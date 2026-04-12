@@ -51,5 +51,14 @@ module.exports = {
         complexity: ['warn', 15],
       },
     },
+    {
+      // One-shot import / ops scripts may have loose-parse code that is
+      // inherently branchy. Runtime code under src/ keeps the tight limits.
+      files: ['scripts/**/*.ts'],
+      rules: {
+        complexity: ['warn', 15],
+        'max-lines-per-function': 'off',
+      },
+    },
   ],
 };

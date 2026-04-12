@@ -13,7 +13,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\" \"tests/**/*.{ts,tsx}\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:golden": "vitest run tests/calc/golden.test.ts",
+    "test:golden": "vitest run tests/calc/golden-full.test.ts tests/calc/golden-mini.test.ts",
     "test:property": "vitest run tests/calc/property.test.ts",
     "test:unit": "vitest run tests/calc/unit.test.ts",
     "import:march": "tsx scripts/import-march-2026.ts",
@@ -29,6 +29,7 @@
     "zustand": "4.5.4"
   },
   "devDependencies": {
+    "@types/node": "20.14.10",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@typescript-eslint/eslint-plugin": "7.16.0",

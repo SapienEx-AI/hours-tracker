@@ -1,0 +1,72 @@
+{
+  "_notes": "Hand-verified 2026-04-11. Computed from tests/fixtures/2026-03-golden.json (102 entries parsed from scripts/march-2026-source.md) using the spec §13 project list and rates (single $125 CAD/hr entry effective 2026-01-01). Sanity spot checks: sprosty 17.25h = 9h@$20 ($180) + 8.25h@$125 ($1031.25) = $1211.25 = 121125 cents. bayard 17h × $125 = $2125 = 212500 cents. Integer math via mulCentsByHundredths throughout.",
+  "month": "2026-03",
+  "total_hours_hundredths": 9750,
+  "billable_hours_hundredths": 7695,
+  "non_billable_hours_hundredths": 1565,
+  "needs_review_hours_hundredths": 490,
+  "billable_amount_cents": 867375,
+  "per_project": {
+    "internal": {
+      "billable_hours_hundredths": 225,
+      "billable_amount_cents": 28125,
+      "non_billable_hours_hundredths": 300,
+      "needs_review_hours_hundredths": 140
+    },
+    "sprosty": {
+      "billable_hours_hundredths": 1725,
+      "billable_amount_cents": 121125
+    },
+    "shannex": {
+      "billable_hours_hundredths": 970,
+      "billable_amount_cents": 121250,
+      "non_billable_hours_hundredths": 215,
+      "needs_review_hours_hundredths": 150
+    },
+    "axiom": {
+      "needs_review_hours_hundredths": 100
+    },
+    "bayard": {
+      "billable_hours_hundredths": 1700,
+      "billable_amount_cents": 212500,
+      "non_billable_hours_hundredths": 50,
+      "needs_review_hours_hundredths": 50
+    },
+    "truvista": {
+      "billable_hours_hundredths": 250,
+      "billable_amount_cents": 31250
+    },
+    "pickleplex": {
+      "billable_hours_hundredths": 775,
+      "billable_amount_cents": 96875
+    },
+    "sparc-bc": {
+      "billable_hours_hundredths": 1025,
+      "billable_amount_cents": 128125
+    },
+    "image-lift": {
+      "billable_hours_hundredths": 200,
+      "billable_amount_cents": 25000
+    },
+    "bluej-legal": {
+      "billable_hours_hundredths": 500,
+      "billable_amount_cents": 62500,
+      "non_billable_hours_hundredths": 250,
+      "needs_review_hours_hundredths": 50
+    },
+    "sterling": {
+      "billable_hours_hundredths": 75,
+      "billable_amount_cents": 9375,
+      "non_billable_hours_hundredths": 700
+    },
+    "tech-lead": {
+      "billable_hours_hundredths": 50,
+      "billable_amount_cents": 6250,
+      "non_billable_hours_hundredths": 50
+    },
+    "pre-sales": {
+      "billable_hours_hundredths": 200,
+      "billable_amount_cents": 25000
+    }
+  }
+}
