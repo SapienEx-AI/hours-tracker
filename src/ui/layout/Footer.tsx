@@ -1,5 +1,5 @@
 /**
- * Footer — subtle SapienEx icon in the bottom-right corner.
+ * Footer — subtle SapienEx icon in the bottom-right corner on a dark pill.
  */
 export function Footer(): JSX.Element {
   const base = typeof import.meta !== 'undefined'
@@ -8,11 +8,13 @@ export function Footer(): JSX.Element {
 
   return (
     <footer className="flex justify-end px-3 py-1.5">
-      <img
-        src={`${base}partners/sapienex/icon.png`}
-        alt="SapienEx"
-        className="h-5 w-5 opacity-25 hover:opacity-40 transition-opacity"
-      />
+      <div className="bg-slate-800/80 rounded-lg p-1.5 hover:bg-slate-700/80 transition-colors">
+        <img
+          src={`${base}partners/sapienex/icon.png`}
+          alt="SapienEx"
+          className="h-5 w-5 opacity-70 hover:opacity-100 transition-opacity"
+        />
+      </div>
     </footer>
   );
 }
