@@ -34,7 +34,7 @@ module.exports = {
     schema: [],
     messages: {
       forbidden:
-        'Do not use `{{op}}` directly on `{{name}}`. Integer math must go through src/calc/int helpers (addCents, mulHundredths, etc.).',
+        'Do not use `{{op}}` directly on `{{name}}`. Integer math must go through src/calc/int helpers (addCents, sumCents, addHundredths, sumHundredths, mulCentsByHundredths, etc.).',
     },
   },
   create(context) {

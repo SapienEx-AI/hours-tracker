@@ -16,7 +16,7 @@ module.exports = {
     'node_modules',
     'coverage',
     'eslint-rules',
-    'eslint-local-rules.js',
+    'eslint-local-rules.cjs',
     'postcss.config.js',
     '.eslintrc.cjs',
     'tailwind.config.ts',
