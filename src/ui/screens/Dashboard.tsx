@@ -226,7 +226,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
         </div>
 
         {/* Right: active project builds */}
-        <div className="w-80 shrink-0">
+        <div className="w-[420px] shrink-0">
           <section>
             <h2 className="font-display text-lg font-bold mb-1">Project Builds</h2>
             <p className="text-xs text-slate-400 mb-3">Per-project, spans months.</p>
