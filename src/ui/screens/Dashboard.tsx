@@ -172,9 +172,9 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
   }, [entries.data, projects.data, rates.data, month]);
 
   const streams = useMemo(() => {
-    if (!entries.data) return null;
-    return splitBillingStreams(entries.data.entries, month);
-  }, [entries.data, month]);
+    if (!entries.data || !projects.data) return null;
+    return splitBillingStreams(entries.data.entries, month, projects.data);
+  }, [entries.data, projects.data, month]);
 
   if (entries.isLoading || projects.isLoading || rates.isLoading) return <div className="text-slate-500">Loading…</div>;
   if (entries.error) return <Banner variant="error">Failed to load: {(entries.error as Error).message}</Banner>;

@@ -174,9 +174,16 @@ export function computeMonthTotals(input: CalcInput, month: string): MonthTotals
 }
 
 /**
+ * Bucket types that are billed on the monthly invoice (alongside unbucketed hours).
+ * hour_block and discovery are general consulting sold in blocks — invoiced monthly.
+ * arch_tl, dev, custom are project-specific builds — invoiced per-project on completion.
+ */
+const MONTHLY_BUCKET_TYPES = new Set(['hour_block', 'discovery']);
+
+/**
  * Split a month's billable entries into two billing streams:
- *   1. Monthly invoice (unbucketed billable) — general consulting billed monthly
- *   2. Project builds (bucketed billable) — billed per-project on completion
+ *   1. Monthly invoice — unbucketed + hour_block + discovery bucket entries
+ *   2. Project builds — arch_tl + dev + custom bucket entries (billed per-project)
  */
 export type BillingStreamSplit = {
   monthly_invoice: {
@@ -191,7 +198,20 @@ export type BillingStreamSplit = {
   };
 };
 
-export function splitBillingStreams(entries: readonly Entry[], month: string): BillingStreamSplit {
+function isMonthlyStream(entry: Entry, projects: ProjectsConfig): boolean {
+  if (entry.bucket_id === null) return true;
+  const project = projects.projects.find((p) => p.id === entry.project);
+  if (!project) return true; // unbucketed fallback
+  const bucket = project.buckets.find((b) => b.id === entry.bucket_id);
+  if (!bucket) return true; // bucket not found → treat as monthly
+  return MONTHLY_BUCKET_TYPES.has(bucket.type);
+}
+
+export function splitBillingStreams(
+  entries: readonly Entry[],
+  month: string,
+  projects: ProjectsConfig,
+): BillingStreamSplit {
   const scoped = entries.filter((e) => e.date.startsWith(month) && e.billable_status === 'billable');
 
   const monthlyByProject = new Map<string, { hours: number; amount: number }>();
@@ -204,7 +224,8 @@ export function splitBillingStreams(entries: readonly Entry[], month: string): B
 
   for (const e of scoped) {
     const amount = mulCentsByHundredths(e.rate_cents, e.hours_hundredths);
-    const map = e.bucket_id === null ? monthlyByProject : buildsbyProject;
+    const isMonthly = isMonthlyStream(e, projects);
+    const map = isMonthly ? monthlyByProject : buildsbyProject;
     const existing = map.get(e.project);
     if (existing) {
       existing.hours = addHundredths(existing.hours, e.hours_hundredths);
@@ -212,7 +233,7 @@ export function splitBillingStreams(entries: readonly Entry[], month: string): B
     } else {
       map.set(e.project, { hours: e.hours_hundredths, amount });
     }
-    if (e.bucket_id === null) {
+    if (isMonthly) {
       monthlyHours = addHundredths(monthlyHours, e.hours_hundredths);
       monthlyAmount = addCents(monthlyAmount, amount);
     } else {
