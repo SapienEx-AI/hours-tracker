@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "partners": [
+    { "id": "sector-growth", "display_name": "Sector Growth", "enabled": true }
+  ]
+}

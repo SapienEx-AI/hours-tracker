@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "sector-growth",
+  "display_name": "Sector Growth",
+  "tagline": "Consulting hours for Sector Growth",
+  "website": "https://sectorgrowth.com",
+  "currency": "CAD",
+  "currency_symbol": "$",
+  "currency_display_suffix": "CAD",
+  "data_repo_prefix": "hours-data-sector-growth-",
+  "theme": {
+    "mode": "dark",
+    "bg_deep": "#0A1628",
+    "bg_darker": "#050B16",
+    "accent_cyan": "#6BCFEE",
+    "accent_mid": "#2A85C4",
+    "accent_deep": "#1E4DA8",
+    "text_primary": "#F5F7FA",
+    "text_muted": "#94A3B8",
+    "border_subtle": "rgba(255,255,255,0.08)",
+    "border_strong": "rgba(255,255,255,0.16)"
+  },
+  "fonts": {
+    "display": "'Space Grotesk', system-ui, sans-serif",
+    "body": "'Inter', system-ui, sans-serif",
+    "mono": "'JetBrains Mono', ui-monospace, monospace",
+    "google_fonts_link": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+  },
+  "assets": {
+    "logo": "logo.webp",
+    "logo_alt_text": "Sector Growth",
+    "logo_width": 180,
+    "logo_height": 48,
+    "logo_dark_filter": "invert(1) hue-rotate(180deg) brightness(1.05)",
+    "favicon": "favicon.png"
+  },
+  "enabled": true
+}
