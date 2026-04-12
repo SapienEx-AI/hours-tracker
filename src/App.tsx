@@ -5,8 +5,43 @@ import { applyPartnerTheme } from '@/partner/apply-theme';
 import type { Partner } from '@/schema/types';
 import { AppShell } from '@/ui/layout/AppShell';
 import { Banner } from '@/ui/components/Banner';
+import { ErrorBoundary } from '@/ui/ErrorBoundary';
 import { FirstRun } from '@/ui/screens/FirstRun';
-import { useRoute } from '@/ui/Router';
+import { QuickLog } from '@/ui/screens/QuickLog';
+import { Dashboard } from '@/ui/screens/Dashboard';
+import { Entries } from '@/ui/screens/Entries';
+import { ProjectsAndBuckets } from '@/ui/screens/ProjectsAndBuckets';
+import { Rates } from '@/ui/screens/Rates';
+import { Snapshots } from '@/ui/screens/Snapshots';
+import { Settings } from '@/ui/screens/Settings';
+import { useRoute, type Route } from '@/ui/Router';
+
+function ScreenForRoute({
+  route,
+  partner,
+}: {
+  route: Route;
+  partner: Partner;
+}): JSX.Element {
+  switch (route) {
+    case 'log':
+      return <QuickLog />;
+    case 'dashboard':
+      return <Dashboard partner={partner} />;
+    case 'entries':
+      return <Entries partner={partner} />;
+    case 'projects':
+      return <ProjectsAndBuckets />;
+    case 'rates':
+      return <Rates partner={partner} />;
+    case 'snapshots':
+      return <Snapshots partner={partner} />;
+    case 'settings':
+      return <Settings />;
+    default:
+      return <QuickLog />;
+  }
+}
 
 export default function App(): JSX.Element {
   const auth = useAuthStore();
@@ -59,9 +94,9 @@ export default function App(): JSX.Element {
       route={route}
       onNavigate={setRoute}
     >
-      <div className="text-partner-muted font-mono text-sm">
-        Route: <span className="text-partner-text">{route}</span>. Screens land in Phase 8.
-      </div>
+      <ErrorBoundary>
+        <ScreenForRoute route={route} partner={partner} />
+      </ErrorBoundary>
     </AppShell>
   );
 }

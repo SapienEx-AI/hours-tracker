@@ -15,6 +15,7 @@ import { Select } from '@/ui/components/Select';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
 import { HoursChips } from '@/ui/components/HoursChips';
+import { formatHoursDecimal } from '@/format/format';
 import { qk } from '@/data/query-keys';
 
 function todayISO(): string {
@@ -157,7 +158,7 @@ export function QuickLog(): JSX.Element {
       return project?.name ?? form.projectId;
     },
     onSuccess: (projectName) => {
-      const hoursDisplay = (form.hoursHundredths / 100).toFixed(2);
+      const hoursDisplay = formatHoursDecimal(form.hoursHundredths);
       setToast(`Logged ${hoursDisplay}h to ${projectName}`);
       // Reset all fields except project (common pattern: logging multiple entries per project in a row).
       setForm((f) => ({ ...initialForm, projectId: f.projectId, date: f.date }));
@@ -207,7 +208,7 @@ export function QuickLog(): JSX.Element {
           type="number"
           step="0.01"
           min="0.01"
-          value={form.hoursHundredths === 0 ? '' : (form.hoursHundredths / 100).toString()}
+          value={form.hoursHundredths === 0 ? '' : formatHoursDecimal(form.hoursHundredths)}
           onChange={(e) =>
             setForm((f) => ({
               ...f,
