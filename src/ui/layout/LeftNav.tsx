@@ -24,7 +24,7 @@ export function LeftNav({ active, onNavigate }: Props): JSX.Element {
             <button
               type="button"
               onClick={() => onNavigate(s.id)}
-              className={`w-full text-left px-3 py-2 rounded font-mono text-sm transition-colors ${
+              className={`w-full text-left px-3 py-2 rounded font-body text-sm font-medium transition-colors ${
                 s.id === active
                   ? 'bg-partner-deep text-partner-text'
                   : 'text-partner-muted hover:text-partner-cyan'

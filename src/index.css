@@ -18,9 +18,9 @@
   --partner-text-muted: #94A3B8;
   --partner-border-subtle: rgba(255, 255, 255, 0.08);
   --partner-border-strong: rgba(255, 255, 255, 0.16);
-  --partner-font-display: 'Space Grotesk', system-ui, sans-serif;
-  --partner-font-body: 'Inter', system-ui, sans-serif;
-  --partner-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --partner-font-display: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --partner-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --partner-font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
 }
 
 html, body, #root {

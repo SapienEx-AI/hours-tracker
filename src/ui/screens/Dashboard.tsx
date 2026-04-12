@@ -38,7 +38,7 @@ type TotalRowProps = {
 function TotalRow({ label, hours, amount }: TotalRowProps): JSX.Element {
   return (
     <div className="p-4 rounded border border-partner-border-subtle">
-      <div className="font-mono text-xs uppercase tracking-wide text-partner-muted">{label}</div>
+      <div className="font-body text-xs font-semibold uppercase tracking-wide text-partner-muted">{label}</div>
       <div className="font-display text-2xl">{formatHours(hours)}</div>
       {amount && <div className="font-mono text-sm text-partner-cyan">{amount}</div>}
     </div>
@@ -78,7 +78,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl">{month}</h1>
-        <div className="flex gap-2 font-mono text-sm">
+        <div className="flex gap-2 font-body text-sm font-medium">
           <button
             className="text-partner-muted hover:text-partner-cyan"
             onClick={() => setMonth(prevMonth(month))}

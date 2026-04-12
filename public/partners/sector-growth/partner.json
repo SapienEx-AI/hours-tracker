@@ -21,10 +21,9 @@
     "border_strong": "rgba(255,255,255,0.16)"
   },
   "fonts": {
-    "display": "'Space Grotesk', system-ui, sans-serif",
-    "body": "'Inter', system-ui, sans-serif",
-    "mono": "'JetBrains Mono', ui-monospace, monospace",
-    "google_fonts_link": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    "display": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    "body": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    "mono": "'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace"
   },
   "assets": {
     "logo": "logo.webp",

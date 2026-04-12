@@ -12,7 +12,7 @@ export function Button({
   ...rest
 }: Props): JSX.Element {
   const base =
-    'px-4 py-2 rounded font-mono text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+    'px-4 py-2 rounded font-body text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   const variants: Record<NonNullable<Props['variant']>, string> = {
     primary: 'bg-partner-deep text-partner-text hover:bg-partner-mid',
     secondary:

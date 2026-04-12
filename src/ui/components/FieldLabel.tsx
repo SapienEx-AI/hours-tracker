@@ -9,7 +9,7 @@ type Props = {
 export function FieldLabel({ label, hint, children }: Props): JSX.Element {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-mono text-xs uppercase tracking-wide text-partner-muted">
+      <span className="font-body text-xs font-semibold uppercase tracking-wide text-partner-muted">
         {label}
       </span>
       {children}

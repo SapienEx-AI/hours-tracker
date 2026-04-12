@@ -234,7 +234,7 @@ export function QuickLog(): JSX.Element {
       </FieldLabel>
 
       <FieldLabel label="Status">
-        <div className="flex gap-4 font-mono text-sm">
+        <div className="flex gap-4 font-body text-sm">
           {(['billable', 'non_billable', 'needs_review'] as const).map((s) => (
             <label
               key={s}
@@ -275,7 +275,7 @@ export function QuickLog(): JSX.Element {
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           maxLength={500}
           rows={3}
-          className="w-full px-3 py-2 rounded bg-partner-bg-deep border border-partner-border-subtle text-partner-text font-mono text-sm focus:outline-none focus:border-partner-cyan"
+          className="w-full px-3 py-2 rounded bg-partner-bg-deep border border-partner-border-subtle text-partner-text font-body text-sm focus:outline-none focus:border-partner-cyan"
         />
       </FieldLabel>
 

@@ -54,11 +54,11 @@ export function AppShell({
           />
         </a>
         <div className="flex items-center gap-4">
-          <span className="font-mono text-sm text-partner-muted">{consultantDisplayName}</span>
+          <span className="font-body text-sm text-partner-muted">{consultantDisplayName}</span>
           <button
             type="button"
             onClick={onSignOut}
-            className="font-mono text-xs uppercase tracking-wide text-partner-muted hover:text-partner-cyan transition-colors"
+            className="font-body text-xs font-medium uppercase tracking-wide text-partner-muted hover:text-partner-cyan transition-colors"
           >
             Sign out
           </button>
