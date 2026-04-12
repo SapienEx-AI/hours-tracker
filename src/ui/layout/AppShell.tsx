@@ -52,17 +52,10 @@ export function AppShell({
 
   return (
     <div
-      className="h-screen flex flex-col font-body text-slate-800 animated-gradient p-3 relative"
+      key={pulseKey}
+      className={`h-screen flex flex-col font-body text-slate-800 animated-gradient p-3${pulseKey > 0 ? ' border-pulse' : ''}`}
       style={{ background: gradientBg }}
     >
-      {/* Pulse wave overlay on the content frame */}
-      {pulseKey > 0 && (
-        <div
-          key={pulseKey}
-          className="nav-pulse"
-          style={{ top: '56px', left: '12px', right: '12px', bottom: '12px' }}
-        />
-      )}
       {/* ── Single-line header: logo | nav tabs | user ── */}
       <header className="flex items-center px-6 py-4 shrink-0">
         <div className="shrink-0">
