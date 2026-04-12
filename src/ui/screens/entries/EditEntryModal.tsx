@@ -89,15 +89,34 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
     mutationFn: async () => {
       if (!octokit || !dataRepo || !projects.data || !rates.data) throw new Error('Not ready');
       const { owner, repo } = splitRepoPath(dataRepo);
-      const resolved = resolveRateAtLogTime({
-        project_id: entry.project, bucket_id: bucketId, date,
-        projects: projects.data, rates: rates.data,
-      });
-      const finalRate = rateOverridden ? rateCents : resolved.rate_cents;
+      // When editing, the entry already has a snapshotted rate. Use the form's
+      // current rateCents (which was either inherited from the entry on open,
+      // auto-resolved by the useEffect, or manually overridden by the user).
+      // Don't call resolveRateAtLogTime here — it throws for historical entries
+      // whose date predates the earliest rate history entry.
+      let finalRate = rateCents;
+      let finalSource = entry.rate_source;
+      if (rateOverridden) {
+        finalSource = 'entry_override';
+      } else {
+        try {
+          const resolved = resolveRateAtLogTime({
+            project_id: entry.project, bucket_id: bucketId, date,
+            projects: projects.data, rates: rates.data,
+          });
+          finalRate = resolved.rate_cents;
+          finalSource = resolved.source;
+        } catch {
+          // Historical entry — rate history doesn't cover this date.
+          // Keep the entry's existing snapshotted rate.
+          finalRate = rateCents;
+          finalSource = entry.rate_source;
+        }
+      }
       const updated: Entry = {
         ...entry, date, hours_hundredths: hoursHundredths,
         rate_cents: finalRate,
-        rate_source: rateOverridden ? 'entry_override' : resolved.source,
+        rate_source: finalSource,
         billable_status: status, bucket_id: bucketId,
         description, review_flag: reviewFlag,
         updated_at: new Date().toISOString(),
@@ -193,13 +212,13 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
             </div>
           </FieldLabel>
 
-          <FieldLabel label="Rate (cents)" hint={rateOverridden ? 'override' : 'inherited'}>
+          <FieldLabel label="Rate ($/hr)" hint={rateOverridden ? 'override' : 'inherited'}>
             <Input
               type="number"
-              step="1"
-              value={rateCents}
+              step="0.01"
+              value={rateCents === 0 ? '' : (rateCents / 100).toString()}
               onChange={(e) => {
-                setRateCents(parseInt(e.target.value || '0', 10));
+                setRateCents(Math.round(parseFloat(e.target.value || '0') * 100));
                 setRateOverridden(true);
               }}
             />

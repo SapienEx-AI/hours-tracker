@@ -9,9 +9,20 @@ import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
 import { Banner } from '@/ui/components/Banner';
 import { assertMonthTotalsInvariants } from '@/ui/runtime-invariants';
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 function currentMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(m: string): string {
+  const [yStr, mStr] = m.split('-');
+  const monthIdx = parseInt(mStr ?? '1', 10) - 1;
+  return `${MONTH_NAMES[monthIdx] ?? ''} ${yStr ?? ''}`;
 }
 
 function prevMonth(m: string): string {
@@ -133,7 +144,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl">{month}</h1>
+        <h1 className="font-display text-2xl font-bold">{formatMonthLabel(month)}</h1>
         <div className="flex gap-2 font-body text-sm font-medium">
           <button
             className="text-slate-500 hover:text-sky-500"

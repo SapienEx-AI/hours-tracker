@@ -76,6 +76,10 @@ function loadingOrErrorGate(
   return null;
 }
 
+function formatRateDollars(rateCents: number): string {
+  return rateCents === 0 ? '' : (rateCents / 100).toString();
+}
+
 function buildEntry(
   form: FormState,
   projects: ProjectsConfig,
@@ -260,15 +264,15 @@ export function QuickLog(): JSX.Element {
         </div>
       </FieldLabel>
 
-      <FieldLabel label="Rate (cents)" hint={form.rateOverridden ? 'override' : 'inherited'}>
+      <FieldLabel label="Rate ($/hr)" hint={form.rateOverridden ? 'override' : 'inherited'}>
         <Input
           type="number"
-          step="1"
-          value={form.rateCents}
+          step="0.01"
+          value={formatRateDollars(form.rateCents)}
           onChange={(e) =>
             setForm((f) => ({
               ...f,
-              rateCents: parseInt(e.target.value || '0', 10),
+              rateCents: Math.round(parseFloat(e.target.value || '0') * 100),
               rateOverridden: true,
             }))
           }

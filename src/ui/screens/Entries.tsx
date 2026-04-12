@@ -14,9 +14,20 @@ import { Banner } from '@/ui/components/Banner';
 import { qk } from '@/data/query-keys';
 import { EditEntryModal } from './entries/EditEntryModal';
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 function currentMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(m: string): string {
+  const [yStr, mStr] = m.split('-');
+  const monthIdx = parseInt(mStr ?? '1', 10) - 1;
+  return `${MONTH_NAMES[monthIdx] ?? ''} ${yStr ?? ''}`;
 }
 
 export function Entries({ partner }: { partner: Partner }): JSX.Element {
@@ -61,7 +72,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   return (
     <div className="flex flex-col gap-4 max-w-4xl">
       <div className="flex items-end gap-4">
-        <h1 className="font-display text-2xl">Entries &middot; {month}</h1>
+        <h1 className="font-display text-2xl">Entries &middot; {formatMonthLabel(month)}</h1>
         <div className="max-w-xs flex-1">
           <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
         </div>
