@@ -39,12 +39,12 @@ export function AppShell({
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-body text-partner-text">
+    <div className="min-h-screen flex flex-col font-body text-slate-800">
       {/* ── Partner-branded header (ONLY dark area in the app) ── */}
       <header
-        className="flex items-center justify-between px-6 py-3.5"
+        className="flex items-center justify-between px-6 py-3.5 shadow-lg shadow-black/10"
         style={{
-          background: `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 100%)`,
+          background: `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 80%, ${partner.theme.accent_mid} 100%)`,
         }}
       >
         <a
@@ -52,6 +52,7 @@ export function AppShell({
           target="_blank"
           rel="noopener noreferrer"
           aria-label={partner.display_name}
+          className="hover:opacity-90 transition-opacity"
         >
           <img
             src={`${base}partners/${partner.id}/${partner.assets.logo}`}
@@ -61,12 +62,12 @@ export function AppShell({
             style={logoStyle}
           />
         </a>
-        <div className="flex items-center gap-4">
-          <span className="font-body text-sm text-white/70">{consultantDisplayName}</span>
+        <div className="flex items-center gap-5">
+          <span className="font-body text-sm text-white/80 font-medium">{consultantDisplayName}</span>
           <button
             type="button"
             onClick={onSignOut}
-            className="font-body text-xs font-medium uppercase tracking-wide text-white/50 hover:text-white/90 transition-colors"
+            className="font-body text-xs font-semibold uppercase tracking-wider text-white/40 hover:text-white transition-all duration-300 hover:tracking-widest"
           >
             Sign out
           </button>

@@ -5,14 +5,14 @@ type Props = {
 export function ConnectInstructions({ computedRepo }: Props): JSX.Element {
   return (
     <>
-      <p className="font-body text-sm text-partner-muted">
+      <p className="font-body text-sm text-slate-500">
         You need a fine-grained Personal Access Token scoped to your private data repo{' '}
         <span className="font-mono">{computedRepo || '(enter slug below)'}</span>.
       </p>
-      <ol className="list-decimal list-inside font-body text-sm text-partner-muted space-y-1">
+      <ol className="list-decimal list-inside font-body text-sm text-slate-500 space-y-1">
         <li>
           <a
-            className="underline hover:text-partner-cyan"
+            className="underline hover:text-sky-500"
             href="https://github.com/settings/personal-access-tokens/new"
             target="_blank"
             rel="noreferrer"

@@ -157,14 +157,14 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
             <div className="flex items-center justify-between mb-2">
               <div>
                 <span className="font-display text-lg">{p.name}</span>
-                <span className="font-mono text-xs text-partner-muted ml-2">{p.id}</span>
+                <span className="font-mono text-xs text-slate-500 ml-2">{p.id}</span>
                 {p.is_internal && (
-                  <span className="text-xs text-partner-muted ml-2 bg-black/5 px-1 rounded">
+                  <span className="text-xs text-slate-500 ml-2 bg-black/5 px-1 rounded">
                     internal
                   </span>
                 )}
               </div>
-              <span className={`text-xs ${p.active ? 'text-green-400' : 'text-partner-muted'}`}>
+              <span className={`text-xs ${p.active ? 'text-green-400' : 'text-slate-500'}`}>
                 {p.active ? 'active' : 'inactive'}
               </span>
             </div>

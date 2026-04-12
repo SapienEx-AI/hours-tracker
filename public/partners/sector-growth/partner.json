@@ -15,8 +15,8 @@
     "accent_cyan": "#6BCFEE",
     "accent_mid": "#2A85C4",
     "accent_deep": "#1E4DA8",
-    "text_primary": "#1a1a2e",
-    "text_muted": "#64748b",
+    "text_primary": "#0f172a",
+    "text_muted": "#475569",
     "border_subtle": "rgba(0,0,0,0.06)",
     "border_strong": "rgba(0,0,0,0.12)"
   },

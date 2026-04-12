@@ -29,7 +29,7 @@ export function BucketRow({
       ? 'text-green-400'
       : bucket.status === 'closed'
         ? 'text-yellow-400'
-        : 'text-partner-muted';
+        : 'text-slate-500';
 
   const consumed = allTimeConsumption?.consumed_hours_hundredths ?? 0;
   const budgeted = bucket.budgeted_hours_hundredths;
@@ -42,7 +42,7 @@ export function BucketRow({
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <span className="font-body text-sm">{bucket.name}</span>
-          <span className="font-mono text-xs text-partner-muted ml-2">
+          <span className="font-mono text-xs text-slate-500 ml-2">
             {bucket.type}
             {bucket.rate_cents !== null && ` · ${formatCents(bucket.rate_cents, currency)}/hr`}
           </span>
@@ -63,13 +63,13 @@ export function BucketRow({
       </div>
       <div className="mt-1">
         <div className="flex items-center justify-between text-xs mb-1">
-          <span className={`font-mono ${over ? 'text-red-400' : 'text-partner-muted'}`}>
+          <span className={`font-mono ${over ? 'text-red-400' : 'text-slate-500'}`}>
             {formatHoursDecimal(consumed)} / {formatHoursDecimal(budgeted)}h used
             {over
               ? ` (${formatHoursDecimal(Math.abs(remaining))}h over)`
               : ` (${formatHoursDecimal(remaining)}h remaining)`}
           </span>
-          <span className="font-mono text-partner-muted">{pct}%</span>
+          <span className="font-mono text-slate-500">{pct}%</span>
         </div>
         <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
           <div

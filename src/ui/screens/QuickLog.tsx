@@ -59,7 +59,7 @@ function loadingOrErrorGate(
   rates: QueryLike<RatesConfig>,
 ): JSX.Element | null {
   if (projects.isLoading || rates.isLoading) {
-    return <div className="text-partner-muted">Loading…</div>;
+    return <div className="text-slate-500">Loading…</div>;
   }
   if (projects.error) {
     return (
@@ -281,7 +281,7 @@ export function QuickLog(): JSX.Element {
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           maxLength={500}
           rows={3}
-          className="w-full px-3.5 py-2.5 rounded-xl glass-input text-partner-text font-body text-sm transition-all duration-200 focus:outline-none focus:border-partner-cyan/50 focus:glass-strong focus:glow-focus placeholder:text-partner-muted/60"
+          className="w-full px-3.5 py-2.5 rounded-xl glass-input text-slate-800 font-body text-sm transition-all duration-200 focus:outline-none focus:border-partner-cyan/50 focus:glass-strong focus:glow-focus placeholder:text-slate-500/60"
         />
       </FieldLabel>
 

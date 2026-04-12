@@ -65,7 +65,7 @@ export function ConnectStep({ partnerId, onBack }: Props): JSX.Element {
   }, [partnerId]);
 
   if (error && !partner) return <Banner variant="error">{error}</Banner>;
-  if (!partner) return <div className="text-partner-muted">Loading partner…</div>;
+  if (!partner) return <div className="text-slate-500">Loading partner…</div>;
 
   const computedRepo = `${OWNER}/${partner.data_repo_prefix}${consultantSlug}`;
 

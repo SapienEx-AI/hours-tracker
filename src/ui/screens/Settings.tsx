@@ -9,13 +9,13 @@ export function Settings(): JSX.Element {
       <h1 className="font-display text-2xl">Settings</h1>
       <section className="font-mono text-sm space-y-1">
         <div>
-          <span className="text-partner-muted">partner_id:</span> {auth.partnerId}
+          <span className="text-slate-500">partner_id:</span> {auth.partnerId}
         </div>
         <div>
-          <span className="text-partner-muted">consultant_slug:</span> {auth.consultantSlug}
+          <span className="text-slate-500">consultant_slug:</span> {auth.consultantSlug}
         </div>
         <div>
-          <span className="text-partner-muted">data_repo:</span> {auth.dataRepo}
+          <span className="text-slate-500">data_repo:</span> {auth.dataRepo}
         </div>
       </section>
       <Banner variant="warning">

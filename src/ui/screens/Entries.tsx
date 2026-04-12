@@ -73,7 +73,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
           />
         </div>
       </div>
-      {entries.isLoading && <div className="text-partner-muted">Loading...</div>}
+      {entries.isLoading && <div className="text-slate-500">Loading...</div>}
       {entries.error && <Banner variant="error">{(entries.error as Error).message}</Banner>}
       {deleteMutation.error && (
         <Banner variant="error">{(deleteMutation.error as Error).message}</Banner>
@@ -82,7 +82,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
       <div className="glass rounded-2xl overflow-hidden">
         <table className="w-full font-mono text-sm">
           <thead>
-            <tr className="text-left text-partner-muted bg-white/30">
+            <tr className="text-left text-slate-500 bg-white/30">
               <th className="py-2.5 px-3">Date</th>
               <th className="py-2.5 px-3">Project</th>
               <th className="py-2.5 px-3">Hours</th>
@@ -134,7 +134,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
       </div>
 
       {visible.length === 0 && !entries.isLoading && (
-        <div className="text-center text-partner-muted py-8">
+        <div className="text-center text-slate-500 py-8">
           No entries for {month}{filter ? ` matching "${filter}"` : ''}
         </div>
       )}

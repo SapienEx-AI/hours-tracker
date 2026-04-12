@@ -34,12 +34,12 @@ function TotalRow({ label, hours, amount }: {
   label: string; hours: number; amount?: string;
 }): JSX.Element {
   return (
-    <div className="p-5 rounded-2xl glass hover:glass-strong transition-all duration-300 hover:glow-cyan">
-      <div className="font-body text-xs font-semibold uppercase tracking-wide text-partner-muted">
+    <div className="p-5 rounded-2xl glass hover:glass-strong transition-all duration-300 hover:glow-cyan group">
+      <div className="font-body text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-500 transition-colors">
         {label}
       </div>
-      <div className="font-display text-2xl mt-1">{formatHours(hours)}</div>
-      {amount && <div className="font-mono text-sm text-partner-mid mt-0.5">{amount}</div>}
+      <div className="font-display text-2xl font-bold text-slate-900 mt-1">{formatHours(hours)}</div>
+      {amount && <div className="font-mono text-sm font-semibold text-partner-mid mt-0.5">{amount}</div>}
     </div>
   );
 }
@@ -60,8 +60,8 @@ function BucketBar({ bucket, allTimeData }: {
   return (
     <div className="pl-6 py-1">
       <div className="flex items-center justify-between text-xs mb-1">
-        <span className="font-body text-partner-muted">{bucket.bucket_id}</span>
-        <span className={`font-mono ${over ? 'text-red-400' : 'text-partner-muted'}`}>
+        <span className="font-body text-slate-500">{bucket.bucket_id}</span>
+        <span className={`font-mono ${over ? 'text-red-400' : 'text-slate-500'}`}>
           {formatHoursDecimal(totalConsumed)} / {formatHoursDecimal(budgeted)}h total
           {over && ` (${formatHoursDecimal(totalConsumed - budgeted)}h over)`}
         </span>
@@ -73,7 +73,7 @@ function BucketBar({ bucket, allTimeData }: {
         />
       </div>
       {thisMonth > 0 && thisMonth !== totalConsumed && (
-        <div className="text-xs text-partner-muted font-mono mt-0.5 pl-1">
+        <div className="text-xs text-slate-500 font-mono mt-0.5 pl-1">
           {formatHoursDecimal(thisMonth)}h this month
         </div>
       )}
@@ -105,7 +105,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
   }, [entries.data, projects.data, rates.data, month]);
 
   if (entries.isLoading || projects.isLoading || rates.isLoading) {
-    return <div className="text-partner-muted">Loading…</div>;
+    return <div className="text-slate-500">Loading…</div>;
   }
   if (entries.error) {
     return (
@@ -114,7 +114,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
       </Banner>
     );
   }
-  if (!totals) return <div className="text-partner-muted">No data</div>;
+  if (!totals) return <div className="text-slate-500">No data</div>;
 
   const currency = {
     currency_symbol: partner.currency_symbol,
@@ -136,13 +136,13 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
         <h1 className="font-display text-2xl">{month}</h1>
         <div className="flex gap-2 font-body text-sm font-medium">
           <button
-            className="text-partner-muted hover:text-partner-cyan"
+            className="text-slate-500 hover:text-sky-500"
             onClick={() => setMonth(prevMonth(month))}
           >
             ← Prev
           </button>
           <button
-            className="text-partner-muted hover:text-partner-cyan"
+            className="text-slate-500 hover:text-sky-500"
             onClick={() => setMonth(nextMonth(month))}
           >
             Next →
@@ -184,13 +184,13 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
                   <div className="w-20 text-right">
                     {hasBuckets ? (
                       <button
-                        className="text-partner-cyan hover:underline text-xs"
+                        className="text-sky-500 hover:underline text-xs"
                         onClick={() => toggleExpand(p.project)}
                       >
                         {isExpanded ? 'hide' : `${p.by_bucket.length} bucket${p.by_bucket.length > 1 ? 's' : ''} ▸`}
                       </button>
                     ) : (
-                      <span className="text-partner-muted text-xs">—</span>
+                      <span className="text-slate-500 text-xs">—</span>
                     )}
                   </div>
                 </div>

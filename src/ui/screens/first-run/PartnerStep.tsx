@@ -26,7 +26,7 @@ export function PartnerStep({ onNext }: Props): JSX.Element {
   }, []);
 
   if (error) return <Banner variant="error">{error}</Banner>;
-  if (!index) return <div className="text-partner-muted">Loading organizations…</div>;
+  if (!index) return <div className="text-slate-500">Loading organizations…</div>;
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,7 +42,7 @@ export function PartnerStep({ onNext }: Props): JSX.Element {
             ))}
         </Select>
       </FieldLabel>
-      <p className="text-xs text-partner-muted">
+      <p className="text-xs text-slate-500">
         Don&apos;t see your org? Contact SapienEx support.
       </p>
       <Button onClick={() => onNext(selected)} disabled={!selected}>

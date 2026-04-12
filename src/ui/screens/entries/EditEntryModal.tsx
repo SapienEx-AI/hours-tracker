@@ -131,12 +131,12 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
       <div className="w-full max-w-lg glass-strong rounded-2xl p-6 glow-blue max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg">Edit entry</h2>
-          <button onClick={onClose} className="text-partner-muted hover:text-partner-text text-xl leading-none">
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800 text-xl leading-none">
             &times;
           </button>
         </div>
 
-        <div className="text-xs font-mono text-partner-muted mb-4">
+        <div className="text-xs font-mono text-slate-500 mb-4">
           {entry.id} &middot; {entry.project}
         </div>
 
@@ -211,11 +211,11 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
               rows={3}
-              className="w-full px-3.5 py-2.5 rounded-xl glass-input text-partner-text font-body text-sm transition-all duration-200 focus:outline-none focus:border-partner-cyan/50 focus:glass-strong focus:glow-focus"
+              className="w-full px-3.5 py-2.5 rounded-xl glass-input text-slate-800 font-body text-sm transition-all duration-200 focus:outline-none focus:border-partner-cyan/50 focus:glass-strong focus:glow-focus"
             />
           </FieldLabel>
 
-          <label className="flex items-center gap-2 text-sm text-partner-muted">
+          <label className="flex items-center gap-2 text-sm text-slate-500">
             <input
               type="checkbox"
               checked={reviewFlag}

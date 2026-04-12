@@ -56,7 +56,7 @@ export function AddBucketForm({ projectId, onAdd, disabled }: Props): JSX.Elemen
 
   return (
     <div className="p-3 rounded-xl glass flex flex-col gap-2">
-      <div className="font-body text-xs font-semibold uppercase tracking-wide text-partner-muted">
+      <div className="font-body text-xs font-semibold uppercase tracking-wide text-slate-500">
         New bucket for {projectId}
       </div>
       <div className="grid grid-cols-2 gap-2">

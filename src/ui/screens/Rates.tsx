@@ -58,7 +58,7 @@ export function Rates({ partner }: { partner: Partner }): JSX.Element {
       <h1 className="font-display text-2xl">Rates</h1>
       <table className="w-full font-mono text-sm">
         <thead>
-          <tr className="text-left text-partner-muted">
+          <tr className="text-left text-slate-500">
             <th>Effective from</th>
             <th>Rate</th>
             <th>Note</th>
@@ -69,7 +69,7 @@ export function Rates({ partner }: { partner: Partner }): JSX.Element {
             <tr key={r.effective_from} className="border-t border-black/5">
               <td className="py-1">{r.effective_from}</td>
               <td className="py-1">{formatCents(r.rate_cents, currency)}</td>
-              <td className="py-1 text-partner-muted">{r.note ?? ''}</td>
+              <td className="py-1 text-slate-500">{r.note ?? ''}</td>
             </tr>
           ))}
         </tbody>
