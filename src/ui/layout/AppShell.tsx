@@ -22,10 +22,6 @@ type Props = {
   children: ReactNode;
 };
 
-/**
- * App shell — partner-branded top bar with centered navigation,
- * animated gradient background, and page transition animations.
- */
 export function AppShell({
   partner,
   consultantDisplayName,
@@ -36,47 +32,32 @@ export function AppShell({
 }: Props): JSX.Element {
   const base = import.meta.env.BASE_URL;
   const logoFilter = partner.assets.logo_dark_filter ?? undefined;
+  const gradientBg = `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 40%, ${partner.theme.accent_mid} 70%, ${partner.theme.bg_deep} 100%)`;
 
   return (
-    <div className="min-h-screen flex flex-col font-body text-slate-800">
-      {/* ── Animated gradient header with centered nav ── */}
-      <header
-        className="animated-gradient shadow-lg shadow-black/10 relative z-10"
-        style={{
-          background: `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 40%, ${partner.theme.accent_mid} 70%, ${partner.theme.bg_deep} 100%)`,
-        }}
-      >
-        {/* Top row: logo + user */}
-        <div className="flex items-center justify-between px-6 pt-3 pb-1">
-          <a
-            href={partner.website ?? '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={partner.display_name}
-            className="hover:opacity-90 transition-opacity"
-          >
-            <img
-              src={`${base}partners/${partner.id}/${partner.assets.logo}`}
-              alt={partner.assets.logo_alt_text}
-              width={partner.assets.logo_width ?? 180}
-              height={partner.assets.logo_height ?? 40}
-              style={{ height: '30px', width: 'auto', filter: logoFilter }}
-            />
-          </a>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-white/70 font-medium">{consultantDisplayName}</span>
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="text-[11px] font-semibold uppercase tracking-wider text-white/35 hover:text-white/80 transition-all duration-300"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
+    <div
+      className="min-h-screen flex flex-col font-body text-slate-800 animated-gradient p-1.5"
+      style={{ background: gradientBg }}
+    >
+      {/* ── Single-line header: logo | nav tabs | user ── */}
+      <header className="flex items-center px-4 py-2 shrink-0">
+        <a
+          href={partner.website ?? '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={partner.display_name}
+          className="hover:opacity-90 transition-opacity shrink-0"
+        >
+          <img
+            src={`${base}partners/${partner.id}/${partner.assets.logo}`}
+            alt={partner.assets.logo_alt_text}
+            width={partner.assets.logo_width ?? 180}
+            height={partner.assets.logo_height ?? 40}
+            style={{ height: '26px', width: 'auto', filter: logoFilter }}
+          />
+        </a>
 
-        {/* Nav row: centered tabs */}
-        <nav className="flex justify-center gap-1 px-6 pb-2 pt-1">
+        <nav className="flex-1 flex justify-center gap-0.5">
           {NAV_ITEMS.map((item) => {
             const isActive = item.id === route;
             return (
@@ -84,10 +65,10 @@ export function AppShell({
                 key={item.id}
                 type="button"
                 onClick={() => onNavigate(item.id)}
-                className={`relative px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-300 ${
+                className={`px-3.5 py-1 rounded-md text-[12px] font-semibold transition-all duration-300 ${
                   isActive
-                    ? 'text-white bg-white/15 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_0_16px_rgba(107,207,238,0.15)]'
-                    : 'text-white/50 hover:text-white/90 hover:bg-white/[0.06]'
+                    ? 'text-white bg-white/15 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_0_12px_rgba(107,207,238,0.12)]'
+                    : 'text-white/45 hover:text-white/90 hover:bg-white/[0.06]'
                 }`}
               >
                 {item.label}
@@ -95,16 +76,28 @@ export function AppShell({
             );
           })}
         </nav>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-[12px] text-white/60 font-medium">{consultantDisplayName}</span>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="text-[10px] font-semibold uppercase tracking-wider text-white/30 hover:text-white/80 transition-all duration-300"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
-      {/* ── Page content with enter animation ── */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        <div key={route} className="page-enter">
-          {children}
-        </div>
-      </main>
-
-      <Footer />
+      {/* ── Content frame: light interior inside the gradient border ── */}
+      <div className="flex-1 flex flex-col rounded-xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-inner shadow-black/5">
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div key={route} className="page-enter">
+            {children}
+          </div>
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }
