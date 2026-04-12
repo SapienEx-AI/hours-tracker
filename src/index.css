@@ -121,16 +121,6 @@ html, body, #root {
   animation: gradient-drift 12s ease-in-out infinite;
 }
 
-/* ── Nav pulse — elegant gradient warmth ── */
-@keyframes border-pulse {
-  0%   { filter: brightness(1) saturate(1); }
-  25%  { filter: brightness(1.2) saturate(1.12); }
-  100% { filter: brightness(1) saturate(1); }
-}
-.border-pulse {
-  animation: border-pulse 1.4s ease-out;
-}
-
 /* ── Page transition (horizontal slide) ── */
 @keyframes page-enter {
   from {
