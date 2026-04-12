@@ -146,7 +146,7 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-3xl">
+    <div className="flex flex-col gap-4">
       <h1 className="font-display text-2xl">Projects &amp; Buckets</h1>
       {projects.error && <Banner variant="error">{(projects.error as Error).message}</Banner>}
       {mutation.error && <Banner variant="error">{(mutation.error as Error).message}</Banner>}
@@ -165,7 +165,7 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
         </Button>
       </section>
 
-      <ul className="flex flex-col gap-4">
+      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {projects.data?.projects.map((p) => (
           <li key={p.id} className="p-4 rounded-2xl glass">
             <div className="flex items-center justify-between mb-2">
