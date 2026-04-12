@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState, useCallback } from 'react';
 import type { Partner } from '@/schema/types';
 import type { Route } from '@/ui/Router';
 import { Footer } from './Footer';
@@ -41,12 +41,28 @@ export function AppShell({
   const base = import.meta.env.BASE_URL;
   const logoFilter = partner.assets.logo_dark_filter ?? undefined;
   const gradientBg = `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 40%, ${partner.theme.accent_mid} 70%, ${partner.theme.bg_deep} 100%)`;
+  const [pulseKey, setPulseKey] = useState(0);
+
+  const handleNav = useCallback((id: Route) => {
+    if (id !== route) {
+      setPulseKey((k) => k + 1);
+      onNavigate(id);
+    }
+  }, [route, onNavigate]);
 
   return (
     <div
-      className="h-screen flex flex-col font-body text-slate-800 animated-gradient p-3"
+      className="h-screen flex flex-col font-body text-slate-800 animated-gradient p-3 relative"
       style={{ background: gradientBg }}
     >
+      {/* Pulse wave overlay on the content frame */}
+      {pulseKey > 0 && (
+        <div
+          key={pulseKey}
+          className="nav-pulse"
+          style={{ top: '56px', left: '12px', right: '12px', bottom: '12px' }}
+        />
+      )}
       {/* ── Single-line header: logo | nav tabs | user ── */}
       <header className="flex items-center px-6 py-4 shrink-0">
         <div className="shrink-0">
@@ -66,7 +82,7 @@ export function AppShell({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => onNavigate(item.id)}
+                onClick={() => handleNav(item.id)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                   isActive
                     ? 'text-white bg-white/15 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_0_12px_rgba(107,207,238,0.12)]'
@@ -83,7 +99,7 @@ export function AppShell({
           <span className="text-sm text-white/60 font-medium">{consultantDisplayName}</span>
           <button
             type="button"
-            onClick={() => onNavigate('settings')}
+            onClick={() => handleNav('settings')}
             className={`p-2 rounded-lg transition-all duration-300 ${
               route === 'settings'
                 ? 'text-white bg-white/15'
