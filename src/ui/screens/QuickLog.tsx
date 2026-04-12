@@ -227,11 +227,17 @@ export function QuickLog(): JSX.Element {
           <option value="">(none — general billable)</option>
           {activeBuckets.map((b) => (
             <option key={b.id} value={b.id}>
-              {b.name}
+              {b.name}{b.status === 'closed' ? ' (closed)' : ''}
             </option>
           ))}
         </Select>
       </FieldLabel>
+      {form.bucketId && activeBuckets.find((b) => b.id === form.bucketId)?.status === 'closed' && (
+        <Banner variant="warning">
+          This bucket is closed. New entries are allowed but may need review — the bucket was
+          likely invoiced already.
+        </Banner>
+      )}
 
       <FieldLabel label="Status">
         <div className="flex gap-4 font-body text-sm">

@@ -31,7 +31,7 @@ function ScreenForRoute({
     case 'entries':
       return <Entries partner={partner} />;
     case 'projects':
-      return <ProjectsAndBuckets />;
+      return <ProjectsAndBuckets partner={partner} />;
     case 'rates':
       return <Rates partner={partner} />;
     case 'snapshots':
