@@ -96,17 +96,18 @@ export function AppShell({
         </div>
       </header>
 
-      {/* ── Content frame: rounded light interior, scrolls internally ── */}
-      <div className="flex-1 min-h-0 flex flex-col rounded-2xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-[inset_0_2px_8px_rgba(0,0,0,0.08)]">
-        <main className="flex-1 min-h-0 p-6 overflow-y-auto">
-          <div key={route} className="page-enter">
-            {children}
-          </div>
-        </main>
+      {/* ── Content frame + icon tab ── */}
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-[inset_0_2px_8px_rgba(0,0,0,0.08)]">
+          <main className="h-full p-6 overflow-y-auto">
+            <div key={route} className="page-enter">
+              {children}
+            </div>
+          </main>
+        </div>
+        {/* Icon tab peeking out from bottom-right corner of the content panel */}
+        <Footer />
       </div>
-
-      {/* ── SapienEx icon tab extending from the gradient border ── */}
-      <Footer />
     </div>
   );
 }
