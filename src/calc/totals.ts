@@ -174,6 +174,67 @@ export function computeMonthTotals(input: CalcInput, month: string): MonthTotals
 }
 
 /**
+ * Split a month's billable entries into two billing streams:
+ *   1. Monthly invoice (unbucketed billable) — general consulting billed monthly
+ *   2. Project builds (bucketed billable) — billed per-project on completion
+ */
+export type BillingStreamSplit = {
+  monthly_invoice: {
+    hours_hundredths: number;
+    amount_cents: number;
+    by_project: Array<{ project: string; hours_hundredths: number; amount_cents: number }>;
+  };
+  project_builds: {
+    hours_hundredths: number;
+    amount_cents: number;
+    by_project: Array<{ project: string; hours_hundredths: number; amount_cents: number }>;
+  };
+};
+
+export function splitBillingStreams(entries: readonly Entry[], month: string): BillingStreamSplit {
+  const scoped = entries.filter((e) => e.date.startsWith(month) && e.billable_status === 'billable');
+
+  const monthlyByProject = new Map<string, { hours: number; amount: number }>();
+  const buildsbyProject = new Map<string, { hours: number; amount: number }>();
+
+  let monthlyHours = 0;
+  let monthlyAmount = 0;
+  let buildsHours = 0;
+  let buildsAmount = 0;
+
+  for (const e of scoped) {
+    const amount = mulCentsByHundredths(e.rate_cents, e.hours_hundredths);
+    const map = e.bucket_id === null ? monthlyByProject : buildsbyProject;
+    const existing = map.get(e.project);
+    if (existing) {
+      existing.hours = addHundredths(existing.hours, e.hours_hundredths);
+      existing.amount = addCents(existing.amount, amount);
+    } else {
+      map.set(e.project, { hours: e.hours_hundredths, amount });
+    }
+    if (e.bucket_id === null) {
+      monthlyHours = addHundredths(monthlyHours, e.hours_hundredths);
+      monthlyAmount = addCents(monthlyAmount, amount);
+    } else {
+      buildsHours = addHundredths(buildsHours, e.hours_hundredths);
+      buildsAmount = addCents(buildsAmount, amount);
+    }
+  }
+
+  const toArray = (m: Map<string, { hours: number; amount: number }>) =>
+    [...m.entries()].map(([project, d]) => ({
+      project,
+      hours_hundredths: d.hours,
+      amount_cents: d.amount,
+    }));
+
+  return {
+    monthly_invoice: { hours_hundredths: monthlyHours, amount_cents: monthlyAmount, by_project: toArray(monthlyByProject) },
+    project_builds: { hours_hundredths: buildsHours, amount_cents: buildsAmount, by_project: toArray(buildsbyProject) },
+  };
+}
+
+/**
  * Compute all-time bucket consumption across ALL entries (every month).
  * Returns a map from bucket_id → { consumed_hours_hundredths, amount_cents }.
  *

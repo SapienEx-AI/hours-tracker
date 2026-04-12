@@ -3,9 +3,16 @@ import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useMonthEntries } from '@/data/hooks/use-month-entries';
 import { useAllEntries } from '@/data/hooks/use-all-entries';
-import { computeMonthTotals, computeAllTimeBucketConsumption } from '@/calc';
-import type { Partner, BucketConsumption } from '@/schema/types';
+import {
+  computeMonthTotals,
+  computeAllTimeBucketConsumption,
+  splitBillingStreams,
+  sumHundredths,
+  sumCents,
+} from '@/calc';
+import type { Partner, ProjectsConfig } from '@/schema/types';
 import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
+import type { CurrencyDisplay } from '@/format/format';
 import { Banner } from '@/ui/components/Banner';
 import { assertMonthTotalsInvariants } from '@/ui/runtime-invariants';
 
@@ -21,80 +28,121 @@ function currentMonth(): string {
 
 function formatMonthLabel(m: string): string {
   const [yStr, mStr] = m.split('-');
-  const monthIdx = parseInt(mStr ?? '1', 10) - 1;
-  return `${MONTH_NAMES[monthIdx] ?? ''} ${yStr ?? ''}`;
+  return `${MONTH_NAMES[parseInt(mStr ?? '1', 10) - 1] ?? ''} ${yStr ?? ''}`;
 }
 
 function prevMonth(m: string): string {
   const [yStr, mStr] = m.split('-');
   const y = parseInt(yStr ?? '0', 10);
   const mo = parseInt(mStr ?? '0', 10);
-  if (mo === 1) return `${y - 1}-12`;
-  return `${y}-${String(mo - 1).padStart(2, '0')}`;
+  return mo === 1 ? `${y - 1}-12` : `${y}-${String(mo - 1).padStart(2, '0')}`;
 }
 
 function nextMonth(m: string): string {
   const [yStr, mStr] = m.split('-');
   const y = parseInt(yStr ?? '0', 10);
   const mo = parseInt(mStr ?? '0', 10);
-  if (mo === 12) return `${y + 1}-01`;
-  return `${y}-${String(mo + 1).padStart(2, '0')}`;
+  return mo === 12 ? `${y + 1}-01` : `${y}-${String(mo + 1).padStart(2, '0')}`;
 }
 
-function TotalRow({ label, hours, amount }: {
-  label: string; hours: number; amount?: string;
+// ── Subcomponents (extracted to stay under line limits) ──
+
+function SummaryCard({ label, hours, amount, accent }: {
+  label: string; hours: number; amount?: string; accent?: boolean;
 }): JSX.Element {
   return (
-    <div className="p-5 rounded-2xl glass hover:glass-strong transition-all duration-300 hover:glow-cyan group">
-      <div className="font-body text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-500 transition-colors">
+    <div className={`p-4 rounded-2xl glass hover:glass-strong transition-all duration-300 hover:glow-cyan group ${accent ? 'glow-cyan' : ''}`}>
+      <div className="font-body text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-500 transition-colors">
         {label}
       </div>
-      <div className="font-display text-2xl font-bold text-slate-900 mt-1">{formatHours(hours)}</div>
-      {amount && <div className="font-mono text-sm font-semibold text-partner-mid mt-0.5">{amount}</div>}
+      <div className="font-display text-xl font-bold text-slate-900 mt-1">{formatHours(hours)}</div>
+      {amount && <div className="font-mono text-xs font-semibold text-partner-mid mt-0.5">{amount}</div>}
+    </div>
+  );
+}
+
+function InvoiceTable({ rows, currency }: {
+  rows: Array<{ project: string; hours_hundredths: number; amount_cents: number }>;
+  currency: CurrencyDisplay;
+}): JSX.Element {
+  if (rows.length === 0) return <div className="text-sm text-slate-400 py-3">No entries this month.</div>;
+  const totalH = sumHundredths(rows.map((r) => r.hours_hundredths));
+  const totalA = sumCents(rows.map((r) => r.amount_cents));
+  return (
+    <div className="glass rounded-2xl overflow-hidden">
+      <div className="flex items-center py-2.5 px-4 bg-white/30 text-xs font-bold uppercase tracking-wider text-slate-400 gap-3">
+        <div className="flex-1">Project</div>
+        <div className="w-24 text-right">Hours</div>
+        <div className="w-36 text-right">Amount</div>
+      </div>
+      {rows.map((r) => (
+        <div key={r.project} className="flex items-center py-2.5 px-4 text-sm border-t border-black/5 hover:bg-white/20 transition-colors gap-3">
+          <div className="flex-1 font-medium text-slate-800">{r.project}</div>
+          <div className="w-24 text-right font-mono text-slate-700">{formatHours(r.hours_hundredths)}</div>
+          <div className="w-36 text-right font-mono font-semibold text-partner-mid">{formatCents(r.amount_cents, currency)}</div>
+        </div>
+      ))}
+      <div className="flex items-center py-2.5 px-4 border-t-2 border-black/10 bg-white/20 gap-3">
+        <div className="flex-1 font-semibold text-slate-800">Total</div>
+        <div className="w-24 text-right font-mono font-bold text-slate-900">{formatHours(totalH)}</div>
+        <div className="w-36 text-right font-mono font-bold text-slate-900">{formatCents(totalA, currency)}</div>
+      </div>
     </div>
   );
 }
 
 type AllTimeBucketMap = Map<string, { consumed_hours_hundredths: number; amount_cents: number }>;
 
-function BucketBar({ bucket, allTimeData }: {
-  bucket: BucketConsumption;
-  allTimeData: AllTimeBucketMap;
+function ActiveBuilds({ allTimeBuckets, projects, currency }: {
+  allTimeBuckets: AllTimeBucketMap; projects: ProjectsConfig; currency: CurrencyDisplay;
 }): JSX.Element {
-  const thisMonth = bucket.consumed_hours_hundredths;
-  const budgeted = bucket.budgeted_hours_hundredths;
-  const allTime = allTimeData.get(bucket.bucket_id);
-  const totalConsumed = allTime?.consumed_hours_hundredths ?? thisMonth;
-  const pct = budgeted > 0 ? Math.min(100, Math.round((totalConsumed / budgeted) * 100)) : 0;
-  const over = totalConsumed > budgeted;
-
+  const withBuckets = projects.projects.filter((p) => p.buckets.some((b) => b.status !== 'archived'));
+  if (withBuckets.length === 0) return <div className="text-sm text-slate-400 py-3">No active project builds.</div>;
   return (
-    <div className="pl-6 py-1">
-      <div className="flex items-center justify-between text-xs mb-1">
-        <span className="font-body text-slate-500">{bucket.bucket_id}</span>
-        <span className={`font-mono ${over ? 'text-red-400' : 'text-slate-500'}`}>
-          {formatHoursDecimal(totalConsumed)} / {formatHoursDecimal(budgeted)}h total
-          {over && ` (${formatHoursDecimal(totalConsumed - budgeted)}h over)`}
-        </span>
-      </div>
-      <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${over ? 'bg-gradient-to-r from-red-400 to-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-gradient-to-r from-partner-mid to-partner-cyan shadow-[0_0_8px_rgba(107,207,238,0.4)]'}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {thisMonth > 0 && thisMonth !== totalConsumed && (
-        <div className="text-xs text-slate-500 font-mono mt-0.5 pl-1">
-          {formatHoursDecimal(thisMonth)}h this month
+    <div className="flex flex-col gap-3">
+      {withBuckets.map((p) => (
+        <div key={p.id} className="glass rounded-xl p-4">
+          <div className="font-semibold text-slate-800 mb-2">{p.name}</div>
+          {p.buckets.filter((b) => b.status !== 'archived').map((b) => {
+            const consumed = allTimeBuckets.get(b.id)?.consumed_hours_hundredths ?? 0;
+            const budgeted = b.budgeted_hours_hundredths;
+            const amt = allTimeBuckets.get(b.id)?.amount_cents ?? 0;
+            const pct = budgeted > 0 ? Math.min(100, Math.round((consumed / budgeted) * 100)) : 0;
+            const over = consumed > budgeted;
+            const barColor = over
+              ? 'bg-gradient-to-r from-red-400 to-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
+              : pct >= 80
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.3)]'
+                : 'bg-gradient-to-r from-partner-mid to-partner-cyan shadow-[0_0_8px_rgba(107,207,238,0.4)]';
+            return (
+              <div key={b.id} className="mb-2.5 last:mb-0">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-slate-600">{b.name} <span className="text-slate-400">({b.type})</span>
+                    {b.rate_cents !== null && <span className="text-slate-400"> @ {formatCents(b.rate_cents, currency)}/hr</span>}
+                  </span>
+                  <span className={`font-mono ${over ? 'text-red-500 font-semibold' : 'text-slate-500'}`}>
+                    {formatHoursDecimal(consumed)} / {formatHoursDecimal(budgeted)}h
+                    {amt > 0 && ` · ${formatCents(amt, currency)}`}
+                    {over && ` (${formatHoursDecimal(consumed - budgeted)}h over)`}
+                  </span>
+                </div>
+                <div className="h-2 bg-black/5 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                </div>
+                {b.status === 'closed' && <div className="text-[11px] text-slate-400 mt-0.5">Closed {b.closed_at ?? ''}</div>}
+              </div>
+            );
+          })}
         </div>
-      )}
+      ))}
     </div>
   );
 }
 
+// ── Main Dashboard ──
+
 export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
   const [month, setMonth] = useState(currentMonth);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const entries = useMonthEntries(month);
   const allEntriesQuery = useAllEntries();
   const projects = useProjects();
@@ -108,136 +156,63 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
   const totals = useMemo(() => {
     if (!entries.data || !projects.data || !rates.data) return null;
     const t = computeMonthTotals(
-      { entries: entries.data.entries, projects: projects.data, rates: rates.data },
-      month,
+      { entries: entries.data.entries, projects: projects.data, rates: rates.data }, month,
     );
     assertMonthTotalsInvariants(t);
     return t;
   }, [entries.data, projects.data, rates.data, month]);
 
-  if (entries.isLoading || projects.isLoading || rates.isLoading) {
-    return <div className="text-slate-500">Loading…</div>;
-  }
-  if (entries.error) {
-    return (
-      <Banner variant="error">
-        Failed to load entries: {(entries.error as Error).message}
-      </Banner>
-    );
-  }
-  if (!totals) return <div className="text-slate-500">No data</div>;
+  const streams = useMemo(() => {
+    if (!entries.data) return null;
+    return splitBillingStreams(entries.data.entries, month);
+  }, [entries.data, month]);
 
-  const currency = {
+  if (entries.isLoading || projects.isLoading || rates.isLoading) return <div className="text-slate-500">Loading…</div>;
+  if (entries.error) return <Banner variant="error">Failed to load: {(entries.error as Error).message}</Banner>;
+  if (!totals || !streams) return <div className="text-slate-500">No data</div>;
+
+  const currency: CurrencyDisplay = {
     currency_symbol: partner.currency_symbol,
     currency_display_suffix: partner.currency_display_suffix,
   };
 
-  function toggleExpand(projectId: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(projectId)) next.delete(projectId);
-      else next.add(projectId);
-      return next;
-    });
-  }
+  const resolveNames = (rows: Array<{ project: string; hours_hundredths: number; amount_cents: number }>) =>
+    rows.map((r) => ({ ...r, project: projects.data?.projects.find((p) => p.id === r.project)?.name ?? r.project }));
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    <div className="flex flex-col gap-8 max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">{formatMonthLabel(month)}</h1>
         <div className="flex gap-2 font-body text-sm font-medium">
-          <button
-            className="text-slate-500 hover:text-sky-500"
-            onClick={() => setMonth(prevMonth(month))}
-          >
-            ← Prev
-          </button>
-          <button
-            className="text-slate-500 hover:text-sky-500"
-            onClick={() => setMonth(nextMonth(month))}
-          >
-            Next →
-          </button>
+          <button className="text-slate-400 hover:text-sky-500 transition-colors" onClick={() => setMonth(prevMonth(month))}>← Prev</button>
+          <button className="text-slate-400 hover:text-sky-500 transition-colors" onClick={() => setMonth(nextMonth(month))}>Next →</button>
         </div>
       </div>
 
-      <section className="grid grid-cols-2 gap-4">
-        <TotalRow
-          label="Billable"
-          hours={totals.billable_hours_hundredths}
-          amount={formatCents(totals.billable_amount_cents, currency)}
-        />
-        <TotalRow label="Non-billable" hours={totals.non_billable_hours_hundredths} />
-        <TotalRow label="Needs review" hours={totals.needs_review_hours_hundredths} />
-        <TotalRow label="Total" hours={totals.total_hours_hundredths} />
+      <section className="grid grid-cols-5 gap-3">
+        <SummaryCard label="Monthly Invoice" hours={streams.monthly_invoice.hours_hundredths} amount={formatCents(streams.monthly_invoice.amount_cents, currency)} accent />
+        <SummaryCard label="Project Builds" hours={streams.project_builds.hours_hundredths} amount={formatCents(streams.project_builds.amount_cents, currency)} />
+        <SummaryCard label="Non-billable" hours={totals.non_billable_hours_hundredths} />
+        <SummaryCard label="Needs Review" hours={totals.needs_review_hours_hundredths} />
+        <SummaryCard label="Total" hours={totals.total_hours_hundredths} />
       </section>
 
       <section>
-        <h2 className="font-display text-lg font-bold mb-3">Per project</h2>
-        <div className="glass rounded-2xl overflow-hidden">
-          <div className="flex items-center py-2.5 px-4 bg-white/30 text-xs font-bold uppercase tracking-wider text-slate-400 gap-3">
-            <div className="flex-1">Project</div>
-            <div className="w-24 text-right">Billable</div>
-            <div className="w-32 text-right">Amount</div>
-            <div className="w-28 text-right">Non-billable</div>
-            <div className="w-24 text-right">Review</div>
-            <div className="w-20 text-right">Buckets</div>
-          </div>
-          {totals.per_project.map((p) => {
-            const project = projects.data?.projects.find((pp) => pp.id === p.project);
-            const hasBuckets = p.by_bucket.length > 0;
-            const isExpanded = expanded.has(p.project);
-            return (
-              <div key={p.project} className="border-t border-black/5">
-                <div className="flex items-center py-2.5 px-4 text-sm hover:bg-white/20 transition-colors gap-3">
-                  <div className="flex-1 font-medium text-slate-800">{project?.name ?? p.project}</div>
-                  <div className="w-24 text-right font-mono text-slate-700">
-                    {formatHours(p.billable_hours_hundredths)}
-                  </div>
-                  <div className="w-32 text-right font-mono font-semibold text-partner-mid">
-                    {formatCents(p.billable_amount_cents, currency)}
-                  </div>
-                  <div className="w-28 text-right font-mono text-slate-500">
-                    {p.non_billable_hours_hundredths > 0
-                      ? formatHours(p.non_billable_hours_hundredths)
-                      : <span className="text-slate-300">—</span>}
-                  </div>
-                  <div className="w-24 text-right font-mono">
-                    {p.needs_review_hours_hundredths > 0
-                      ? <span className="text-amber-600">{formatHours(p.needs_review_hours_hundredths)}</span>
-                      : <span className="text-slate-300">—</span>}
-                  </div>
-                  <div className="w-20 text-right">
-                    {hasBuckets ? (
-                      <button
-                        className="text-sky-500 hover:underline text-xs"
-                        onClick={() => toggleExpand(p.project)}
-                      >
-                        {isExpanded ? 'hide' : `${p.by_bucket.length} ▸`}
-                      </button>
-                    ) : (
-                      <span className="text-slate-500 text-xs">—</span>
-                    )}
-                  </div>
-                </div>
-                {isExpanded && hasBuckets && (
-                  <div className="pb-2">
-                    {p.by_bucket.map((b) => (
-                      <BucketBar key={b.bucket_id} bucket={b} allTimeData={allTimeBuckets} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <h2 className="font-display text-lg font-bold mb-1">Monthly Invoice &middot; {formatMonthLabel(month)}</h2>
+        <p className="text-xs text-slate-400 mb-3">General consulting billed monthly — unbucketed billable entries.</p>
+        <InvoiceTable rows={resolveNames(streams.monthly_invoice.by_project)} currency={currency} />
+      </section>
+
+      <section>
+        <h2 className="font-display text-lg font-bold mb-1">Active Project Builds</h2>
+        <p className="text-xs text-slate-400 mb-3">Bucketed hours billed per-project on completion — spans months.</p>
+        {projects.data && <ActiveBuilds allTimeBuckets={allTimeBuckets} projects={projects.data} currency={currency} />}
       </section>
 
       {totals.needs_review_hours_hundredths > 0 && (
         <section className="p-4 rounded-2xl glass border-l-4 border-amber-400">
           <div className="font-body text-sm text-amber-800">
-            {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify
-            these entries as billable or non-billable before closing the month.
+            {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify before closing the month.
           </div>
         </section>
       )}
