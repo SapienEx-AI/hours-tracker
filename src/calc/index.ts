@@ -10,5 +10,5 @@ export {
   assertNonNegativeInteger,
 } from './int';
 export { resolveRateAtLogTime, type ResolvedRate, type ResolveRateArgs } from './rates';
-export { computeMonthTotals, type CalcInput } from './totals';
+export { computeMonthTotals, computeAllTimeBucketConsumption, type CalcInput } from './totals';
 export { canonicalizeEntriesForHashing, hashEntries } from './hash';

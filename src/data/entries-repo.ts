@@ -48,6 +48,45 @@ export async function loadMonthEntries(
   }
 }
 
+/**
+ * Load ALL entries across every month file in the data repo.
+ * Used for computing all-time bucket consumption (buckets span months).
+ */
+export async function loadAllEntries(
+  octokit: Octokit,
+  args: { owner: string; repo: string },
+): Promise<Entry[]> {
+  // List data/entries/ directory to discover which months have files.
+  let files: Array<{ name: string }>;
+  try {
+    const res = await octokit.rest.repos.getContent({
+      owner: args.owner,
+      repo: args.repo,
+      path: 'data/entries',
+    });
+    if (!Array.isArray(res.data)) return [];
+    files = (res.data as Array<{ name: string; type: string }>).filter(
+      (f) => f.type === 'file' && f.name.endsWith('.json'),
+    );
+  } catch (e) {
+    if ((e as { status?: number }).status === 404) return [];
+    throw e;
+  }
+
+  // Load each month file and flatten into one array.
+  const allEntries: Entry[] = [];
+  for (const file of files) {
+    const month = file.name.replace('.json', '');
+    const result = await loadMonthEntries(octokit, {
+      owner: args.owner,
+      repo: args.repo,
+      month,
+    });
+    allEntries.push(...result.data.entries);
+  }
+  return allEntries;
+}
+
 export type AddEntryArgs = {
   owner: string;
   repo: string;

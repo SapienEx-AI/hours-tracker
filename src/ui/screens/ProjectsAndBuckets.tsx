@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useProjects } from '@/data/hooks/use-projects';
+import { useAllEntries } from '@/data/hooks/use-all-entries';
 import { useOctokit } from '@/data/hooks/use-octokit';
 import { useAuthStore } from '@/store/auth-store';
 import { writeProjects } from '@/data/projects-repo';
 import { splitRepoPath } from '@/data/octokit-client';
 import { configAddProjectMessage, configAddBucketMessage } from '@/data/commit-messages';
+import { computeAllTimeBucketConsumption } from '@/calc';
 import type { Project, Bucket, BucketType, ProjectsConfig, Partner } from '@/schema/types';
 import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
@@ -44,11 +46,17 @@ function updateBucket(
 
 export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Element {
   const projects = useProjects();
+  const allEntriesQuery = useAllEntries();
   const octokit = useOctokit();
   const dataRepo = useAuthStore((s) => s.dataRepo);
   const queryClient = useQueryClient();
   const [newProjName, setNewProjName] = useState('');
   const [newProjId, setNewProjId] = useState('');
+
+  const allTimeBuckets = useMemo(() => {
+    if (!allEntriesQuery.data) return new Map();
+    return computeAllTimeBucketConsumption(allEntriesQuery.data);
+  }, [allEntriesQuery.data]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: qk.projects(dataRepo ?? 'none') });
@@ -168,6 +176,7 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
                     key={b.id}
                     bucket={b}
                     currency={currency}
+                    allTimeConsumption={allTimeBuckets.get(b.id)}
                     onClose={() => closeBucket(p.id, b.id)}
                     onArchive={() => archiveBucket(p.id, b.id)}
                     disabled={mutation.isPending}

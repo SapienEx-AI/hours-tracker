@@ -172,3 +172,38 @@ export function computeMonthTotals(input: CalcInput, month: string): MonthTotals
     per_project,
   };
 }
+
+/**
+ * Compute all-time bucket consumption across ALL entries (every month).
+ * Returns a map from bucket_id → { consumed_hours_hundredths, amount_cents }.
+ *
+ * Used by Dashboard and Projects screen to show lifetime bucket health
+ * (buckets span multiple months; spec §3 decision 7).
+ */
+export function computeAllTimeBucketConsumption(
+  allEntries: readonly Entry[],
+): Map<string, { consumed_hours_hundredths: number; amount_cents: number }> {
+  const result = new Map<string, { consumed_hours_hundredths: number; amount_cents: number }>();
+
+  for (const e of allEntries) {
+    if (e.bucket_id === null) continue;
+    if (e.billable_status !== 'billable') continue;
+
+    const existing = result.get(e.bucket_id);
+    const amount = mulCentsByHundredths(e.rate_cents, e.hours_hundredths);
+    if (existing) {
+      existing.consumed_hours_hundredths = addHundredths(
+        existing.consumed_hours_hundredths,
+        e.hours_hundredths,
+      );
+      existing.amount_cents = addCents(existing.amount_cents, amount);
+    } else {
+      result.set(e.bucket_id, {
+        consumed_hours_hundredths: e.hours_hundredths,
+        amount_cents: amount,
+      });
+    }
+  }
+
+  return result;
+}

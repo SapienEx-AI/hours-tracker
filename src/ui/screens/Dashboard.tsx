@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useMonthEntries } from '@/data/hooks/use-month-entries';
-import { computeMonthTotals, sumHundredths } from '@/calc';
+import { useAllEntries } from '@/data/hooks/use-all-entries';
+import { computeMonthTotals, computeAllTimeBucketConsumption, sumHundredths } from '@/calc';
 import type { Partner, BucketConsumption } from '@/schema/types';
 import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
 import { Banner } from '@/ui/components/Banner';
@@ -43,19 +44,26 @@ function TotalRow({ label, hours, amount }: {
   );
 }
 
-function BucketBar({ bucket }: { bucket: BucketConsumption }): JSX.Element {
-  const consumed = bucket.consumed_hours_hundredths;
+type AllTimeBucketMap = Map<string, { consumed_hours_hundredths: number; amount_cents: number }>;
+
+function BucketBar({ bucket, allTimeData }: {
+  bucket: BucketConsumption;
+  allTimeData: AllTimeBucketMap;
+}): JSX.Element {
+  const thisMonth = bucket.consumed_hours_hundredths;
   const budgeted = bucket.budgeted_hours_hundredths;
-  const pct = budgeted > 0 ? Math.min(100, Math.round((consumed / budgeted) * 100)) : 0;
-  const over = consumed > budgeted;
+  const allTime = allTimeData.get(bucket.bucket_id);
+  const totalConsumed = allTime?.consumed_hours_hundredths ?? thisMonth;
+  const pct = budgeted > 0 ? Math.min(100, Math.round((totalConsumed / budgeted) * 100)) : 0;
+  const over = totalConsumed > budgeted;
 
   return (
     <div className="pl-6 py-1">
       <div className="flex items-center justify-between text-xs mb-1">
         <span className="font-body text-partner-muted">{bucket.bucket_id}</span>
         <span className={`font-mono ${over ? 'text-red-400' : 'text-partner-muted'}`}>
-          {formatHoursDecimal(consumed)} / {formatHoursDecimal(budgeted)}h
-          {over && ` (${formatHoursDecimal(consumed - budgeted)}h over)`}
+          {formatHoursDecimal(totalConsumed)} / {formatHoursDecimal(budgeted)}h total
+          {over && ` (${formatHoursDecimal(totalConsumed - budgeted)}h over)`}
         </span>
       </div>
       <div className="h-1.5 bg-partner-bg-deep rounded-full overflow-hidden">
@@ -64,6 +72,11 @@ function BucketBar({ bucket }: { bucket: BucketConsumption }): JSX.Element {
           style={{ width: `${pct}%` }}
         />
       </div>
+      {thisMonth > 0 && thisMonth !== totalConsumed && (
+        <div className="text-xs text-partner-muted font-mono mt-0.5 pl-1">
+          {formatHoursDecimal(thisMonth)}h this month
+        </div>
+      )}
     </div>
   );
 }
@@ -72,8 +85,14 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
   const [month, setMonth] = useState(currentMonth);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const entries = useMonthEntries(month);
+  const allEntriesQuery = useAllEntries();
   const projects = useProjects();
   const rates = useRates();
+
+  const allTimeBuckets = useMemo<AllTimeBucketMap>(() => {
+    if (!allEntriesQuery.data) return new Map();
+    return computeAllTimeBucketConsumption(allEntriesQuery.data);
+  }, [allEntriesQuery.data]);
 
   const totals = useMemo(() => {
     if (!entries.data || !projects.data || !rates.data) return null;
@@ -178,7 +197,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
                 {isExpanded && hasBuckets && (
                   <div className="pb-2">
                     {p.by_bucket.map((b) => (
-                      <BucketBar key={b.bucket_id} bucket={b} />
+                      <BucketBar key={b.bucket_id} bucket={b} allTimeData={allTimeBuckets} />
                     ))}
                   </div>
                 )}
