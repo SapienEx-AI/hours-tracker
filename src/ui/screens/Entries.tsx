@@ -26,6 +26,22 @@ function currentMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function prevMonth(m: string): string {
+  const [yStr, mStr] = m.split('-');
+  const y = parseInt(yStr ?? '0', 10);
+  const mo = parseInt(mStr ?? '0', 10);
+  if (mo === 1) return `${y - 1}-12`;
+  return `${y}-${String(mo - 1).padStart(2, '0')}`;
+}
+
+function nextMonth(m: string): string {
+  const [yStr, mStr] = m.split('-');
+  const y = parseInt(yStr ?? '0', 10);
+  const mo = parseInt(mStr ?? '0', 10);
+  if (mo === 12) return `${y + 1}-01`;
+  return `${y}-${String(mo + 1).padStart(2, '0')}`;
+}
+
 function formatMonthLabel(m: string): string {
   const [yStr, mStr] = m.split('-');
   const monthIdx = parseInt(mStr ?? '1', 10) - 1;
@@ -170,11 +186,24 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   return (
     <div className="flex flex-col gap-4 max-w-6xl">
       <div className="flex items-end gap-4">
-        <h1 className="font-display text-2xl font-bold">
-          Entries &middot; {formatMonthLabel(month)}
-        </h1>
-        <div className="max-w-xs flex-1">
-          <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-2xl font-bold">
+            Entries &middot; {formatMonthLabel(month)}
+          </h1>
+          <div className="flex gap-1 font-body text-sm font-medium">
+            <button
+              className="text-slate-400 hover:text-sky-500 transition-colors px-1"
+              onClick={() => setMonth(prevMonth(month))}
+            >
+              ←
+            </button>
+            <button
+              className="text-slate-400 hover:text-sky-500 transition-colors px-1"
+              onClick={() => setMonth(nextMonth(month))}
+            >
+              →
+            </button>
+          </div>
         </div>
         <div className="max-w-xs flex-1">
           <Input

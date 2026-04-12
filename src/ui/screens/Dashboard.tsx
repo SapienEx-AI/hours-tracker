@@ -175,10 +175,10 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
       <section>
         <h2 className="font-display text-lg font-bold mb-3">Per project</h2>
         <div className="glass rounded-2xl overflow-hidden">
-          <div className="flex items-center py-2.5 px-4 bg-white/30 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="flex items-center py-2.5 px-4 bg-white/30 text-xs font-bold uppercase tracking-wider text-slate-400 gap-3">
             <div className="flex-1">Project</div>
             <div className="w-24 text-right">Billable</div>
-            <div className="w-28 text-right">Amount</div>
+            <div className="w-32 text-right">Amount</div>
             <div className="w-28 text-right">Non-billable</div>
             <div className="w-24 text-right">Review</div>
             <div className="w-20 text-right">Buckets</div>
@@ -189,12 +189,12 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
             const isExpanded = expanded.has(p.project);
             return (
               <div key={p.project} className="border-t border-black/5">
-                <div className="flex items-center py-2.5 px-4 text-sm hover:bg-white/20 transition-colors">
+                <div className="flex items-center py-2.5 px-4 text-sm hover:bg-white/20 transition-colors gap-3">
                   <div className="flex-1 font-medium text-slate-800">{project?.name ?? p.project}</div>
                   <div className="w-24 text-right font-mono text-slate-700">
                     {formatHours(p.billable_hours_hundredths)}
                   </div>
-                  <div className="w-28 text-right font-mono font-semibold text-partner-mid">
+                  <div className="w-32 text-right font-mono font-semibold text-partner-mid">
                     {formatCents(p.billable_amount_cents, currency)}
                   </div>
                   <div className="w-28 text-right font-mono text-slate-500">

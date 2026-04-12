@@ -234,6 +234,9 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
               }}
             />
           </FieldLabel>
+          {status === 'billable' && rateCents === 0 && (
+            <Banner variant="warning">Rate is $0 — this entry adds billable hours but $0 to the total. Update the rate if changed from non-billable.</Banner>
+          )}
 
           <FieldLabel label="Description">
             <textarea
@@ -246,11 +249,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
           </FieldLabel>
 
           <label className="flex items-center gap-2 text-sm text-slate-500">
-            <input
-              type="checkbox"
-              checked={reviewFlag}
-              onChange={(e) => setReviewFlag(e.target.checked)}
-            />
+            <input type="checkbox" checked={reviewFlag} onChange={(e) => setReviewFlag(e.target.checked)} />
             Flag for review
           </label>
 
