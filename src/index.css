@@ -1,1 +1,31 @@
-/* Tailwind directives added in Task 2 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Default CSS custom properties for partner theme.
+ * These get overwritten at runtime by src/partner/apply-theme.ts once the
+ * active partner is loaded. The values here are the Sector Growth defaults
+ * (dark theme) so we have a sensible fallback before the partner is resolved.
+ */
+:root {
+  --partner-bg-deep: #0A1628;
+  --partner-bg-darker: #050B16;
+  --partner-accent-cyan: #6BCFEE;
+  --partner-accent-mid: #2A85C4;
+  --partner-accent-deep: #1E4DA8;
+  --partner-text-primary: #F5F7FA;
+  --partner-text-muted: #94A3B8;
+  --partner-border-subtle: rgba(255, 255, 255, 0.08);
+  --partner-border-strong: rgba(255, 255, 255, 0.16);
+  --partner-font-display: 'Space Grotesk', system-ui, sans-serif;
+  --partner-font-body: 'Inter', system-ui, sans-serif;
+  --partner-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  background: var(--partner-bg-darker);
+  color: var(--partner-text-primary);
+  font-family: var(--partner-font-body);
+}
