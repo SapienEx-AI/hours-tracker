@@ -103,8 +103,10 @@ export function AppShell({
             {children}
           </div>
         </main>
-        <Footer />
       </div>
+
+      {/* ── SapienEx icon tab extending from the gradient border ── */}
+      <Footer />
     </div>
   );
 }

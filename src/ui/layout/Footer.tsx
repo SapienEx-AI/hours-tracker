@@ -1,5 +1,7 @@
 /**
- * Footer — subtle SapienEx icon in the bottom-right corner on a dark pill.
+ * Footer — SapienEx icon as a tab extending from the gradient border,
+ * bottom-right corner. No separate background — the icon lives directly
+ * in the gradient border area.
  */
 export function Footer(): JSX.Element {
   const base = typeof import.meta !== 'undefined'
@@ -7,14 +9,15 @@ export function Footer(): JSX.Element {
     : '/';
 
   return (
-    <footer className="flex justify-end px-3 py-1.5">
-      <div className="bg-slate-800/80 rounded-lg p-1.5 hover:bg-slate-700/80 transition-colors">
+    <div className="flex justify-end pr-1 -mt-1">
+      <div className="px-2.5 pt-1 pb-0.5">
         <img
           src={`${base}partners/sapienex/icon.png`}
           alt="SapienEx"
-          className="h-5 w-5 opacity-70 hover:opacity-100 transition-opacity"
+          className="h-7 opacity-40 hover:opacity-70 transition-opacity"
+          style={{ aspectRatio: '0.85' }}
         />
       </div>
-    </footer>
+    </div>
   );
 }
