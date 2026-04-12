@@ -8,7 +8,8 @@ import { writeProjects } from '@/data/projects-repo';
 import { splitRepoPath } from '@/data/octokit-client';
 import { configAddProjectMessage, configAddBucketMessage } from '@/data/commit-messages';
 import { computeAllTimeBucketConsumption } from '@/calc';
-import type { Project, Bucket, BucketType, ProjectsConfig, Partner } from '@/schema/types';
+import type { Project, Bucket, BucketType, BucketInvoice, ProjectsConfig, Partner } from '@/schema/types';
+import { formatHoursDecimal } from '@/format/format';
 import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
 import { Banner } from '@/ui/components/Banner';
@@ -126,6 +127,19 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
     });
   }
 
+  function recordInvoice(projectId: string, bucketId: string, invoice: BucketInvoice) {
+    if (!projects.data) return;
+    mutation.mutate({
+      data: updateProject(projects.data, projectId, (p) =>
+        updateBucket(p, bucketId, (b) => ({
+          ...b,
+          invoices: [...(b.invoices ?? []), invoice],
+        })),
+      ),
+      message: `config: record invoice on ${bucketId} in ${projectId} — ${formatHoursDecimal(invoice.hours_hundredths)}h${invoice.note ? ` (${invoice.note})` : ''}`,
+    });
+  }
+
   const currency = {
     currency_symbol: partner.currency_symbol,
     currency_display_suffix: partner.currency_display_suffix,
@@ -179,6 +193,7 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
                     allTimeConsumption={allTimeBuckets.get(b.id)}
                     onClose={() => closeBucket(p.id, b.id)}
                     onArchive={() => archiveBucket(p.id, b.id)}
+                    onRecordInvoice={(inv) => recordInvoice(p.id, b.id, inv)}
                     disabled={mutation.isPending}
                   />
                 ))}

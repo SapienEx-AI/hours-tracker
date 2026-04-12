@@ -105,10 +105,13 @@ function ActiveBuilds({ allTimeBuckets, projects, currency }: {
           <div className="font-semibold text-slate-800 mb-2">{p.name}</div>
           {p.buckets.filter((b) => b.status !== 'archived').map((b) => {
             const consumed = allTimeBuckets.get(b.id)?.consumed_hours_hundredths ?? 0;
+            const consumedAmt = allTimeBuckets.get(b.id)?.amount_cents ?? 0;
             const budgeted = b.budgeted_hours_hundredths;
-            const amt = allTimeBuckets.get(b.id)?.amount_cents ?? 0;
             const pct = budgeted > 0 ? Math.min(100, Math.round((consumed / budgeted) * 100)) : 0;
             const over = consumed > budgeted;
+            const invoices = b.invoices ?? [];
+            const invoicedH = invoices.length > 0 ? sumHundredths(invoices.map((i) => i.hours_hundredths)) : 0;
+            const uninvoicedH = consumed - invoicedH;
             const barColor = over
               ? 'bg-gradient-to-r from-red-400 to-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
               : pct >= 80
@@ -122,14 +125,20 @@ function ActiveBuilds({ allTimeBuckets, projects, currency }: {
                   </span>
                   <span className={`font-mono ${over ? 'text-red-500 font-semibold' : 'text-slate-500'}`}>
                     {formatHoursDecimal(consumed)} / {formatHoursDecimal(budgeted)}h
-                    {amt > 0 && ` · ${formatCents(amt, currency)}`}
-                    {over && ` (${formatHoursDecimal(consumed - budgeted)}h over)`}
+                    {consumedAmt > 0 && ` · ${formatCents(consumedAmt, currency)}`}
                   </span>
                 </div>
                 <div className="h-2 bg-black/5 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
                 </div>
-                {b.status === 'closed' && <div className="text-[11px] text-slate-400 mt-0.5">Closed {b.closed_at ?? ''}</div>}
+                {consumed > 0 && (
+                  <div className="flex gap-3 mt-1 text-[11px]">
+                    {uninvoicedH > 0
+                      ? <span className="text-amber-600 font-medium">{formatHoursDecimal(uninvoicedH)}h uninvoiced</span>
+                      : <span className="text-emerald-600">Fully invoiced</span>}
+                    {b.status === 'closed' && <span className="text-slate-400">Closed {b.closed_at ?? ''}</span>}
+                  </div>
+                )}
               </div>
             );
           })}

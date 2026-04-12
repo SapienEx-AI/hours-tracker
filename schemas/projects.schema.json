@@ -42,7 +42,21 @@
                 "status": { "enum": ["active", "closed", "archived"] },
                 "opened_at": { "type": "string", "format": "date" },
                 "closed_at": { "type": ["string", "null"], "format": "date" },
-                "notes": { "type": "string" }
+                "notes": { "type": "string" },
+                "invoices": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["date", "hours_hundredths", "amount_cents", "note"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "date": { "type": "string", "format": "date" },
+                      "hours_hundredths": { "type": "integer", "minimum": 0 },
+                      "amount_cents": { "type": "integer", "minimum": 0 },
+                      "note": { "type": "string" }
+                    }
+                  }
+                }
               }
             }
           }

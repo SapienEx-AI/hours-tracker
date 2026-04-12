@@ -88,6 +88,13 @@ export type RatesConfig = {
 export type BucketType = 'hour_block' | 'discovery' | 'arch_tl' | 'dev' | 'custom';
 export type BucketStatus = 'active' | 'closed' | 'archived';
 
+export type BucketInvoice = {
+  date: string;
+  hours_hundredths: number;
+  amount_cents: number;
+  note: string;
+};
+
 export type Bucket = {
   id: string;
   type: BucketType;
@@ -98,6 +105,7 @@ export type Bucket = {
   opened_at: string;
   closed_at: string | null;
   notes: string;
+  invoices?: BucketInvoice[];
 };
 
 export type Project = {
