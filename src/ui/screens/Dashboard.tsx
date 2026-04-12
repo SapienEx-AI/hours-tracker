@@ -189,8 +189,8 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
     rows.map((r) => ({ ...r, project: projects.data?.projects.find((p) => p.id === r.project)?.name ?? r.project }));
 
   return (
-    <div className="flex flex-col gap-8 max-w-4xl">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between max-w-4xl">
         <h1 className="font-display text-2xl font-bold">{formatMonthLabel(month)}</h1>
         <div className="flex gap-2 font-body text-sm font-medium">
           <button className="text-slate-400 hover:text-sky-500 transition-colors" onClick={() => setMonth(prevMonth(month))}>← Prev</button>
@@ -198,7 +198,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
         </div>
       </div>
 
-      <section className="grid grid-cols-5 gap-3">
+      <section className="grid grid-cols-5 gap-3 max-w-4xl">
         <SummaryCard label="Monthly Invoice" hours={streams.monthly_invoice.hours_hundredths} amount={formatCents(streams.monthly_invoice.amount_cents, currency)} accent />
         <SummaryCard label="Project Builds" hours={streams.project_builds.hours_hundredths} amount={formatCents(streams.project_builds.amount_cents, currency)} />
         <SummaryCard label="Non-billable" hours={totals.non_billable_hours_hundredths} />
@@ -206,25 +206,35 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
         <SummaryCard label="Total" hours={totals.total_hours_hundredths} />
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-bold mb-1">Monthly Invoice &middot; {formatMonthLabel(month)}</h2>
-        <p className="text-xs text-slate-400 mb-3">General consulting billed monthly — unbucketed billable entries.</p>
-        <InvoiceTable rows={resolveNames(streams.monthly_invoice.by_project)} currency={currency} />
-      </section>
+      {/* Two-column layout: monthly invoice (left) + project builds (right) */}
+      <div className="flex gap-6">
+        {/* Left: monthly invoice + needs review */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-4xl">
+          <section>
+            <h2 className="font-display text-lg font-bold mb-1">Monthly Invoice &middot; {formatMonthLabel(month)}</h2>
+            <p className="text-xs text-slate-400 mb-3">General consulting billed monthly — unbucketed billable entries.</p>
+            <InvoiceTable rows={resolveNames(streams.monthly_invoice.by_project)} currency={currency} />
+          </section>
 
-      <section>
-        <h2 className="font-display text-lg font-bold mb-1">Active Project Builds</h2>
-        <p className="text-xs text-slate-400 mb-3">Bucketed hours billed per-project on completion — spans months.</p>
-        {projects.data && <ActiveBuilds allTimeBuckets={allTimeBuckets} projects={projects.data} currency={currency} />}
-      </section>
+          {totals.needs_review_hours_hundredths > 0 && (
+            <section className="p-4 rounded-2xl glass border-l-4 border-amber-400">
+              <div className="font-body text-sm text-amber-800">
+                {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify before closing the month.
+              </div>
+            </section>
+          )}
+        </div>
 
-      {totals.needs_review_hours_hundredths > 0 && (
-        <section className="p-4 rounded-2xl glass border-l-4 border-amber-400">
-          <div className="font-body text-sm text-amber-800">
-            {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify before closing the month.
-          </div>
-        </section>
-      )}
+        {/* Right: active project builds */}
+        <div className="w-80 shrink-0">
+          <section>
+            <h2 className="font-display text-lg font-bold mb-1">Project Builds</h2>
+            <p className="text-xs text-slate-400 mb-3">Per-project, spans months.</p>
+            {projects.data && <ActiveBuilds allTimeBuckets={allTimeBuckets} projects={projects.data} currency={currency} />}
+          </section>
+        </div>
+      </div>
+
     </div>
   );
 }
