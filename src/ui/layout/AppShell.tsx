@@ -33,7 +33,7 @@ type Props = {
 export function AppShell({
   partner,
   consultantDisplayName,
-  onSignOut,
+  onSignOut: _onSignOut,
   route,
   onNavigate,
   children,
@@ -108,13 +108,6 @@ export function AppShell({
             title="Settings"
           >
             <GearIcon className="w-[18px] h-[18px]" />
-          </button>
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="text-xs font-semibold uppercase tracking-wider text-white/30 hover:text-white/80 transition-all duration-300"
-          >
-            Sign out
           </button>
         </div>
       </header>
