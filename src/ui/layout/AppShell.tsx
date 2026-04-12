@@ -10,8 +10,16 @@ const NAV_ITEMS: Array<{ id: Route; label: string }> = [
   { id: 'projects', label: 'Projects' },
   { id: 'rates', label: 'Rates' },
   { id: 'snapshots', label: 'Snapshots' },
-  { id: 'settings', label: 'Settings' },
 ];
+
+function GearIcon({ className }: { className?: string }): JSX.Element {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
 
 type Props = {
   partner: Partner;
@@ -77,8 +85,20 @@ export function AppShell({
           })}
         </nav>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           <span className="text-[12px] text-white/60 font-medium">{consultantDisplayName}</span>
+          <button
+            type="button"
+            onClick={() => onNavigate('settings')}
+            className={`p-1.5 rounded-md transition-all duration-300 ${
+              route === 'settings'
+                ? 'text-white bg-white/15'
+                : 'text-white/35 hover:text-white/80 hover:bg-white/[0.06]'
+            }`}
+            title="Settings"
+          >
+            <GearIcon />
+          </button>
           <button
             type="button"
             onClick={onSignOut}
@@ -89,8 +109,8 @@ export function AppShell({
         </div>
       </header>
 
-      {/* ── Content frame: light interior inside the gradient border ── */}
-      <div className="flex-1 flex flex-col rounded-xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-inner shadow-black/5">
+      {/* ── Content frame: rounded light interior inside the gradient border ── */}
+      <div className="flex-1 flex flex-col rounded-2xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-[inset_0_2px_8px_rgba(0,0,0,0.08)]">
         <main className="flex-1 p-6 overflow-y-auto">
           <div key={route} className="page-enter">
             {children}

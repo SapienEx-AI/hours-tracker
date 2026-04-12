@@ -45,7 +45,7 @@ module.exports = {
       // function. The 80-line limit applies to calc/data/etc. where small
       // focused functions matter most. Raise the cap for screens but keep
       // complexity bounded to force control-flow decomposition.
-      files: ['src/ui/screens/**/*.tsx'],
+      files: ['src/ui/screens/**/*.tsx', 'src/ui/layout/**/*.tsx'],
       rules: {
         'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
         complexity: ['warn', 15],
