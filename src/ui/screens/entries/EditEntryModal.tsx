@@ -19,6 +19,7 @@ import { HoursChips } from '@/ui/components/HoursChips';
 import { qk } from '@/data/query-keys';
 
 type FormState = {
+  projectId: string;
   date: string;
   hoursHundredths: number;
   bucketId: string | null;
@@ -31,6 +32,7 @@ type FormState = {
 
 function buildChangeDescription(entry: Entry, form: FormState, newRateCents: number): string {
   const changes: string[] = [];
+  if (entry.project !== form.projectId) changes.push(`project ${entry.project} → ${form.projectId}`);
   if (entry.hours_hundredths !== form.hoursHundredths) {
     changes.push(`hours ${formatHoursDecimal(entry.hours_hundredths)} → ${formatHoursDecimal(form.hoursHundredths)}`);
   }
@@ -54,6 +56,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
   const rates = useRates();
   const queryClient = useQueryClient();
 
+  const [projectId, setProjectId] = useState(entry.project);
   const [date, setDate] = useState(entry.date);
   const [hoursHundredths, setHoursHundredths] = useState(entry.hours_hundredths);
   const [bucketId, setBucketId] = useState<string | null>(entry.bucket_id);
@@ -71,7 +74,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
     if (!projects.data || !rates.data || rateOverridden) return;
     try {
       const resolved = resolveRateAtLogTime({
-        project_id: entry.project,
+        project_id: projectId,
         bucket_id: bucketId,
         date,
         projects: projects.data,
@@ -79,11 +82,11 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
       });
       setRateCents(resolved.rate_cents);
     } catch {
-      // silent
+      // silent — historical entry predates rate history
     }
-  }, [bucketId, date, entry.project, projects.data, rates.data, rateOverridden]);
+  }, [projectId, bucketId, date, projects.data, rates.data, rateOverridden]);
 
-  const form: FormState = { date, hoursHundredths, bucketId, status, rateCents, rateOverridden, description, reviewFlag };
+  const form: FormState = { date, hoursHundredths, bucketId, status, rateCents, rateOverridden, description, reviewFlag, projectId };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -101,20 +104,18 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
       } else {
         try {
           const resolved = resolveRateAtLogTime({
-            project_id: entry.project, bucket_id: bucketId, date,
+            project_id: projectId, bucket_id: bucketId, date,
             projects: projects.data, rates: rates.data,
           });
           finalRate = resolved.rate_cents;
           finalSource = resolved.source;
         } catch {
-          // Historical entry — rate history doesn't cover this date.
-          // Keep the entry's existing snapshotted rate.
           finalRate = rateCents;
           finalSource = entry.rate_source;
         }
       }
       const updated: Entry = {
-        ...entry, date, hours_hundredths: hoursHundredths,
+        ...entry, project: projectId, date, hours_hundredths: hoursHundredths,
         rate_cents: finalRate,
         rate_source: finalSource,
         billable_status: status, bucket_id: bucketId,
@@ -138,7 +139,8 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
     },
   });
 
-  const selectedProject = projects.data?.projects.find((p) => p.id === entry.project);
+  const activeProjects = projects.data?.projects.filter((p) => p.active) ?? [];
+  const selectedProject = projects.data?.projects.find((p) => p.id === projectId);
   const activeBuckets = selectedProject?.buckets.filter((b) => b.status !== 'archived') ?? [];
   const canSave = hoursHundredths > 0 && description.trim().length > 0;
 
@@ -148,18 +150,27 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-lg glass-strong rounded-2xl p-6 glow-blue max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg">Edit entry</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-800 text-xl leading-none">
-            &times;
-          </button>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800 text-xl leading-none">&times;</button>
         </div>
 
-        <div className="text-xs font-mono text-slate-500 mb-4">
-          {entry.id} &middot; {entry.project}
-        </div>
-
+        <div className="text-xs font-mono text-slate-500 mb-3">{entry.id}</div>
         <div className="flex flex-col gap-3">
+          <FieldLabel label="Project">
+            <Select
+              value={projectId}
+              onChange={(e) => {
+                setProjectId(e.target.value);
+                setBucketId(null); // clear bucket when project changes
+              }}
+            >
+              {activeProjects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </Select>
+          </FieldLabel>
+
           <FieldLabel label="Date">
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </FieldLabel>

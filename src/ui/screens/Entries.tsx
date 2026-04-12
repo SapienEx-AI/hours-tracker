@@ -168,7 +168,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col gap-4 max-w-5xl">
+    <div className="flex flex-col gap-4 max-w-6xl">
       <div className="flex items-end gap-4">
         <h1 className="font-display text-2xl font-bold">
           Entries &middot; {formatMonthLabel(month)}
@@ -242,7 +242,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
                     busy={assignBucketMutation.isPending}
                   />
                 </td>
-                <td className="py-2 px-3 truncate max-w-[200px] text-slate-600">
+                <td className="py-2 px-3 text-slate-600 max-w-sm">
                   {e.description}
                 </td>
                 <td className="py-2 px-3" onClick={(ev) => ev.stopPropagation()}>
