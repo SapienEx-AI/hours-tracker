@@ -44,18 +44,12 @@ export function AppShell({
 
   return (
     <div
-      className="min-h-screen flex flex-col font-body text-slate-800 animated-gradient p-1.5"
+      className="h-screen flex flex-col font-body text-slate-800 animated-gradient p-3"
       style={{ background: gradientBg }}
     >
       {/* ── Single-line header: logo | nav tabs | user ── */}
-      <header className="flex items-center px-4 py-2 shrink-0">
-        <a
-          href={partner.website ?? '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={partner.display_name}
-          className="hover:opacity-90 transition-opacity shrink-0"
-        >
+      <header className="flex items-center px-6 py-3 shrink-0">
+        <div className="shrink-0">
           <img
             src={`${base}partners/${partner.id}/${partner.assets.logo}`}
             alt={partner.assets.logo_alt_text}
@@ -63,7 +57,7 @@ export function AppShell({
             height={partner.assets.logo_height ?? 40}
             style={{ height: '26px', width: 'auto', filter: logoFilter }}
           />
-        </a>
+        </div>
 
         <nav className="flex-1 flex justify-center gap-0.5">
           {NAV_ITEMS.map((item) => {
@@ -109,9 +103,9 @@ export function AppShell({
         </div>
       </header>
 
-      {/* ── Content frame: rounded light interior inside the gradient border ── */}
-      <div className="flex-1 flex flex-col rounded-2xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-[inset_0_2px_8px_rgba(0,0,0,0.08)]">
-        <main className="flex-1 p-6 overflow-y-auto">
+      {/* ── Content frame: rounded light interior, scrolls internally ── */}
+      <div className="flex-1 min-h-0 flex flex-col rounded-2xl overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f0f9ff] to-[#faf5ff] shadow-[inset_0_2px_8px_rgba(0,0,0,0.08)]">
+        <main className="flex-1 min-h-0 p-6 overflow-y-auto">
           <div key={route} className="page-enter">
             {children}
           </div>

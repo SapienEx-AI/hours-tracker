@@ -28,7 +28,8 @@
 }
 
 html, body, #root {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: #0A1628;
   color: var(--partner-text-primary);
   font-family: var(--partner-font-body);
