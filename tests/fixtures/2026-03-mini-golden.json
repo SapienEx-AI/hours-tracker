@@ -1,0 +1,94 @@
+{
+  "entries": {
+    "schema_version": 1,
+    "month": "2026-03",
+    "entries": [
+      {
+        "id": "2026-03-25-sprosty-aaaaaa",
+        "project": "sprosty",
+        "date": "2026-03-25",
+        "hours_hundredths": 400,
+        "rate_cents": 2000,
+        "rate_source": "entry_override",
+        "billable_status": "billable",
+        "bucket_id": null,
+        "description": "skyvia HS + companies configs",
+        "review_flag": false,
+        "created_at": "2026-04-11T00:00:00Z",
+        "updated_at": "2026-04-11T00:00:00Z"
+      },
+      {
+        "id": "2026-03-01-internal-bbbbbb",
+        "project": "internal",
+        "date": "2026-03-01",
+        "hours_hundredths": 100,
+        "rate_cents": 0,
+        "rate_source": "global_default",
+        "billable_status": "non_billable",
+        "bucket_id": null,
+        "description": "Monthly planning",
+        "review_flag": false,
+        "created_at": "2026-04-11T00:00:00Z",
+        "updated_at": "2026-04-11T00:00:00Z"
+      },
+      {
+        "id": "2026-03-03-axiom-cccccc",
+        "project": "axiom",
+        "date": "2026-03-03",
+        "hours_hundredths": 50,
+        "rate_cents": 12500,
+        "rate_source": "global_default",
+        "billable_status": "needs_review",
+        "bucket_id": null,
+        "description": "prep for call, and call itself",
+        "review_flag": true,
+        "created_at": "2026-04-11T00:00:00Z",
+        "updated_at": "2026-04-11T00:00:00Z"
+      },
+      {
+        "id": "2026-03-04-bayard-dddddd",
+        "project": "bayard",
+        "date": "2026-03-04",
+        "hours_hundredths": 100,
+        "rate_cents": 12500,
+        "rate_source": "global_default",
+        "billable_status": "billable",
+        "bucket_id": null,
+        "description": "kick off call + prep",
+        "review_flag": false,
+        "created_at": "2026-04-11T00:00:00Z",
+        "updated_at": "2026-04-11T00:00:00Z"
+      },
+      {
+        "id": "2026-03-08-truvista-eeeeee",
+        "project": "truvista",
+        "date": "2026-03-08",
+        "hours_hundredths": 200,
+        "rate_cents": 12500,
+        "rate_source": "global_default",
+        "billable_status": "billable",
+        "bucket_id": null,
+        "description": "technical disco (light), scoping and estimations",
+        "review_flag": false,
+        "created_at": "2026-04-11T00:00:00Z",
+        "updated_at": "2026-04-11T00:00:00Z"
+      }
+    ]
+  },
+  "projects": {
+    "schema_version": 1,
+    "projects": [
+      { "id": "sprosty", "name": "Sprosty", "client": null, "active": true, "is_internal": false, "default_rate_cents": null, "buckets": [] },
+      { "id": "internal", "name": "Internal", "client": null, "active": true, "is_internal": true, "default_rate_cents": null, "buckets": [] },
+      { "id": "axiom", "name": "Axiom", "client": null, "active": true, "is_internal": false, "default_rate_cents": null, "buckets": [] },
+      { "id": "bayard", "name": "Bayard", "client": null, "active": true, "is_internal": false, "default_rate_cents": null, "buckets": [] },
+      { "id": "truvista", "name": "TruVista", "client": null, "active": true, "is_internal": false, "default_rate_cents": null, "buckets": [] }
+    ]
+  },
+  "rates": {
+    "schema_version": 1,
+    "default_rate_history": [
+      { "effective_from": "2026-01-01", "rate_cents": 12500, "note": "Initial rate" }
+    ]
+  }
+}

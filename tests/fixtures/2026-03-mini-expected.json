@@ -1,0 +1,16 @@
+{
+  "_notes": "Hand-computed by Claude + user at plan time. sprosty 4h × $20 = $80; bayard 1h × $125 = $125; truvista 2h × $125 = $250; total billable $455. internal 1h non-billable. axiom 0.5h needs_review.",
+  "month": "2026-03",
+  "total_hours_hundredths": 850,
+  "billable_hours_hundredths": 700,
+  "non_billable_hours_hundredths": 100,
+  "needs_review_hours_hundredths": 50,
+  "billable_amount_cents": 45500,
+  "per_project_summary": {
+    "sprosty_billable_cents": 8000,
+    "internal_non_billable_hours": 100,
+    "axiom_needs_review_hours": 50,
+    "bayard_billable_cents": 12500,
+    "truvista_billable_cents": 25000
+  }
+}
