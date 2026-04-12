@@ -14,12 +14,12 @@ export function Footer(): JSX.Element {
   return (
     <div className="flex items-center justify-between px-4 py-1.5 shrink-0">
       <div className="flex items-center gap-3 text-[11px] text-white/35">
-        <span className="font-medium text-white/50">SapienEx Hours</span>
+        <span className="font-medium text-white/50">Hours Tracker</span>
         <span>v{APP_VERSION}</span>
         {dataRepo && (
           <>
             <span className="text-white/20">·</span>
-            <span className="font-mono">{dataRepo}</span>
+            <span className="font-mono">{dataRepo.replace(/^[^/]+\//, '')}</span>
           </>
         )}
       </div>
