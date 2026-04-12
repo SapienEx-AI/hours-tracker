@@ -12,7 +12,7 @@ export function Footer(): JSX.Element {
     : '/';
 
   return (
-    <div className="flex items-center justify-between px-4 py-1.5 shrink-0">
+    <div className="flex items-center justify-between px-4 pt-1.5 pb-0.5 shrink-0">
       <div className="flex items-center gap-3 text-[11px] text-white/35">
         <span className="font-medium text-white/50">Hours Tracker</span>
         <span>v{APP_VERSION}</span>
