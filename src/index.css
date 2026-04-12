@@ -3,21 +3,25 @@
 @tailwind utilities;
 
 /*
- * Default CSS custom properties for partner theme.
- * These get overwritten at runtime by src/partner/apply-theme.ts once the
- * active partner is loaded. The values here are the Sector Growth defaults
- * (dark theme) so we have a sensible fallback before the partner is resolved.
+ * Light-mode Glass + Glow theme defaults.
+ * Partner header stays dark (SG branded); workspace is light with glass effects.
+ * Overwritten at runtime by src/partner/apply-theme.ts.
  */
 :root {
+  /* Header (partner-branded dark area) */
   --partner-bg-deep: #0A1628;
   --partner-bg-darker: #050B16;
   --partner-accent-cyan: #6BCFEE;
   --partner-accent-mid: #2A85C4;
   --partner-accent-deep: #1E4DA8;
-  --partner-text-primary: #F5F7FA;
-  --partner-text-muted: #94A3B8;
-  --partner-border-subtle: rgba(255, 255, 255, 0.08);
-  --partner-border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Workspace (light) */
+  --partner-text-primary: #1a1a2e;
+  --partner-text-muted: #64748b;
+  --partner-border-subtle: rgba(0, 0, 0, 0.06);
+  --partner-border-strong: rgba(0, 0, 0, 0.12);
+
+  /* Fonts */
   --partner-font-display: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --partner-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --partner-font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
@@ -25,7 +29,54 @@
 
 html, body, #root {
   min-height: 100vh;
-  background: var(--partner-bg-darker);
+  background: linear-gradient(160deg, #eef2ff 0%, #f0f9ff 40%, #faf5ff 100%);
   color: var(--partner-text-primary);
   font-family: var(--partner-font-body);
+}
+
+/* ── Glass utility classes ── */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+  }
+  .glass-input {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+  .glow-cyan {
+    box-shadow:
+      0 0 20px rgba(107, 207, 238, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.03);
+  }
+  .glow-blue {
+    box-shadow:
+      0 2px 16px rgba(30, 77, 168, 0.2),
+      0 0 20px rgba(107, 207, 238, 0.08);
+  }
+  .glow-focus {
+    box-shadow:
+      0 0 0 3px rgba(107, 207, 238, 0.15),
+      0 0 16px rgba(107, 207, 238, 0.1);
+  }
+  .btn-glow {
+    box-shadow:
+      0 2px 16px rgba(30, 77, 168, 0.3),
+      0 0 20px rgba(107, 207, 238, 0.1);
+  }
+  .btn-glow-hover {
+    box-shadow:
+      0 4px 28px rgba(30, 77, 168, 0.4),
+      0 0 32px rgba(107, 207, 238, 0.2);
+  }
 }

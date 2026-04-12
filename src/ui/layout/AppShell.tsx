@@ -14,10 +14,11 @@ type Props = {
 };
 
 /**
- * Top-level app shell (spec §8.1).
+ * Top-level app shell — Glass + Glow design.
  *
- * Partner logo top-left (always primary). Consultant slug + sign-out top-right.
- * Left nav. Footer with muted "Powered by SapienEx" attribution.
+ * Header: dark SG-branded gradient (partner colors, ONLY branded area).
+ * Body: light gradient workspace with glass panels.
+ * Footer: subtle SapienEx attribution.
  */
 export function AppShell({
   partner,
@@ -29,16 +30,23 @@ export function AppShell({
 }: Props): JSX.Element {
   const base = import.meta.env.BASE_URL;
   const logoStyle: React.CSSProperties = {
-    height: '40px',
+    height: '36px',
     width: 'auto',
-    ...(partner.theme.mode === 'dark' && partner.assets.logo_dark_filter
+    // Header is always dark → always apply the dark filter for the logo
+    ...(partner.assets.logo_dark_filter
       ? { filter: partner.assets.logo_dark_filter }
       : {}),
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-partner-bg-darker text-partner-text font-body">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-partner-border-subtle">
+    <div className="min-h-screen flex flex-col font-body text-partner-text">
+      {/* ── Partner-branded header (ONLY dark area in the app) ── */}
+      <header
+        className="flex items-center justify-between px-6 py-3.5"
+        style={{
+          background: `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 100%)`,
+        }}
+      >
         <a
           href={partner.website ?? '#'}
           target="_blank"
@@ -54,16 +62,18 @@ export function AppShell({
           />
         </a>
         <div className="flex items-center gap-4">
-          <span className="font-body text-sm text-partner-muted">{consultantDisplayName}</span>
+          <span className="font-body text-sm text-white/70">{consultantDisplayName}</span>
           <button
             type="button"
             onClick={onSignOut}
-            className="font-body text-xs font-medium uppercase tracking-wide text-partner-muted hover:text-partner-cyan transition-colors"
+            className="font-body text-xs font-medium uppercase tracking-wide text-white/50 hover:text-white/90 transition-colors"
           >
             Sign out
           </button>
         </div>
       </header>
+
+      {/* ── Light workspace ── */}
       <div className="flex-1 flex">
         <LeftNav active={route} onNavigate={onNavigate} />
         <main className="flex-1 p-6 overflow-y-auto">{children}</main>

@@ -38,7 +38,7 @@ export function BucketRow({
   const pct = budgeted > 0 ? Math.min(100, Math.round((consumed / budgeted) * 100)) : 0;
 
   return (
-    <div className="py-2 pl-4 border-l-2 border-partner-border-subtle">
+    <div className="py-2 pl-4 border-l-2 border-black/5">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <span className="font-body text-sm">{bucket.name}</span>
@@ -71,9 +71,9 @@ export function BucketRow({
           </span>
           <span className="font-mono text-partner-muted">{pct}%</span>
         </div>
-        <div className="h-1.5 bg-partner-bg-deep rounded-full overflow-hidden">
+        <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${over ? 'bg-red-500' : 'bg-partner-cyan'}`}
+            className={`h-full rounded-full transition-all ${over ? 'bg-gradient-to-r from-red-400 to-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-gradient-to-r from-partner-mid to-partner-cyan shadow-[0_0_8px_rgba(107,207,238,0.4)]'}`}
             style={{ width: `${pct}%` }}
           />
         </div>

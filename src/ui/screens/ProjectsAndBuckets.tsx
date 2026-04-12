@@ -153,13 +153,13 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
 
       <ul className="flex flex-col gap-4">
         {projects.data?.projects.map((p) => (
-          <li key={p.id} className="p-4 rounded border border-partner-border-subtle">
+          <li key={p.id} className="p-4 rounded-2xl glass">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <span className="font-display text-lg">{p.name}</span>
                 <span className="font-mono text-xs text-partner-muted ml-2">{p.id}</span>
                 {p.is_internal && (
-                  <span className="text-xs text-partner-muted ml-2 bg-partner-bg-deep px-1 rounded">
+                  <span className="text-xs text-partner-muted ml-2 bg-black/5 px-1 rounded">
                     internal
                   </span>
                 )}

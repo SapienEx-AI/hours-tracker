@@ -90,7 +90,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
         </thead>
         <tbody>
           {visible.map((e) => (
-            <tr key={e.id} className="border-t border-partner-border-subtle">
+            <tr key={e.id} className="border-t border-black/5">
               <td className="py-1">{e.date}</td>
               <td className="py-1">{e.project}</td>
               <td className="py-1">{formatHours(e.hours_hundredths)}</td>

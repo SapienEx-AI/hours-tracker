@@ -9,16 +9,16 @@
   "currency_display_suffix": "CAD",
   "data_repo_prefix": "hours-data-sector-growth-",
   "theme": {
-    "mode": "dark",
+    "mode": "light",
     "bg_deep": "#0A1628",
     "bg_darker": "#050B16",
     "accent_cyan": "#6BCFEE",
     "accent_mid": "#2A85C4",
     "accent_deep": "#1E4DA8",
-    "text_primary": "#F5F7FA",
-    "text_muted": "#94A3B8",
-    "border_subtle": "rgba(255,255,255,0.08)",
-    "border_strong": "rgba(255,255,255,0.16)"
+    "text_primary": "#1a1a2e",
+    "text_muted": "#64748b",
+    "border_subtle": "rgba(0,0,0,0.06)",
+    "border_strong": "rgba(0,0,0,0.12)"
   },
   "fonts": {
     "display": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",

@@ -66,7 +66,7 @@ export function Rates({ partner }: { partner: Partner }): JSX.Element {
         </thead>
         <tbody>
           {rates.data?.default_rate_history.map((r) => (
-            <tr key={r.effective_from} className="border-t border-partner-border-subtle">
+            <tr key={r.effective_from} className="border-t border-black/5">
               <td className="py-1">{r.effective_from}</td>
               <td className="py-1">{formatCents(r.rate_cents, currency)}</td>
               <td className="py-1 text-partner-muted">{r.note ?? ''}</td>

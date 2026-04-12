@@ -14,7 +14,7 @@ export function HoursChips({ onPick }: Props): JSX.Element {
           key={h}
           type="button"
           onClick={() => onPick(h)}
-          className="px-2 py-1 rounded border border-partner-border-subtle font-mono text-xs text-partner-muted hover:text-partner-cyan hover:border-partner-cyan transition-colors"
+          className="px-3 py-1.5 rounded-lg glass font-mono text-xs text-partner-muted hover:text-partner-deep hover:glow-cyan transition-all duration-200"
         >
           {formatHoursDecimal(h)}
         </button>

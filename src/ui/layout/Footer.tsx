@@ -4,9 +4,9 @@
  */
 export function Footer(): JSX.Element {
   return (
-    <footer className="px-6 py-3 border-t border-partner-border-subtle flex justify-end">
-      <span className="font-body text-[11px] text-partner-muted">
-        Powered by <span className="font-mono">SapienEx</span>
+    <footer className="px-6 py-3 border-t border-black/5 flex justify-end">
+      <span className="font-body text-[11px] text-partner-muted/60">
+        Powered by <span className="font-medium">SapienEx</span>
       </span>
     </footer>
   );

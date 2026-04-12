@@ -34,12 +34,12 @@ function TotalRow({ label, hours, amount }: {
   label: string; hours: number; amount?: string;
 }): JSX.Element {
   return (
-    <div className="p-4 rounded border border-partner-border-subtle">
+    <div className="p-5 rounded-2xl glass hover:glass-strong transition-all duration-300 hover:glow-cyan">
       <div className="font-body text-xs font-semibold uppercase tracking-wide text-partner-muted">
         {label}
       </div>
-      <div className="font-display text-2xl">{formatHours(hours)}</div>
-      {amount && <div className="font-mono text-sm text-partner-cyan">{amount}</div>}
+      <div className="font-display text-2xl mt-1">{formatHours(hours)}</div>
+      {amount && <div className="font-mono text-sm text-partner-mid mt-0.5">{amount}</div>}
     </div>
   );
 }
@@ -66,9 +66,9 @@ function BucketBar({ bucket, allTimeData }: {
           {over && ` (${formatHoursDecimal(totalConsumed - budgeted)}h over)`}
         </span>
       </div>
-      <div className="h-1.5 bg-partner-bg-deep rounded-full overflow-hidden">
+      <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${over ? 'bg-red-500' : 'bg-partner-cyan'}`}
+          className={`h-full rounded-full transition-all ${over ? 'bg-gradient-to-r from-red-400 to-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-gradient-to-r from-partner-mid to-partner-cyan shadow-[0_0_8px_rgba(107,207,238,0.4)]'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -174,7 +174,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
             const hasBuckets = p.by_bucket.length > 0;
             const isExpanded = expanded.has(p.project);
             return (
-              <div key={p.project} className="border-t border-partner-border-subtle">
+              <div key={p.project} className="border-t border-black/5">
                 <div className="flex items-center py-2 font-mono text-sm">
                   <div className="flex-1">{project?.name ?? p.project}</div>
                   <div className="w-24 text-right">{formatHours(totalProjectHours)}</div>
@@ -208,8 +208,8 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
       </section>
 
       {totals.needs_review_hours_hundredths > 0 && (
-        <section className="p-4 rounded border border-yellow-500/30 bg-yellow-900/10">
-          <div className="font-body text-sm text-yellow-200">
+        <section className="p-4 rounded-2xl glass border-l-4 border-amber-400">
+          <div className="font-body text-sm text-amber-800">
             {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify
             these entries as billable or non-billable before closing the month.
           </div>

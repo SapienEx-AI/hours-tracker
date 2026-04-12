@@ -7,8 +7,8 @@ export function FirstRun(): JSX.Element {
   const [partnerId, setPartnerId] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-partner-bg-darker">
-      <div className="w-full max-w-xl">
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="w-full max-w-xl glass-strong rounded-2xl p-8 glow-cyan">
         {step === 'partner' && (
           <PartnerStep
             onNext={(id) => {

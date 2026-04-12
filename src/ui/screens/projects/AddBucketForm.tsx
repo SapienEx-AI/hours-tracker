@@ -55,7 +55,7 @@ export function AddBucketForm({ projectId, onAdd, disabled }: Props): JSX.Elemen
   const canAdd = !!bucketId && !!name && parseFloat(budgetedHours || '0') > 0;
 
   return (
-    <div className="p-3 rounded border border-partner-border-subtle flex flex-col gap-2">
+    <div className="p-3 rounded-xl glass flex flex-col gap-2">
       <div className="font-body text-xs font-semibold uppercase tracking-wide text-partner-muted">
         New bucket for {projectId}
       </div>

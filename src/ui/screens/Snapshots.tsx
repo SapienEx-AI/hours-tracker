@@ -89,7 +89,7 @@ export function Snapshots({ partner }: { partner: Partner }): JSX.Element {
         <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
       </FieldLabel>
       {totals && (
-        <div className="p-4 rounded border border-partner-border-subtle font-mono text-sm">
+        <div className="p-4 rounded-2xl glass font-mono text-sm">
           <div>
             Billable: {formatHours(totals.billable_hours_hundredths)} ·{' '}
             {formatCents(totals.billable_amount_cents, currency)}
