@@ -3,7 +3,7 @@ import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useMonthEntries } from '@/data/hooks/use-month-entries';
 import { useAllEntries } from '@/data/hooks/use-all-entries';
-import { computeMonthTotals, computeAllTimeBucketConsumption, sumHundredths } from '@/calc';
+import { computeMonthTotals, computeAllTimeBucketConsumption } from '@/calc';
 import type { Partner, BucketConsumption } from '@/schema/types';
 import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
 import { Banner } from '@/ui/components/Banner';
@@ -173,24 +173,39 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
       </section>
 
       <section>
-        <h2 className="font-display text-lg mb-2">Per project</h2>
-        <div className="flex flex-col">
+        <h2 className="font-display text-lg font-bold mb-3">Per project</h2>
+        <div className="glass rounded-2xl overflow-hidden">
+          <div className="flex items-center py-2.5 px-4 bg-white/30 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex-1">Project</div>
+            <div className="w-24 text-right">Billable</div>
+            <div className="w-28 text-right">Amount</div>
+            <div className="w-28 text-right">Non-billable</div>
+            <div className="w-24 text-right">Review</div>
+            <div className="w-20 text-right">Buckets</div>
+          </div>
           {totals.per_project.map((p) => {
             const project = projects.data?.projects.find((pp) => pp.id === p.project);
-            const totalProjectHours = sumHundredths([
-              p.billable_hours_hundredths,
-              p.non_billable_hours_hundredths,
-              p.needs_review_hours_hundredths,
-            ]);
             const hasBuckets = p.by_bucket.length > 0;
             const isExpanded = expanded.has(p.project);
             return (
               <div key={p.project} className="border-t border-black/5">
-                <div className="flex items-center py-2 font-mono text-sm">
-                  <div className="flex-1">{project?.name ?? p.project}</div>
-                  <div className="w-24 text-right">{formatHours(totalProjectHours)}</div>
-                  <div className="w-36 text-right">
+                <div className="flex items-center py-2.5 px-4 text-sm hover:bg-white/20 transition-colors">
+                  <div className="flex-1 font-medium text-slate-800">{project?.name ?? p.project}</div>
+                  <div className="w-24 text-right font-mono text-slate-700">
+                    {formatHours(p.billable_hours_hundredths)}
+                  </div>
+                  <div className="w-28 text-right font-mono font-semibold text-partner-mid">
                     {formatCents(p.billable_amount_cents, currency)}
+                  </div>
+                  <div className="w-28 text-right font-mono text-slate-500">
+                    {p.non_billable_hours_hundredths > 0
+                      ? formatHours(p.non_billable_hours_hundredths)
+                      : <span className="text-slate-300">—</span>}
+                  </div>
+                  <div className="w-24 text-right font-mono">
+                    {p.needs_review_hours_hundredths > 0
+                      ? <span className="text-amber-600">{formatHours(p.needs_review_hours_hundredths)}</span>
+                      : <span className="text-slate-300">—</span>}
                   </div>
                   <div className="w-20 text-right">
                     {hasBuckets ? (
@@ -198,7 +213,7 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
                         className="text-sky-500 hover:underline text-xs"
                         onClick={() => toggleExpand(p.project)}
                       >
-                        {isExpanded ? 'hide' : `${p.by_bucket.length} bucket${p.by_bucket.length > 1 ? 's' : ''} ▸`}
+                        {isExpanded ? 'hide' : `${p.by_bucket.length} ▸`}
                       </button>
                     ) : (
                       <span className="text-slate-500 text-xs">—</span>
