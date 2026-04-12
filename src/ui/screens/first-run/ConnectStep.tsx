@@ -11,7 +11,7 @@ import { validateDataRepo } from './validate-data-repo';
 import { ConnectInstructions } from './ConnectInstructions';
 import { useAuthStore } from '@/store/auth-store';
 
-const OWNER = 'sapienEx-AI';
+const OWNER = 'SapienEx-AI';
 
 type Props = {
   partnerId: string;
