@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/profile.schema.json",
+  "title": "Consultant profile",
+  "type": "object",
+  "required": ["schema_version", "partner_id", "consultant_id", "display_name", "created_at"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "partner_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "consultant_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "email": { "type": "string", "format": "email" },
+    "timezone": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

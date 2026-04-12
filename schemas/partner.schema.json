@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/partner.schema.json",
+  "title": "Partner",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "display_name",
+    "currency",
+    "currency_symbol",
+    "currency_display_suffix",
+    "data_repo_prefix",
+    "theme",
+    "fonts",
+    "assets",
+    "enabled"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "tagline": { "type": "string" },
+    "website": { "type": "string", "format": "uri" },
+    "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+    "currency_symbol": { "type": "string", "minLength": 1 },
+    "currency_display_suffix": { "type": "string" },
+    "data_repo_prefix": { "type": "string", "pattern": "^hours-data-[a-z0-9-]+-$" },
+    "theme": {
+      "type": "object",
+      "required": [
+        "mode",
+        "bg_deep",
+        "bg_darker",
+        "accent_cyan",
+        "accent_mid",
+        "accent_deep",
+        "text_primary",
+        "text_muted",
+        "border_subtle",
+        "border_strong"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["dark", "light"] },
+        "bg_deep": { "type": "string" },
+        "bg_darker": { "type": "string" },
+        "accent_cyan": { "type": "string" },
+        "accent_mid": { "type": "string" },
+        "accent_deep": { "type": "string" },
+        "text_primary": { "type": "string" },
+        "text_muted": { "type": "string" },
+        "border_subtle": { "type": "string" },
+        "border_strong": { "type": "string" }
+      }
+    },
+    "fonts": {
+      "type": "object",
+      "required": ["display", "body", "mono"],
+      "additionalProperties": false,
+      "properties": {
+        "display": { "type": "string" },
+        "body": { "type": "string" },
+        "mono": { "type": "string" },
+        "google_fonts_link": { "type": "string", "format": "uri" }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "required": ["logo", "logo_alt_text", "favicon"],
+      "additionalProperties": false,
+      "properties": {
+        "logo": { "type": "string" },
+        "logo_alt_text": { "type": "string" },
+        "logo_width": { "type": "integer", "minimum": 1 },
+        "logo_height": { "type": "integer", "minimum": 1 },
+        "logo_dark_filter": { "type": "string" },
+        "favicon": { "type": "string" }
+      }
+    },
+    "enabled": { "type": "boolean" }
+  }
+}

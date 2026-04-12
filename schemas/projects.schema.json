@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/projects.schema.json",
+  "title": "Projects and buckets",
+  "type": "object",
+  "required": ["schema_version", "projects"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "active", "is_internal", "buckets"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "name": { "type": "string", "minLength": 1 },
+          "client": { "type": ["string", "null"] },
+          "active": { "type": "boolean" },
+          "is_internal": { "type": "boolean" },
+          "default_rate_cents": { "type": ["integer", "null"], "minimum": 1 },
+          "buckets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "type",
+                "name",
+                "budgeted_hours_hundredths",
+                "status",
+                "opened_at"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+                "type": { "enum": ["hour_block", "discovery", "arch_tl", "dev", "custom"] },
+                "name": { "type": "string", "minLength": 1 },
+                "budgeted_hours_hundredths": { "type": "integer", "minimum": 1 },
+                "rate_cents": { "type": ["integer", "null"], "minimum": 1 },
+                "status": { "enum": ["active", "closed", "archived"] },
+                "opened_at": { "type": "string", "format": "date" },
+                "closed_at": { "type": ["string", "null"], "format": "date" },
+                "notes": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

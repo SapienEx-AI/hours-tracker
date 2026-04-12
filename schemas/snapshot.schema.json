@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/snapshot.schema.json",
+  "title": "Monthly snapshot",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "month",
+    "closed_at",
+    "closed_at_commit_sha",
+    "source_hash",
+    "totals",
+    "per_project",
+    "entry_ids"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+    "closed_at": { "type": "string", "format": "date-time" },
+    "closed_at_commit_sha": { "type": "string", "pattern": "^[a-f0-9]{7,40}$" },
+    "source_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "totals": {
+      "type": "object",
+      "required": [
+        "total_hours_hundredths",
+        "billable_hours_hundredths",
+        "non_billable_hours_hundredths",
+        "needs_review_hours_hundredths",
+        "billable_amount_cents"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "total_hours_hundredths": { "type": "integer", "minimum": 0 },
+        "billable_hours_hundredths": { "type": "integer", "minimum": 0 },
+        "non_billable_hours_hundredths": { "type": "integer", "minimum": 0 },
+        "needs_review_hours_hundredths": { "type": "integer", "minimum": 0 },
+        "billable_amount_cents": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "per_project": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "project",
+          "billable_hours_hundredths",
+          "billable_amount_cents",
+          "non_billable_hours_hundredths",
+          "needs_review_hours_hundredths",
+          "by_bucket"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "project": { "type": "string" },
+          "billable_hours_hundredths": { "type": "integer", "minimum": 0 },
+          "billable_amount_cents": { "type": "integer", "minimum": 0 },
+          "non_billable_hours_hundredths": { "type": "integer", "minimum": 0 },
+          "needs_review_hours_hundredths": { "type": "integer", "minimum": 0 },
+          "by_bucket": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "bucket_id",
+                "consumed_hours_hundredths",
+                "budgeted_hours_hundredths",
+                "amount_cents"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bucket_id": { "type": "string" },
+                "consumed_hours_hundredths": { "type": "integer", "minimum": 0 },
+                "budgeted_hours_hundredths": { "type": "integer", "minimum": 0 },
+                "amount_cents": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "entry_ids": { "type": "array", "items": { "type": "string" } }
+  }
+}
