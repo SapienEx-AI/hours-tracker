@@ -15,6 +15,7 @@ import { Rates } from '@/ui/screens/Rates';
 import { Snapshots } from '@/ui/screens/Snapshots';
 import { Settings } from '@/ui/screens/Settings';
 import { useRoute, type Route } from '@/ui/Router';
+import { CommitQueueFAB } from '@/ui/CommitQueueFAB';
 
 function ScreenForRoute({
   route,
@@ -97,6 +98,7 @@ export default function App(): JSX.Element {
       <ErrorBoundary>
         <ScreenForRoute route={route} partner={partner} />
       </ErrorBoundary>
+      <CommitQueueFAB />
     </AppShell>
   );
 }

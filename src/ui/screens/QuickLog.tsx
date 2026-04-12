@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useOctokit } from '@/data/hooks/use-octokit';
+import { useQueuedMutation } from '@/data/hooks/use-queued-mutation';
 import { useAuthStore } from '@/store/auth-store';
 import { addEntry } from '@/data/entries-repo';
 import { splitRepoPath } from '@/data/octokit-client';
@@ -114,7 +114,6 @@ export function QuickLog(): JSX.Element {
   const dataRepo = useAuthStore((s) => s.dataRepo);
   const projects = useProjects();
   const rates = useRates();
-  const queryClient = useQueryClient();
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [toast, setToast] = useState<string | null>(null);
@@ -151,25 +150,17 @@ export function QuickLog(): JSX.Element {
     }
   }, [form.bucketId]);
 
-  const mutation = useMutation({
-    mutationFn: async () => {
+  const mutation = useQueuedMutation<{ entry: Entry; projectName: string }>({
+    label: (args) => `Log ${formatHoursDecimal(args.entry.hours_hundredths)}h to ${args.projectName}`,
+    mutationFn: async (args) => {
       if (!octokit || !dataRepo) throw new Error('Not authenticated');
-      if (!projects.data || !rates.data) throw new Error('Config not loaded');
       const { owner, repo } = splitRepoPath(dataRepo);
-      const entry = buildEntry(form, projects.data, rates.data);
-      await addEntry(octokit, { owner, repo, entry });
-      const project = projects.data.projects.find((p) => p.id === form.projectId);
-      return project?.name ?? form.projectId;
+      await addEntry(octokit, { owner, repo, entry: args.entry });
     },
-    onSuccess: (projectName) => {
-      const hoursDisplay = formatHoursDecimal(form.hoursHundredths);
-      setToast(`Logged ${hoursDisplay}h to ${projectName}`);
-      // Reset all fields except project (common pattern: logging multiple entries per project in a row).
-      setForm((f) => ({ ...initialForm, projectId: f.projectId, date: f.date }));
-      queryClient.invalidateQueries({
-        queryKey: qk.monthEntries(dataRepo ?? 'none', form.date.slice(0, 7)),
-      });
-    },
+    invalidateKeys: [
+      qk.monthEntries(dataRepo ?? 'none', form.date.slice(0, 7)),
+      [...qk.all, 'all-entries', dataRepo ?? 'none'],
+    ],
   });
 
   const gate = loadingOrErrorGate(projects, rates);
@@ -179,6 +170,19 @@ export function QuickLog(): JSX.Element {
   const selectedProject = activeProjects.find((p) => p.id === form.projectId);
   const activeBuckets = selectedProject?.buckets.filter((b) => b.status !== 'archived') ?? [];
   const canSave = !!form.projectId && form.hoursHundredths > 0 && form.description.trim().length > 0;
+
+  function handleSave() {
+    if (!projects.data || !rates.data) return;
+    const entry = buildEntry(form, projects.data, rates.data);
+    const project = projects.data.projects.find((p) => p.id === form.projectId);
+    const projectName = project?.name ?? form.projectId;
+    mutation.mutate({ entry, projectName }, {
+      onSuccess: () => {
+        setToast(`Logged ${formatHoursDecimal(form.hoursHundredths)}h to ${projectName}`);
+        setForm((f) => ({ ...initialForm, projectId: f.projectId, date: f.date }));
+      },
+    });
+  }
 
   return (
     <div className="max-w-xl flex flex-col gap-4">
@@ -291,7 +295,7 @@ export function QuickLog(): JSX.Element {
 
       {mutation.error && <Banner variant="error">{(mutation.error as Error).message}</Banner>}
 
-      <Button onClick={() => mutation.mutate()} disabled={mutation.isPending || !canSave}>
+      <Button onClick={() => handleSave()} disabled={mutation.isPending || !canSave}>
         {mutation.isPending ? 'Saving…' : 'Save (⌘↵)'}
       </Button>
     </div>
