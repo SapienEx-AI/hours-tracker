@@ -48,7 +48,7 @@ module.exports = {
       files: ['src/ui/screens/**/*.tsx'],
       rules: {
         'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
-        complexity: ['warn', 18],
+        complexity: ['warn', 15],
       },
     },
     {
