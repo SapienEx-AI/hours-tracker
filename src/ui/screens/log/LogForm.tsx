@@ -7,6 +7,8 @@ import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
 import { HoursChips } from '@/ui/components/HoursChips';
 import { formatHoursDecimal } from '@/format/format';
+import { useTimerStore } from '@/store/timer-store';
+import { TimerControl } from './TimerControl';
 import { formatRateDollars, type FormState } from './form-helpers';
 
 type Props = {
@@ -57,21 +59,7 @@ export function LogForm(props: Props): JSX.Element {
         </Select>
       </FieldLabel>
 
-      <FieldLabel label="Hours">
-        <Input
-          type="number"
-          step="0.01"
-          min="0.01"
-          value={form.hoursHundredths === 0 ? '' : formatHoursDecimal(form.hoursHundredths)}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              hoursHundredths: Math.round(parseFloat(e.target.value || '0') * 100),
-            }))
-          }
-        />
-      </FieldLabel>
-      <HoursChips onPick={(h) => setForm((f) => ({ ...f, hoursHundredths: h }))} />
+      <HoursWithTimer form={form} setForm={setForm} />
 
       <FieldLabel label="Bucket">
         <Select
@@ -146,6 +134,52 @@ export function LogForm(props: Props): JSX.Element {
         {saving ? 'Saving…' : 'Save (⌘↵)'}
       </Button>
     </div>
+  );
+}
+
+function HoursWithTimer({
+  form,
+  setForm,
+}: {
+  form: FormState;
+  setForm: (next: FormState | ((f: FormState) => FormState)) => void;
+}): JSX.Element {
+  const timerLive = useTimerStore(
+    (s) => s.session?.phase.kind === 'running' || s.session?.phase.kind === 'paused',
+  );
+
+  return (
+    <>
+      <FieldLabel label="Hours">
+        <div className="flex items-center gap-3">
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            disabled={timerLive}
+            value={form.hoursHundredths === 0 ? '' : formatHoursDecimal(form.hoursHundredths)}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                hoursHundredths: Math.round(parseFloat(e.target.value || '0') * 100),
+              }))
+            }
+          />
+          <TimerControl
+            form={{
+              projectId: form.projectId,
+              bucketId: form.bucketId,
+              description: form.description,
+              date: form.date,
+            }}
+          />
+        </div>
+      </FieldLabel>
+      <HoursChips
+        onPick={(h) => setForm((f) => ({ ...f, hoursHundredths: h }))}
+        disabled={timerLive}
+      />
+    </>
   );
 }
 

@@ -14,8 +14,11 @@ import { formatHoursDecimal } from '@/format/format';
 import { qk } from '@/data/query-keys';
 import type { Route } from '@/ui/Router';
 import type { Suggestion } from '@/data/hooks/use-calendar-events';
+import { useTimerStore } from '@/store/timer-store';
+import type { TimerSession } from '@/store/timer-session';
 import { SuggestionsPanel } from './log/SuggestionsPanel';
 import { LogForm } from './log/LogForm';
+import { TimerBanner } from './log/TimerBanner';
 import { buildEntry, initialForm, type FormState } from './log/form-helpers';
 
 type QueryLike<T> = {
@@ -97,6 +100,8 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
     }
   }, [form.bucketId]);
 
+  const discardTimer = useTimerStore((s) => s.discard);
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (!octokit || !dataRepo) throw new Error('Not authenticated');
@@ -130,37 +135,60 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       date: s.date,
       hoursHundredths: s.hours_hundredths,
       description: s.description,
-      source_event_id: s.source_event_id,
+      source_ref: s.source_event_id
+        ? { kind: 'calendar', id: s.source_event_id }
+        : null,
     }));
     setPrefillHint(s.description || '(no title)');
   }
 
   function clearPrefill() {
-    setForm((f) => ({ ...f, hoursHundredths: 0, description: '', source_event_id: null }));
+    setForm((f) => ({ ...f, hoursHundredths: 0, description: '', source_ref: null }));
     setPrefillHint(null);
   }
 
+  function applyTimerSession(session: TimerSession, hoursHundredths: number) {
+    setForm((f) => ({
+      ...f,
+      date: session.snapshot.date,
+      projectId: session.snapshot.projectId,
+      bucketId: session.snapshot.bucketId,
+      description: session.snapshot.description,
+      hoursHundredths,
+      source_ref: { kind: 'timer', id: session.id },
+    }));
+    setPrefillHint(
+      session.snapshot.description === ''
+        ? '(timer session, no description)'
+        : `timer: ${session.snapshot.description}`,
+    );
+    discardTimer();
+  }
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      <LogForm
-        form={form}
-        setForm={setForm}
-        activeProjects={activeProjects}
-        projectRef={projectRef}
-        toast={toast}
-        prefillHint={prefillHint}
-        onClearPrefill={clearPrefill}
-        mutationError={mutation.error as Error | null}
-        saving={mutation.isPending}
-        canSave={canSave}
-        onSave={() => mutation.mutate()}
-      />
-      <div className="w-full lg:w-[380px] shrink-0">
-        <SuggestionsPanel
-          date={form.date}
-          onSelect={applySuggestion}
-          onNavigate={onNavigate}
+    <div className="flex flex-col gap-4">
+      <TimerBanner onLoad={applyTimerSession} />
+      <div className="flex flex-col lg:flex-row gap-6">
+        <LogForm
+          form={form}
+          setForm={setForm}
+          activeProjects={activeProjects}
+          projectRef={projectRef}
+          toast={toast}
+          prefillHint={prefillHint}
+          onClearPrefill={clearPrefill}
+          mutationError={mutation.error as Error | null}
+          saving={mutation.isPending}
+          canSave={canSave}
+          onSave={() => mutation.mutate()}
         />
+        <div className="w-full lg:w-[380px] shrink-0">
+          <SuggestionsPanel
+            date={form.date}
+            onSelect={applySuggestion}
+            onNavigate={onNavigate}
+          />
+        </div>
       </div>
     </div>
   );

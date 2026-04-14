@@ -8,15 +8,31 @@ function entriesPath(month: string): string {
   return `data/entries/${month}.json`;
 }
 
-export function upgradeEntriesFileToV2(file: EntriesFile): EntriesFile {
+/**
+ * Upgrade a v1 or v2 file to v3. The validator has already lifted any legacy
+ * source_event_id into source_ref on read, so file.entries are already v3
+ * shape in memory — we just bump the version on the wire and ensure source_ref
+ * is set.
+ *
+ * Returns the input file unchanged when it is already v3.
+ */
+export function upgradeEntriesFileToV3(file: EntriesFile): EntriesFile {
+  if (file.schema_version === 3) return file;
   return {
     ...file,
-    schema_version: 2,
-    entries: file.entries.map((e) => ({
-      ...e,
-      source_event_id: e.source_event_id ?? null,
-    })),
+    schema_version: 3,
+    entries: file.entries.map((e) => ({ ...e, source_ref: e.source_ref ?? null })),
   };
+}
+
+function schemaUpgradeSuffix(fromVersion: EntriesFile['schema_version']): string {
+  if (fromVersion === 3) return '';
+  return ` [schema v${fromVersion}→v3]`;
+}
+
+function sourceTag(entry: Entry): 'calendar' | 'timer' | undefined {
+  if (entry.source_ref === null) return undefined;
+  return entry.source_ref.kind;
 }
 
 export type LoadMonthEntriesArgs = {
@@ -67,7 +83,6 @@ export async function loadAllEntries(
   octokit: Octokit,
   args: { owner: string; repo: string },
 ): Promise<Entry[]> {
-  // List data/entries/ directory to discover which months have files.
   let files: Array<{ name: string }>;
   try {
     const res = await octokit.rest.repos.getContent({
@@ -84,7 +99,6 @@ export async function loadAllEntries(
     throw e;
   }
 
-  // Load each month file and flatten into one array.
   const allEntries: Entry[] = [];
   for (const file of files) {
     const month = file.name.replace('.json', '');
@@ -108,45 +122,53 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
   const month = args.entry.date.slice(0, 7);
   const path = entriesPath(month);
 
-  // Validate the full entry first as a standalone file (one entry).
-  const probe: EntriesFile = { schema_version: 2, month, entries: [args.entry] };
+  const probe: EntriesFile = { schema_version: 3, month, entries: [args.entry] };
   const validation = validateEntries(probe);
   if (!validation.ok) {
     throw new Error(`Entry failed validation:\n${formatValidationErrors(validation.errors)}`);
   }
 
+  const src = sourceTag(args.entry);
+  const baseMessage = logMessage(
+    src !== undefined
+      ? {
+          project: args.entry.project,
+          date: args.entry.date,
+          hours_hundredths: args.entry.hours_hundredths,
+          rate_cents: args.entry.rate_cents,
+          description: args.entry.description,
+          source: src,
+        }
+      : {
+          project: args.entry.project,
+          date: args.entry.date,
+          hours_hundredths: args.entry.hours_hundredths,
+          rate_cents: args.entry.rate_cents,
+          description: args.entry.description,
+        },
+  );
+
   await writeJsonFileWithRetry<EntriesFile>(octokit, {
     owner: args.owner,
     repo: args.repo,
     path,
-    message: logMessage(
-      args.entry.source_event_id !== null
-        ? {
-            project: args.entry.project,
-            date: args.entry.date,
-            hours_hundredths: args.entry.hours_hundredths,
-            rate_cents: args.entry.rate_cents,
-            description: args.entry.description,
-            source: 'calendar',
-          }
-        : {
-            project: args.entry.project,
-            date: args.entry.date,
-            hours_hundredths: args.entry.hours_hundredths,
-            rate_cents: args.entry.rate_cents,
-            description: args.entry.description,
-          },
-    ),
+    // Message is built per-attempt so the [schema vN→v3] suffix reflects
+    // the actual on-disk version read during this attempt (retries may see
+    // a different version if another writer landed in between).
+    message: (current) => {
+      const fromVersion: EntriesFile['schema_version'] = current?.schema_version ?? 3;
+      return baseMessage + schemaUpgradeSuffix(fromVersion);
+    },
     transform: (current) => {
       const base: EntriesFile = current ?? {
-        schema_version: 2,
+        schema_version: 3,
         month,
         entries: [],
       };
       if (base.entries.some((e) => e.id === args.entry.id)) {
         throw new Error(`Duplicate entry id ${args.entry.id} — refusing to overwrite.`);
       }
-      const upgraded = upgradeEntriesFileToV2(base);
+      const upgraded = upgradeEntriesFileToV3(base);
       return {
         ...upgraded,
         entries: [...upgraded.entries, args.entry],
@@ -178,7 +200,7 @@ export async function updateEntry(
       if (!current) {
         throw new Error(`Cannot update entry in missing month file: ${path}`);
       }
-      const upgraded = upgradeEntriesFileToV2(current);
+      const upgraded = upgradeEntriesFileToV3(current);
       const idx = upgraded.entries.findIndex((e) => e.id === args.entry.id);
       if (idx < 0) {
         throw new Error(`Entry id ${args.entry.id} not found in ${path}`);
@@ -217,7 +239,7 @@ export async function deleteEntry(
     message: args.message,
     transform: (current) => {
       if (!current) throw new Error(`Cannot delete from missing file ${path}`);
-      const upgraded = upgradeEntriesFileToV2(current);
+      const upgraded = upgradeEntriesFileToV3(current);
       return {
         ...upgraded,
         entries: upgraded.entries.filter((e) => e.id !== args.entryId),

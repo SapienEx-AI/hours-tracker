@@ -1,4 +1,4 @@
-import type { BillableStatus, Entry, ProjectsConfig, RatesConfig } from '@/schema/types';
+import type { BillableStatus, Entry, ProjectsConfig, RatesConfig, SourceRef } from '@/schema/types';
 import { resolveRateAtLogTime } from '@/calc';
 import { newEntryId } from '@/data/new-entry-id';
 
@@ -11,7 +11,7 @@ export type FormState = {
   rateCents: number;
   rateOverridden: boolean;
   description: string;
-  source_event_id: string | null;
+  source_ref: SourceRef;
 };
 
 export function todayISO(): string {
@@ -31,7 +31,7 @@ export const initialForm: FormState = {
   rateCents: 0,
   rateOverridden: false,
   description: '',
-  source_event_id: null,
+  source_ref: null,
 };
 
 export function formatRateDollars(rateCents: number): string {
@@ -64,6 +64,6 @@ export function buildEntry(
     review_flag: false,
     created_at: now,
     updated_at: now,
-    source_event_id: form.source_event_id,
+    source_ref: form.source_ref,
   };
 }
