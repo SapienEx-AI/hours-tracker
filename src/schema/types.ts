@@ -128,6 +128,11 @@ export type ProjectsConfig = {
 export type RateSource = 'entry_override' | 'project_default' | 'global_default';
 export type BillableStatus = 'billable' | 'non_billable' | 'needs_review';
 
+export type SourceRef =
+  | { kind: 'calendar'; id: string }
+  | { kind: 'timer'; id: string }
+  | null;
+
 export type Entry = {
   id: string;
   project: string;
@@ -141,11 +146,11 @@ export type Entry = {
   review_flag: boolean;
   created_at: string;
   updated_at: string;
-  source_event_id: string | null;
+  source_ref: SourceRef;
 };
 
 export type EntriesFile = {
-  schema_version: 1 | 2;
+  schema_version: 1 | 2 | 3;
   month: string;
   entries: Entry[];
 };

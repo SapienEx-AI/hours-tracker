@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/entries.schema.json",
-  "title": "Monthly entries file",
+  "title": "Monthly entries file (v3)",
   "type": "object",
   "required": ["schema_version", "month", "entries"],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "enum": [1, 2] },
+    "schema_version": { "enum": [1, 2, 3] },
     "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
     "entries": {
       "type": "array",
@@ -43,7 +43,21 @@
           "review_flag": { "type": "boolean" },
           "created_at": { "type": "string", "format": "date-time" },
           "updated_at": { "type": "string", "format": "date-time" },
-          "source_event_id": { "type": ["string", "null"] }
+          "source_event_id": { "type": ["string", "null"] },
+          "source_ref": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "required": ["kind", "id"],
+                "additionalProperties": false,
+                "properties": {
+                  "kind": { "enum": ["calendar", "timer"] },
+                  "id": { "type": "string", "minLength": 1 }
+                }
+              }
+            ]
+          }
         }
       }
     }
