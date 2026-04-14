@@ -14,6 +14,7 @@ import type {
   RatesConfig,
   ProjectsConfig,
   EntriesFile,
+  Entry,
   Snapshot,
 } from './types';
 
@@ -42,8 +43,18 @@ export const validatePartner = wrap<Partner>(_partner);
 export const validateProfile = wrap<Profile>(_profile);
 export const validateRates = wrap<RatesConfig>(_rates);
 export const validateProjects = wrap<ProjectsConfig>(_projects);
-export const validateEntries = wrap<EntriesFile>(_entries);
 export const validateSnapshot = wrap<Snapshot>(_snapshot);
+
+export const validateEntries = (data: unknown): ValidationResult<EntriesFile> => {
+  if (!_entries(data)) return { ok: false, errors: _entries.errors ?? [] };
+  const file = data as EntriesFile;
+  for (const e of file.entries) {
+    if (!('source_event_id' in e)) {
+      (e as Entry).source_event_id = null;
+    }
+  }
+  return { ok: true, value: file };
+};
 
 export function formatValidationErrors(errors: ErrorObject[]): string {
   return errors.map((e) => `  ${e.instancePath || '(root)'} ${e.message ?? ''}`).join('\n');

@@ -6,7 +6,7 @@
   "required": ["schema_version", "month", "entries"],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "const": 1 },
+    "schema_version": { "enum": [1, 2] },
     "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
     "entries": {
       "type": "array",
@@ -42,7 +42,8 @@
           "description": { "type": "string", "minLength": 1, "maxLength": 500 },
           "review_flag": { "type": "boolean" },
           "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+          "updated_at": { "type": "string", "format": "date-time" },
+          "source_event_id": { "type": ["string", "null"] }
         }
       }
     }

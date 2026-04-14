@@ -8,6 +8,7 @@ function makeEntry(p: Partial<Entry> = {}): Entry {
     rate_cents: 10000, rate_source: 'global_default', billable_status: 'billable',
     bucket_id: null, description: 'd', review_flag: false,
     created_at: '2026-03-10T00:00:00Z', updated_at: '2026-03-10T00:00:00Z',
+    source_event_id: null,
     ...p,
   };
 }

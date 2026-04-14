@@ -60,6 +60,7 @@ function entry(
     review_flag: false,
     created_at: '2026-03-25T00:00:00Z',
     updated_at: '2026-03-25T00:00:00Z',
+    source_event_id: null,
     ...partial,
   };
 }

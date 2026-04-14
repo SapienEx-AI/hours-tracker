@@ -107,6 +107,7 @@ function buildEntry(
     review_flag: false,
     created_at: now,
     updated_at: now,
+    source_event_id: null,
   };
 }
 
