@@ -103,7 +103,12 @@ export async function writeJsonFileWithRetry<T>(
     owner: string;
     repo: string;
     path: string;
-    message: string;
+    /**
+     * Commit message. If a function, it is called with the freshly-read
+     * current data for this attempt, so callers can inspect the on-disk
+     * shape (e.g. to append a schema-upgrade suffix).
+     */
+    message: string | ((current: T | null) => string);
     transform: (current: T | null, currentSha: string | null) => unknown;
   },
 ): Promise<WriteResult> {
@@ -123,13 +128,15 @@ export async function writeJsonFileWithRetry<T>(
       if (!(e instanceof FileNotFoundError)) throw e;
     }
     const nextContent = args.transform(currentData, currentSha);
+    const message =
+      typeof args.message === 'function' ? args.message(currentData) : args.message;
     try {
       return await writeJsonFile(octokit, {
         owner: args.owner,
         repo: args.repo,
         path: args.path,
         content: nextContent,
-        message: args.message,
+        message,
         ...(currentSha !== null ? { sha: currentSha } : {}),
       });
     } catch (e) {

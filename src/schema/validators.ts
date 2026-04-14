@@ -49,9 +49,19 @@ export const validateProjects = wrap<ProjectsConfig>(_projects);
 export const validateSnapshot = wrap<Snapshot>(_snapshot);
 export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
 
+/**
+ * Validate an entries file. Accepts v1 / v2 / v3 on the wire; the returned
+ * value always has v3 shape (every entry carries `source_ref`, never the
+ * legacy `source_event_id`).
+ *
+ * NOTE: returns a *deep clone* of the input with the v3 shape applied.
+ * The caller's original object is never mutated, so a diagnostic logger
+ * holding the parsed JSON sees exactly what came off disk.
+ */
 export const validateEntries = (data: unknown): ValidationResult<EntriesFile> => {
   if (!_entries(data)) return { ok: false, errors: _entries.errors ?? [] };
-  const file = data as EntriesFile;
+  // Clone before mutating. EntriesFile is pure JSON so structuredClone is safe.
+  const file = structuredClone(data) as EntriesFile;
 
   // v3 files must not carry the legacy source_event_id field.
   if (file.schema_version === 3) {

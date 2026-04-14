@@ -27,6 +27,9 @@
           "updated_at"
         ],
         "additionalProperties": false,
+        "not": {
+          "required": ["source_event_id", "source_ref"]
+        },
         "properties": {
           "id": {
             "type": "string",

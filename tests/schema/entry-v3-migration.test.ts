@@ -113,4 +113,41 @@ describe('Entry v1/v2/v3 acceptance + backfill', () => {
     const r = validateEntries(file);
     expect(r.ok).toBe(false);
   });
+
+  it('rejects entries with BOTH source_event_id and source_ref at any schema_version', () => {
+    // Defense-in-depth: the JSON schema itself forbids both fields on the same
+    // entry regardless of version, independent of the validator wrapper's
+    // v3-specific rule.
+    for (const schema_version of [1, 2, 3] as const) {
+      const file = {
+        schema_version,
+        month: '2026-05',
+        entries: [
+          {
+            ...baseEntry,
+            source_event_id: 'a',
+            source_ref: { kind: 'calendar', id: 'a' },
+          },
+        ],
+      };
+      const r = validateEntries(file);
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it('does not mutate the caller\'s input object', () => {
+    const v2Input = {
+      schema_version: 2,
+      month: '2026-04',
+      entries: [{ ...baseEntry, source_event_id: 'gcal-abc' }],
+    };
+    const snapshot = JSON.parse(JSON.stringify(v2Input));
+    const r = validateEntries(v2Input);
+    expect(r.ok).toBe(true);
+    // Caller's original object should be byte-identical to its pre-validate
+    // snapshot — no keys added, no keys removed.
+    expect(v2Input).toEqual(snapshot);
+    // And specifically: the legacy field must still be present on the input.
+    expect('source_event_id' in v2Input.entries[0]!).toBe(true);
+  });
 });

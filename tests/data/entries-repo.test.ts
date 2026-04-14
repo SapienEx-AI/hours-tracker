@@ -77,4 +77,94 @@ describe('addEntry', () => {
       }),
     ).rejects.toThrow(/validation/i);
   });
+
+  it('appends [schema v2→v3] to the commit message when upgrading a v2 source file', async () => {
+    const mock = mockOctokit();
+    const existingV2File = {
+      schema_version: 2,
+      month: '2026-04',
+      entries: [
+        {
+          id: '2026-04-10-sprosty-aaaaaa',
+          project: 'sprosty',
+          date: '2026-04-10',
+          hours_hundredths: 100,
+          rate_cents: 12500,
+          rate_source: 'global_default',
+          billable_status: 'billable',
+          bucket_id: null,
+          description: 'older',
+          review_flag: false,
+          created_at: '2026-04-10T00:00:00Z',
+          updated_at: '2026-04-10T00:00:00Z',
+          source_event_id: null,
+        },
+      ],
+    };
+    mock.rest.repos.getContent.mockResolvedValue({
+      data: {
+        type: 'file',
+        content: btoa(JSON.stringify(existingV2File)),
+        sha: 'v2sha',
+        encoding: 'base64',
+      },
+    });
+    mock.rest.repos.createOrUpdateFileContents.mockResolvedValue({
+      data: { content: { sha: 'new' } },
+    });
+
+    await addEntry(mock as never, {
+      owner: 'test',
+      repo: 'data',
+      entry: {
+        ...sampleEntry,
+        id: '2026-04-11-sprosty-bbbbbb',
+        created_at: '2026-04-11T00:00:00Z',
+        updated_at: '2026-04-11T00:00:00Z',
+      } as Entry,
+    });
+
+    expect(mock.rest.repos.createOrUpdateFileContents).toHaveBeenCalledTimes(1);
+    const call = mock.rest.repos.createOrUpdateFileContents.mock.calls[0]![0] as {
+      message: string;
+    };
+    expect(call.message).toContain('log:');
+    expect(call.message).toContain('[schema v2→v3]');
+  });
+
+  it('does not append a schema-upgrade suffix when writing to a v3 source file', async () => {
+    const mock = mockOctokit();
+    const existingV3File = {
+      schema_version: 3,
+      month: '2026-04',
+      entries: [] as Entry[],
+    };
+    mock.rest.repos.getContent.mockResolvedValue({
+      data: {
+        type: 'file',
+        content: btoa(JSON.stringify(existingV3File)),
+        sha: 'v3sha',
+        encoding: 'base64',
+      },
+    });
+    mock.rest.repos.createOrUpdateFileContents.mockResolvedValue({
+      data: { content: { sha: 'new' } },
+    });
+
+    await addEntry(mock as never, {
+      owner: 'test',
+      repo: 'data',
+      entry: {
+        ...sampleEntry,
+        id: '2026-04-11-sprosty-cccccc',
+        created_at: '2026-04-11T00:00:00Z',
+        updated_at: '2026-04-11T00:00:00Z',
+      } as Entry,
+    });
+
+    const call = mock.rest.repos.createOrUpdateFileContents.mock.calls[0]![0] as {
+      message: string;
+    };
+    expect(call.message).not.toContain('[schema');
+  });
 });

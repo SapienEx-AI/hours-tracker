@@ -128,39 +128,43 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
     throw new Error(`Entry failed validation:\n${formatValidationErrors(validation.errors)}`);
   }
 
-  let upgradeFrom: EntriesFile['schema_version'] = 3;
   const src = sourceTag(args.entry);
+  const baseMessage = logMessage(
+    src !== undefined
+      ? {
+          project: args.entry.project,
+          date: args.entry.date,
+          hours_hundredths: args.entry.hours_hundredths,
+          rate_cents: args.entry.rate_cents,
+          description: args.entry.description,
+          source: src,
+        }
+      : {
+          project: args.entry.project,
+          date: args.entry.date,
+          hours_hundredths: args.entry.hours_hundredths,
+          rate_cents: args.entry.rate_cents,
+          description: args.entry.description,
+        },
+  );
 
   await writeJsonFileWithRetry<EntriesFile>(octokit, {
     owner: args.owner,
     repo: args.repo,
     path,
-    message:
-      logMessage(
-        src !== undefined
-          ? {
-              project: args.entry.project,
-              date: args.entry.date,
-              hours_hundredths: args.entry.hours_hundredths,
-              rate_cents: args.entry.rate_cents,
-              description: args.entry.description,
-              source: src,
-            }
-          : {
-              project: args.entry.project,
-              date: args.entry.date,
-              hours_hundredths: args.entry.hours_hundredths,
-              rate_cents: args.entry.rate_cents,
-              description: args.entry.description,
-            },
-      ) + schemaUpgradeSuffix(upgradeFrom),
+    // Message is built per-attempt so the [schema vN→v3] suffix reflects
+    // the actual on-disk version read during this attempt (retries may see
+    // a different version if another writer landed in between).
+    message: (current) => {
+      const fromVersion: EntriesFile['schema_version'] = current?.schema_version ?? 3;
+      return baseMessage + schemaUpgradeSuffix(fromVersion);
+    },
     transform: (current) => {
       const base: EntriesFile = current ?? {
         schema_version: 3,
         month,
         entries: [],
       };
-      upgradeFrom = base.schema_version;
       if (base.entries.some((e) => e.id === args.entry.id)) {
         throw new Error(`Duplicate entry id ${args.entry.id} — refusing to overwrite.`);
       }
