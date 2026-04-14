@@ -19,15 +19,17 @@ import { useRoute, type Route } from '@/ui/Router';
 function ScreenForRoute({
   route,
   partner,
+  onNavigate,
 }: {
   route: Route;
   partner: Partner;
+  onNavigate: (r: Route) => void;
 }): JSX.Element {
   switch (route) {
     case 'log':
       return <QuickLog />;
     case 'dashboard':
-      return <Dashboard partner={partner} />;
+      return <Dashboard partner={partner} onNavigate={onNavigate} />;
     case 'entries':
       return <Entries partner={partner} />;
     case 'projects':
@@ -95,7 +97,7 @@ export default function App(): JSX.Element {
       onNavigate={setRoute}
     >
       <ErrorBoundary>
-        <ScreenForRoute route={route} partner={partner} />
+        <ScreenForRoute route={route} partner={partner} onNavigate={setRoute} />
       </ErrorBoundary>
     </AppShell>
   );

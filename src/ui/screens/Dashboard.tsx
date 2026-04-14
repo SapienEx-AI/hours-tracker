@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useUiStore } from '@/store/ui-store';
+import type { Route } from '@/ui/Router';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useMonthEntries } from '@/data/hooks/use-month-entries';
@@ -150,8 +152,15 @@ function ActiveBuilds({ allTimeBuckets, projects, currency }: {
 
 // ── Main Dashboard ──
 
-export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
+export function Dashboard({
+  partner,
+  onNavigate,
+}: {
+  partner: Partner;
+  onNavigate: (r: Route) => void;
+}): JSX.Element {
   const [month, setMonth] = useState(currentMonth);
+  const setPrefilter = useUiStore((s) => s.setEntriesPrefilter);
   const entries = useMonthEntries(month);
   const allEntriesQuery = useAllEntries();
   const projects = useProjects();
@@ -217,11 +226,18 @@ export function Dashboard({ partner }: { partner: Partner }): JSX.Element {
           </section>
 
           {totals.needs_review_hours_hundredths > 0 && (
-            <section className="p-4 rounded-2xl glass border-l-4 border-amber-400">
+            <button
+              type="button"
+              onClick={() => {
+                setPrefilter({ status: 'needs_review' });
+                onNavigate('entries');
+              }}
+              className="text-left w-full p-4 rounded-2xl glass border-l-4 border-amber-400 hover:bg-white/50 transition-colors"
+            >
               <div className="font-body text-sm text-amber-800">
-                {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify before closing the month.
+                {formatHours(totals.needs_review_hours_hundredths)} flagged for review — classify before closing the month. <span className="underline">Review →</span>
               </div>
-            </section>
+            </button>
           )}
         </div>
 
