@@ -196,3 +196,12 @@ export type Snapshot = {
   per_project: ProjectTotals[];
   entry_ids: string[];
 };
+
+// ─── Calendar integration ───
+
+export type CalendarConfig = {
+  schema_version: 1;
+  provider: 'google';
+  enabled_calendars: string[];
+  last_connected_at?: string;
+};

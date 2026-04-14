@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/calendar-config.schema.json",
+  "title": "Calendar integration config",
+  "type": "object",
+  "required": ["schema_version", "provider", "enabled_calendars"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "provider": { "const": "google" },
+    "enabled_calendars": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "last_connected_at": { "type": "string", "format": "date-time" }
+  }
+}

@@ -80,3 +80,8 @@ export function snapshotCloseMessage(args: {
 export function importMessage(month: string, source: string, count: number): string {
   return `import: ${month} from ${source} (${count} entries)`;
 }
+
+// ─── calendar config ───
+export function calendarConfigMessage(action: 'connect' | 'disconnect' | 'update'): string {
+  return `config: ${action} calendar integration`;
+}

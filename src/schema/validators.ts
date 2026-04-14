@@ -7,6 +7,7 @@ import ratesSchema from '../../schemas/rates.schema.json';
 import projectsSchema from '../../schemas/projects.schema.json';
 import entriesSchema from '../../schemas/entries.schema.json';
 import snapshotSchema from '../../schemas/snapshot.schema.json';
+import calendarConfigSchema from '../../schemas/calendar-config.schema.json';
 
 import type {
   Partner,
@@ -16,6 +17,7 @@ import type {
   EntriesFile,
   Entry,
   Snapshot,
+  CalendarConfig,
 } from './types';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
@@ -27,6 +29,7 @@ const _rates = ajv.compile<RatesConfig>(ratesSchema);
 const _projects = ajv.compile<ProjectsConfig>(projectsSchema);
 const _entries = ajv.compile<EntriesFile>(entriesSchema);
 const _snapshot = ajv.compile<Snapshot>(snapshotSchema);
+const _calendarConfig = ajv.compile<CalendarConfig>(calendarConfigSchema);
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -44,6 +47,7 @@ export const validateProfile = wrap<Profile>(_profile);
 export const validateRates = wrap<RatesConfig>(_rates);
 export const validateProjects = wrap<ProjectsConfig>(_projects);
 export const validateSnapshot = wrap<Snapshot>(_snapshot);
+export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
 
 export const validateEntries = (data: unknown): ValidationResult<EntriesFile> => {
   if (!_entries(data)) return { ok: false, errors: _entries.errors ?? [] };
