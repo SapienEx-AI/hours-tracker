@@ -130,13 +130,15 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       date: s.date,
       hoursHundredths: s.hours_hundredths,
       description: s.description,
-      source_event_id: s.source_event_id,
+      source_ref: s.source_event_id
+        ? { kind: 'calendar', id: s.source_event_id }
+        : null,
     }));
     setPrefillHint(s.description || '(no title)');
   }
 
   function clearPrefill() {
-    setForm((f) => ({ ...f, hoursHundredths: 0, description: '', source_event_id: null }));
+    setForm((f) => ({ ...f, hoursHundredths: 0, description: '', source_ref: null }));
     setPrefillHint(null);
   }
 
