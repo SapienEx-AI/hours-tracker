@@ -13,6 +13,8 @@ Tracked features deferred from MVP (Phases 1–11). Each item references the spe
 - **Snapshot list + drift indicator + diff** — Snapshots screen lists every closed month, shows drift badge on expand, and surfaces added / removed / possibly-changed entry ids (spec §5.6, §8.7). Phase A.
 - **Log screen 2-column layout + date at top** — form left, calendar suggestions right. Phase B.
 - **Google Calendar integration (read-only)** — browser-native OAuth via GIS, multi-calendar support, click-to-prefill form, persistent dedupe via Entry `source_event_id` (schema v2). Phase C.
+- **Dashboard calendar view** — month-grid modal launched from a calendar icon on the Dashboard header. Per-day billable / non-billable / needs-review stacked bars, heatmap tint, today ring, muted weekends, week totals column, click-day side panel with entry list, click-entry → existing EditEntryModal. Mobile list fallback below `lg`.
+- **Dashboard this-month Project Builds table** — bucket-level table for the selected month, styled like Monthly Invoice. Uses the same project-builds stream definition as the existing summary card.
 
 ## Near-term
 
