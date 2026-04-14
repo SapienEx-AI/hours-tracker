@@ -2,16 +2,19 @@
 
 Tracked features deferred from MVP (Phases 1–11). Each item references the spec section that motivates it.
 
+## Shipped
+
+- **Edit modal for entries** — click a row in Entries to open the Quick Log form pre-filled (spec §8.4). Shipped pre-Phase-A.
+- **CSV export** — Export CSV button on Entries exports the currently-filtered rows (spec §3 row 12). Phase A.
+- **Keyboard shortcut `⌘/Ctrl+K`** — focuses Quick Log project select from any screen (spec §8.1). Phase A.
+- **Needs-review queue on dashboard** — clickable banner links to Entries with a needs-review status filter prefilled (spec §8.3). Phase A.
+- **Bucket CRUD (edit)** — inline edit name, budgeted hours, rate, status, and notes from Projects & Buckets (spec §8.5). Phase A.
+- **Bulk rate update tool** — filter + preview + apply dialog on Rates; commits one `bulk-edit:` per affected month (spec §7 row 9, §8.6). Phase A.
+- **Snapshot list + drift indicator + diff** — Snapshots screen lists every closed month, shows drift badge on expand, and surfaces added / removed / possibly-changed entry ids (spec §5.6, §8.7). Phase A.
+
 ## Near-term
 
-- **Bucket CRUD** — edit/close/archive buckets from the UI (spec §8.5). MVP only supports creating projects.
-- **Edit modal for entries** — click a row in Entries to open Quick Log form pre-filled (spec §8.4). MVP supports delete only.
-- **Snapshot list + drift diff** — full Snapshots screen with drift indicator and diff view (spec §8.7). MVP supports close only.
-- **Bulk rate update tool** — preview + filter + apply (spec §7 row 9, decision 9). MVP uses manual per-entry edits.
-- **CSV export** — export any month or filtered set as CSV (spec §3 row 12).
-- **Keyboard shortcut `⌘/Ctrl+K`** to focus Quick Log from any screen (spec §8.1).
-- **Needs-review queue on dashboard** — clickable, review-all (spec §8.3).
-- **Drift indicator on snapshots** — `source_hash` comparison on snapshot load (spec §5.6).
+_(Phase-A items moved to Shipped above.)_
 
 ## Medium-term
 
