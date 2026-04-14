@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useMonthEntries } from '@/data/hooks/use-month-entries';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useOctokit } from '@/data/hooks/use-octokit';
 import { useAuthStore } from '@/store/auth-store';
+import { useUiStore } from '@/store/ui-store';
 import { deleteEntry, updateEntry } from '@/data/entries-repo';
 import { splitRepoPath } from '@/data/octokit-client';
 import { deleteMessage, editMessage } from '@/data/commit-messages';
-import { formatHours, formatCents } from '@/format/format';
 import type { Partner, Entry } from '@/schema/types';
 import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
 import { Select } from '@/ui/components/Select';
 import { Banner } from '@/ui/components/Banner';
 import { qk } from '@/data/query-keys';
+import { entriesToCSV, downloadCSV } from '@/export/csv';
 import { EditEntryModal } from './entries/EditEntryModal';
+import { EntryRow } from './entries/EntryRow';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -48,88 +50,34 @@ function formatMonthLabel(m: string): string {
   return `${MONTH_NAMES[monthIdx] ?? ''} ${yStr ?? ''}`;
 }
 
-function BucketCell({
-  entry,
-  buckets,
-  onAssign,
-  busy,
-}: {
-  entry: Entry;
-  buckets: Array<{ id: string; name: string; status: string }>;
-  onAssign: (entryId: string, bucketId: string) => void;
-  busy: boolean;
-}): JSX.Element {
-  const [picking, setPicking] = useState(false);
-
-  if (entry.bucket_id) {
-    const bucket = buckets.find((b) => b.id === entry.bucket_id);
-    return (
-      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700">
-        {bucket?.name ?? entry.bucket_id}
-      </span>
-    );
-  }
-
-  if (picking) {
-    return (
-      <Select
-        className="!py-1 !px-2 !text-xs !w-36"
-        autoFocus
-        value=""
-        onChange={(e) => {
-          if (e.target.value) {
-            onAssign(entry.id, e.target.value);
-          }
-          setPicking(false);
-        }}
-        onBlur={() => setPicking(false)}
-        disabled={busy}
-      >
-        <option value="">select bucket...</option>
-        {buckets
-          .filter((b) => b.status !== 'archived')
-          .map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-      </Select>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={(ev) => {
-        ev.stopPropagation();
-        setPicking(true);
-      }}
-      className="text-xs text-slate-400 hover:text-sky-500 transition-colors"
-    >
-      + assign
-    </button>
-  );
-}
+type StatusFilter = 'all' | 'billable' | 'non_billable' | 'needs_review';
 
 export function Entries({ partner }: { partner: Partner }): JSX.Element {
   const [month, setMonth] = useState(currentMonth);
   const [filter, setFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editing, setEditing] = useState<Entry | null>(null);
   const entries = useMonthEntries(month);
   const projects = useProjects();
   const octokit = useOctokit();
   const dataRepo = useAuthStore((s) => s.dataRepo);
   const queryClient = useQueryClient();
+  const prefilter = useUiStore((s) => s.entriesPrefilter);
+  const setPrefilter = useUiStore((s) => s.setEntriesPrefilter);
+
+  useEffect(() => {
+    if (prefilter?.status === 'needs_review') {
+      setStatusFilter('needs_review');
+      setPrefilter(null);
+    }
+  }, [prefilter, setPrefilter]);
 
   const deleteMutation = useMutation({
     mutationFn: async (entry: Entry) => {
       if (!octokit || !dataRepo) throw new Error('Not authenticated');
       const { owner, repo } = splitRepoPath(dataRepo);
       await deleteEntry(octokit, {
-        owner,
-        repo,
-        month,
-        entryId: entry.id,
+        owner, repo, month, entryId: entry.id,
         message: deleteMessage(entry.id, 'deleted via UI'),
       });
     },
@@ -145,15 +93,11 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
       if (!octokit || !dataRepo) throw new Error('Not authenticated');
       const { owner, repo } = splitRepoPath(dataRepo);
       const updated: Entry = {
-        ...args.entry,
-        bucket_id: args.bucketId,
-        billable_status: 'billable',
-        updated_at: new Date().toISOString(),
+        ...args.entry, bucket_id: args.bucketId,
+        billable_status: 'billable', updated_at: new Date().toISOString(),
       };
       await updateEntry(octokit, {
-        owner,
-        repo,
-        entry: updated,
+        owner, repo, entry: updated,
         message: editMessage(args.entry.id, `bucket none → ${args.bucketId}`),
       });
     },
@@ -169,9 +113,10 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
 
   const visible = (entries.data?.entries ?? []).filter(
     (e) =>
-      !filter ||
-      e.project.toLowerCase().includes(filter.toLowerCase()) ||
-      e.description.toLowerCase().includes(filter.toLowerCase()),
+      (statusFilter === 'all' || e.billable_status === statusFilter) &&
+      (!filter ||
+        e.project.toLowerCase().includes(filter.toLowerCase()) ||
+        e.description.toLowerCase().includes(filter.toLowerCase())),
   );
   const currency = {
     currency_symbol: partner.currency_symbol,
@@ -181,6 +126,11 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   function getBucketsForProject(projectId: string) {
     const project = projects.data?.projects.find((p) => p.id === projectId);
     return project?.buckets ?? [];
+  }
+
+  function handleAssign(entryId: string, bucketId: string) {
+    const target = entries.data?.entries.find((x) => x.id === entryId);
+    if (target) assignBucketMutation.mutate({ entry: target, bucketId });
   }
 
   return (
@@ -194,15 +144,11 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
             <button
               className="text-slate-400 hover:text-sky-500 transition-colors px-1"
               onClick={() => setMonth(prevMonth(month))}
-            >
-              ←
-            </button>
+            >←</button>
             <button
               className="text-slate-400 hover:text-sky-500 transition-colors px-1"
               onClick={() => setMonth(nextMonth(month))}
-            >
-              →
-            </button>
+            >→</button>
           </div>
         </div>
         <div className="max-w-xs flex-1">
@@ -212,6 +158,24 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
+        <div className="w-48">
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          >
+            <option value="all">all statuses</option>
+            <option value="billable">billable</option>
+            <option value="non_billable">non-billable</option>
+            <option value="needs_review">needs-review</option>
+          </Select>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => downloadCSV(`entries-${month}.csv`, entriesToCSV(visible))}
+          disabled={visible.length === 0}
+        >
+          Export CSV
+        </Button>
       </div>
       {entries.isLoading && <div className="text-slate-500">Loading...</div>}
       {entries.error && <Banner variant="error">{(entries.error as Error).message}</Banner>}
@@ -238,53 +202,16 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
           </thead>
           <tbody>
             {visible.map((e) => (
-              <tr
+              <EntryRow
                 key={e.id}
-                className="border-t border-black/5 hover:bg-white/30 transition-colors cursor-pointer"
-                onClick={() => setEditing(e)}
-              >
-                <td className="py-2 px-3 font-mono text-slate-600">{e.date}</td>
-                <td className="py-2 px-3 font-medium text-slate-800">{e.project}</td>
-                <td className="py-2 px-3 font-mono">{formatHours(e.hours_hundredths)}</td>
-                <td className="py-2 px-3 font-mono">{formatCents(e.rate_cents, currency)}</td>
-                <td className="py-2 px-3">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      e.billable_status === 'billable'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : e.billable_status === 'non_billable'
-                          ? 'bg-slate-100 text-slate-600'
-                          : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {e.billable_status.replace('_', '-')}
-                  </span>
-                </td>
-                <td className="py-2 px-3" onClick={(ev) => ev.stopPropagation()}>
-                  <BucketCell
-                    entry={e}
-                    buckets={getBucketsForProject(e.project)}
-                    onAssign={(entryId, bucketId) => {
-                      const target = entries.data?.entries.find((x) => x.id === entryId);
-                      if (target) assignBucketMutation.mutate({ entry: target, bucketId });
-                    }}
-                    busy={assignBucketMutation.isPending}
-                  />
-                </td>
-                <td className="py-2 px-3 text-slate-600 max-w-sm">
-                  {e.description}
-                </td>
-                <td className="py-2 px-3" onClick={(ev) => ev.stopPropagation()}>
-                  <Button
-                    variant="danger"
-                    onClick={() => {
-                      if (confirm(`Delete entry ${e.id}?`)) deleteMutation.mutate(e);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </td>
-              </tr>
+                entry={e}
+                buckets={getBucketsForProject(e.project)}
+                currency={currency}
+                onEdit={setEditing}
+                onAssignBucket={handleAssign}
+                onDelete={(x) => deleteMutation.mutate(x)}
+                assignBusy={assignBucketMutation.isPending}
+              />
             ))}
           </tbody>
         </table>

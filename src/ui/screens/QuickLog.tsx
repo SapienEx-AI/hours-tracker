@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useUiStore } from '@/store/ui-store';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useOctokit } from '@/data/hooks/use-octokit';
@@ -118,6 +119,12 @@ export function QuickLog(): JSX.Element {
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [toast, setToast] = useState<string | null>(null);
+  const projectRef = useRef<HTMLSelectElement | null>(null);
+  const focusLogNonce = useUiStore((s) => s.focusLogNonce);
+
+  useEffect(() => {
+    if (focusLogNonce > 0) projectRef.current?.focus();
+  }, [focusLogNonce]);
 
   // Auto-resolve rate when project/bucket/date changes (if not manually overridden).
   useEffect(() => {
@@ -187,6 +194,7 @@ export function QuickLog(): JSX.Element {
 
       <FieldLabel label="Project">
         <Select
+          ref={projectRef}
           value={form.projectId}
           onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value, bucketId: null }))}
         >

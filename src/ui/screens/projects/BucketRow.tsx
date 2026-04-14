@@ -4,6 +4,7 @@ import { formatHoursDecimal, formatCents, type CurrencyDisplay } from '@/format/
 import { sumHundredths, sumCents, subCents } from '@/calc';
 import { Button } from '@/ui/components/Button';
 import { RecordInvoiceForm } from './RecordInvoiceForm';
+import { EditBucketForm, type EditBucketUpdates } from './EditBucketForm';
 
 type AllTimeConsumption = {
   consumed_hours_hundredths: number;
@@ -44,6 +45,42 @@ function ProgressBar({ pct, over }: { pct: number; over: boolean }): JSX.Element
   );
 }
 
+function BucketActions({
+  bucket, canInvoice, editing, disabled, onInvoice, onEditToggle, onClose, onArchive,
+}: {
+  bucket: Bucket;
+  canInvoice: boolean;
+  editing: boolean;
+  disabled: boolean;
+  onInvoice: () => void;
+  onEditToggle: () => void;
+  onClose: () => void;
+  onArchive: () => void;
+}): JSX.Element {
+  const isArchived = bucket.status === 'archived';
+  const isActive = bucket.status === 'active';
+  return (
+    <div className="flex gap-1">
+      {canInvoice && (
+        <Button variant="secondary" onClick={onInvoice} disabled={disabled}>
+          Record invoice
+        </Button>
+      )}
+      {!isArchived && (
+        <Button variant="secondary" onClick={onEditToggle} disabled={disabled}>
+          {editing ? 'Close edit' : 'Edit'}
+        </Button>
+      )}
+      {isActive && (
+        <Button variant="secondary" onClick={onClose} disabled={disabled}>Close</Button>
+      )}
+      {!isArchived && (
+        <Button variant="secondary" onClick={onArchive} disabled={disabled}>Archive</Button>
+      )}
+    </div>
+  );
+}
+
 type Props = {
   bucket: Bucket;
   currency: CurrencyDisplay;
@@ -51,6 +88,7 @@ type Props = {
   onClose: () => void;
   onArchive: () => void;
   onRecordInvoice: (invoice: BucketInvoice) => void;
+  onEdit: (updates: EditBucketUpdates, changes: string[]) => void;
   disabled: boolean;
 };
 
@@ -61,9 +99,11 @@ export function BucketRow({
   onClose,
   onArchive,
   onRecordInvoice,
+  onEdit,
   disabled,
 }: Props): JSX.Element {
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const statusColor =
     bucket.status === 'active'
@@ -86,19 +126,16 @@ export function BucketRow({
           </span>
           <span className={`text-xs ml-2 ${statusColor}`}>{bucket.status}</span>
         </div>
-        <div className="flex gap-1">
-          {consumed > 0 && (
-            <Button variant="secondary" onClick={() => setShowInvoiceForm(true)} disabled={disabled || uninvoicedHours <= 0}>
-              Record invoice
-            </Button>
-          )}
-          {bucket.status === 'active' && (
-            <Button variant="secondary" onClick={onClose} disabled={disabled}>Close</Button>
-          )}
-          {bucket.status !== 'archived' && (
-            <Button variant="secondary" onClick={onArchive} disabled={disabled}>Archive</Button>
-          )}
-        </div>
+        <BucketActions
+          bucket={bucket}
+          canInvoice={consumed > 0 && uninvoicedHours > 0}
+          editing={editing}
+          disabled={disabled}
+          onInvoice={() => setShowInvoiceForm(true)}
+          onEditToggle={() => setEditing((v) => !v)}
+          onClose={onClose}
+          onArchive={onArchive}
+        />
       </div>
 
       {/* Progress bar */}
@@ -152,6 +189,19 @@ export function BucketRow({
             setShowInvoiceForm(false);
           }}
           onCancel={() => setShowInvoiceForm(false)}
+          disabled={disabled}
+        />
+      )}
+
+      {/* Edit bucket form */}
+      {editing && (
+        <EditBucketForm
+          bucket={bucket}
+          onSave={(u, c) => {
+            onEdit(u, c);
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
           disabled={disabled}
         />
       )}
