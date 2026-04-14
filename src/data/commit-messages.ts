@@ -48,6 +48,15 @@ export function configAddBucketMessage(bucketId: string, projectId: string): str
   return `config: add bucket ${bucketId} to ${projectId}`;
 }
 
+export function configEditBucketMessage(args: {
+  bucketId: string;
+  projectId: string;
+  changes: string[];
+}): string {
+  const body = args.changes.length > 0 ? args.changes.join(', ') : 'no field changes';
+  return `config: edit bucket ${args.bucketId} in ${args.projectId} — ${body}`;
+}
+
 export function configAddRateMessage(rate_cents: number, effective_from: string): string {
   return `config: add rate ${formatDollars(rate_cents)} effective ${effective_from}`;
 }
