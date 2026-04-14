@@ -9,20 +9,32 @@ function entriesPath(month: string): string {
 }
 
 /**
- * Upgrade a v1 or v2 file to v3. The validator has already lifted any legacy
- * source_event_id into source_ref on read, so file.entries are already v3
- * shape in memory — we just bump the version on the wire and ensure source_ref
- * is set.
+ * Upgrade a v1 or v2 file to v3. Strips any legacy `source_event_id` from
+ * each entry (forbidden in v3) and synthesizes `source_ref` when missing —
+ * either as a calendar-kinded ref lifted from the legacy id, or null.
  *
- * Returns the input file unchanged when it is already v3.
+ * Passing an already-v3 file still runs the strip pass as a belt-and-suspenders
+ * recovery: if a prior broken write left a v3 entry carrying the legacy field,
+ * this removes it so the next write lands a clean file.
  */
 export function upgradeEntriesFileToV3(file: EntriesFile): EntriesFile {
-  if (file.schema_version === 3) return file;
-  return {
-    ...file,
-    schema_version: 3,
-    entries: file.entries.map((e) => ({ ...e, source_ref: e.source_ref ?? null })),
-  };
+  const entries = file.entries.map((e) => {
+    const anyE = e as Entry & { source_event_id?: string | null };
+    const legacyId = anyE.source_event_id;
+    const cleaned: Entry & { source_event_id?: string | null } = { ...anyE };
+    delete cleaned.source_event_id;
+    if (cleaned.source_ref === undefined) {
+      cleaned.source_ref =
+        legacyId === undefined || legacyId === null
+          ? null
+          : { kind: 'calendar', id: legacyId };
+    }
+    return cleaned as Entry;
+  });
+  if (file.schema_version === 3) {
+    return { ...file, entries };
+  }
+  return { ...file, schema_version: 3, entries };
 }
 
 function schemaUpgradeSuffix(fromVersion: EntriesFile['schema_version']): string {

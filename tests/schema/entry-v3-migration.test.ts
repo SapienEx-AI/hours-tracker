@@ -98,7 +98,10 @@ describe('Entry v1/v2/v3 acceptance + backfill', () => {
     expect(r.ok).toBe(false);
   });
 
-  it('rejects a v3 file that also carries legacy source_event_id', () => {
+  it('self-heals a v3 file with BOTH source_event_id and source_ref by stripping the legacy field', () => {
+    // This pattern is produced by a pre-fix broken writer. The validator
+    // strips source_event_id in memory and accepts; next write lands a clean
+    // file via the fixed upgradeEntriesFileToV3.
     const file = {
       schema_version: 3,
       month: '2026-05',
@@ -111,13 +114,16 @@ describe('Entry v1/v2/v3 acceptance + backfill', () => {
       ],
     };
     const r = validateEntries(file);
-    expect(r.ok).toBe(false);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.entries[0]?.source_ref).toEqual({ kind: 'calendar', id: 'a' });
+      expect('source_event_id' in r.value.entries[0]!).toBe(false);
+    }
   });
 
-  it('rejects entries with BOTH source_event_id and source_ref at any schema_version', () => {
-    // Defense-in-depth: the JSON schema itself forbids both fields on the same
-    // entry regardless of version, independent of the validator wrapper's
-    // v3-specific rule.
+  it('self-heals entries with BOTH source_event_id and source_ref at any schema_version', () => {
+    // Self-heal applies regardless of schema_version so already-corrupted
+    // files at any version load cleanly.
     for (const schema_version of [1, 2, 3] as const) {
       const file = {
         schema_version,
@@ -131,7 +137,10 @@ describe('Entry v1/v2/v3 acceptance + backfill', () => {
         ],
       };
       const r = validateEntries(file);
-      expect(r.ok).toBe(false);
+      expect(r.ok).toBe(true);
+      if (r.ok) {
+        expect('source_event_id' in r.value.entries[0]!).toBe(false);
+      }
     }
   });
 

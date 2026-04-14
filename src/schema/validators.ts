@@ -58,46 +58,48 @@ export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
  * The caller's original object is never mutated, so a diagnostic logger
  * holding the parsed JSON sees exactly what came off disk.
  */
-export const validateEntries = (data: unknown): ValidationResult<EntriesFile> => {
-  if (!_entries(data)) return { ok: false, errors: _entries.errors ?? [] };
-  // Clone before mutating. EntriesFile is pure JSON so structuredClone is safe.
-  const file = structuredClone(data) as EntriesFile;
-
-  // v3 files must not carry the legacy source_event_id field.
-  if (file.schema_version === 3) {
-    for (let i = 0; i < file.entries.length; i++) {
-      const e = file.entries[i] as Entry & { source_event_id?: string | null };
-      if ('source_event_id' in e) {
-        return {
-          ok: false,
-          errors: [
-            {
-              instancePath: `/entries/${i}/source_event_id`,
-              schemaPath: '#/properties/entries/items/properties/source_event_id',
-              keyword: 'deprecated',
-              params: {},
-              message:
-                'schema_version 3 entries must not carry legacy source_event_id; use source_ref',
-            },
-          ],
-        };
-      }
+/**
+ * Strip `source_event_id` from any entry that also has `source_ref`.
+ * This pattern is corruption from a pre-fix broken writer; self-healing on
+ * read lets those files load, and the next write lands a clean file via
+ * the fixed upgradeEntriesFileToV3.
+ */
+function stripCorruptedLegacyField(data: unknown): void {
+  if (typeof data !== 'object' || data === null) return;
+  const entries = (data as { entries?: unknown }).entries;
+  if (!Array.isArray(entries)) return;
+  for (const e of entries as Array<Record<string, unknown>>) {
+    if ('source_event_id' in e && 'source_ref' in e) {
+      delete e.source_event_id;
     }
   }
+}
 
-  // Backfill source_ref from legacy versions so downstream code only sees v3 shape.
+/**
+ * Lift legacy `source_event_id` into `source_ref` on entries that don't
+ * already have `source_ref`. v1/v2 files always take this path; v3 files
+ * generally already have source_ref.
+ */
+function liftLegacyFieldToSourceRef(file: EntriesFile): void {
   for (const e of file.entries) {
     const anyE = e as Entry & { source_event_id?: string | null };
-    if (!('source_ref' in e)) {
-      const legacyId = anyE.source_event_id;
-      if (legacyId === undefined || legacyId === null) {
-        (e as Entry).source_ref = null;
-      } else {
-        (e as Entry).source_ref = { kind: 'calendar', id: legacyId };
-      }
-      delete anyE.source_event_id;
-    }
+    if ('source_ref' in e) continue;
+    const legacyId = anyE.source_event_id;
+    (e as Entry).source_ref =
+      legacyId === undefined || legacyId === null
+        ? null
+        : { kind: 'calendar', id: legacyId };
+    delete anyE.source_event_id;
   }
+}
+
+export const validateEntries = (data: unknown): ValidationResult<EntriesFile> => {
+  // Clone FIRST — never mutate the caller's input.
+  const cloned = structuredClone(data) as unknown;
+  stripCorruptedLegacyField(cloned);
+  if (!_entries(cloned)) return { ok: false, errors: _entries.errors ?? [] };
+  const file = cloned as EntriesFile;
+  liftLegacyFieldToSourceRef(file);
   return { ok: true, value: file };
 };
 
