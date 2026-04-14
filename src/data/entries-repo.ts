@@ -8,6 +8,17 @@ function entriesPath(month: string): string {
   return `data/entries/${month}.json`;
 }
 
+export function upgradeEntriesFileToV2(file: EntriesFile): EntriesFile {
+  return {
+    ...file,
+    schema_version: 2,
+    entries: file.entries.map((e) => ({
+      ...e,
+      source_event_id: e.source_event_id ?? null,
+    })),
+  };
+}
+
 export type LoadMonthEntriesArgs = {
   owner: string;
   repo: string;
@@ -98,7 +109,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
   const path = entriesPath(month);
 
   // Validate the full entry first as a standalone file (one entry).
-  const probe: EntriesFile = { schema_version: 1, month, entries: [args.entry] };
+  const probe: EntriesFile = { schema_version: 2, month, entries: [args.entry] };
   const validation = validateEntries(probe);
   if (!validation.ok) {
     throw new Error(`Entry failed validation:\n${formatValidationErrors(validation.errors)}`);
@@ -108,25 +119,37 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
     owner: args.owner,
     repo: args.repo,
     path,
-    message: logMessage({
-      project: args.entry.project,
-      date: args.entry.date,
-      hours_hundredths: args.entry.hours_hundredths,
-      rate_cents: args.entry.rate_cents,
-      description: args.entry.description,
-    }),
+    message: logMessage(
+      args.entry.source_event_id !== null
+        ? {
+            project: args.entry.project,
+            date: args.entry.date,
+            hours_hundredths: args.entry.hours_hundredths,
+            rate_cents: args.entry.rate_cents,
+            description: args.entry.description,
+            source: 'calendar',
+          }
+        : {
+            project: args.entry.project,
+            date: args.entry.date,
+            hours_hundredths: args.entry.hours_hundredths,
+            rate_cents: args.entry.rate_cents,
+            description: args.entry.description,
+          },
+    ),
     transform: (current) => {
       const base: EntriesFile = current ?? {
-        schema_version: 1,
+        schema_version: 2,
         month,
         entries: [],
       };
       if (base.entries.some((e) => e.id === args.entry.id)) {
         throw new Error(`Duplicate entry id ${args.entry.id} — refusing to overwrite.`);
       }
+      const upgraded = upgradeEntriesFileToV2(base);
       return {
-        ...base,
-        entries: [...base.entries, args.entry],
+        ...upgraded,
+        entries: [...upgraded.entries, args.entry],
       };
     },
   });
@@ -155,13 +178,14 @@ export async function updateEntry(
       if (!current) {
         throw new Error(`Cannot update entry in missing month file: ${path}`);
       }
-      const idx = current.entries.findIndex((e) => e.id === args.entry.id);
+      const upgraded = upgradeEntriesFileToV2(current);
+      const idx = upgraded.entries.findIndex((e) => e.id === args.entry.id);
       if (idx < 0) {
         throw new Error(`Entry id ${args.entry.id} not found in ${path}`);
       }
-      const next = [...current.entries];
+      const next = [...upgraded.entries];
       next[idx] = { ...args.entry, updated_at: new Date().toISOString() };
-      const updated: EntriesFile = { ...current, entries: next };
+      const updated: EntriesFile = { ...upgraded, entries: next };
       const v = validateEntries(updated);
       if (!v.ok) {
         throw new Error(
@@ -193,9 +217,10 @@ export async function deleteEntry(
     message: args.message,
     transform: (current) => {
       if (!current) throw new Error(`Cannot delete from missing file ${path}`);
+      const upgraded = upgradeEntriesFileToV2(current);
       return {
-        ...current,
-        entries: current.entries.filter((e) => e.id !== args.entryId),
+        ...upgraded,
+        entries: upgraded.entries.filter((e) => e.id !== args.entryId),
       };
     },
   });
