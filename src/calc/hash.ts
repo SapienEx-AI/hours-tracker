@@ -1,4 +1,4 @@
-import type { Entry } from '@/schema/types';
+import type { Entry, SourceRef } from '@/schema/types';
 
 /**
  * Canonicalize a list of entries into a deterministic JSON string suitable
@@ -6,8 +6,12 @@ import type { Entry } from '@/schema/types';
  *   - Key order within any entry object
  *   - Entry array order (we sort by `id`)
  *
- * This gives us a stable "snapshot source hash" (spec §5.6) that only changes
- * when the semantic content of the entries changes.
+ * source_ref is projected back to per-kind canonical fields so:
+ *   - null / missing → no source field (matches v1 and v2-null hashes)
+ *   - { kind: 'calendar', id } → "source_event_id": id (matches v2 calendar hashes)
+ *   - { kind: 'timer', id } → "source_timer_id": id (new; no legacy conflict)
+ *
+ * This preserves every pre-existing snapshot hash byte-for-byte.
  */
 export function canonicalizeEntriesForHashing(entries: readonly Entry[]): string {
   const sorted = [...entries].sort((a, b) => a.id.localeCompare(b.id));
@@ -15,8 +19,6 @@ export function canonicalizeEntriesForHashing(entries: readonly Entry[]): string
 }
 
 function canonicalizeEntry(e: Entry): Record<string, unknown> {
-  // Emit keys in fixed order. source_event_id is emitted only when non-null
-  // so v1 entries (no field) and v2 entries with null hash identically.
   const base: Record<string, unknown> = {
     id: e.id,
     project: e.project,
@@ -31,17 +33,26 @@ function canonicalizeEntry(e: Entry): Record<string, unknown> {
     created_at: e.created_at,
     updated_at: e.updated_at,
   };
-  if (e.source_event_id !== null && e.source_event_id !== undefined) {
-    base.source_event_id = e.source_event_id;
+  const source = canonicalSource(e.source_ref);
+  for (const [k, v] of Object.entries(source)) {
+    base[k] = v;
   }
   return base;
 }
 
-/**
- * Compute SHA-256 of the canonicalized entries, returning the string
- * `sha256:<hex>`. Uses the browser's crypto.subtle API (available in all
- * modern browsers and Node 18+).
- */
+function canonicalSource(ref: SourceRef | undefined): Record<string, string> {
+  // Treat undefined identically to null — the validator backfills source_ref on
+  // read, but defensively allow callers that construct Entry-like values
+  // without it (tests, future migrations).
+  if (ref === null || ref === undefined) return {};
+  if (ref.kind === 'calendar') return { source_event_id: ref.id };
+  if (ref.kind === 'timer') return { source_timer_id: ref.id };
+  // Exhaustiveness check — if a new kind is added without updating this file,
+  // TypeScript will error here at compile time.
+  const _exhaustive: never = ref;
+  return _exhaustive;
+}
+
 export async function hashEntries(entries: readonly Entry[]): Promise<string> {
   const canonical = canonicalizeEntriesForHashing(entries);
   const bytes = new TextEncoder().encode(canonical);

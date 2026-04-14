@@ -45,7 +45,7 @@ function entry(p: Partial<Entry> & {
     rate_source: 'global_default',
     created_at: '2026-04-14T00:00:00Z',
     updated_at: '2026-04-14T00:00:00Z',
-    source_event_id: null,
+    source_ref: null,
     ...p,
   };
 }

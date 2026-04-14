@@ -15,7 +15,7 @@ const baseEntry: Entry = {
   review_flag: false,
   created_at: '2026-03-25T22:15:04Z',
   updated_at: '2026-03-25T22:15:04Z',
-  source_event_id: null,
+  source_ref: null,
 };
 
 describe('hash', () => {
@@ -24,6 +24,7 @@ describe('hash', () => {
     // A re-ordered clone with same content but arbitrary key order.
     const b = [
       {
+        source_ref: baseEntry.source_ref,
         updated_at: baseEntry.updated_at,
         created_at: baseEntry.created_at,
         review_flag: baseEntry.review_flag,
