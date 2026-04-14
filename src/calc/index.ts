@@ -24,3 +24,4 @@ export {
   type BulkRateFilter,
   type BulkRatePreview,
 } from './bulk-rate';
+export { computeDrift, type DriftDiff } from './drift';

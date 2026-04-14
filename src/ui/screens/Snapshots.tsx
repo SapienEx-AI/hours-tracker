@@ -4,6 +4,7 @@ import { useMonthEntries } from '@/data/hooks/use-month-entries';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
 import { useOctokit } from '@/data/hooks/use-octokit';
+import { useSnapshotsList } from '@/data/hooks/use-snapshots-list';
 import { useAuthStore } from '@/store/auth-store';
 import { splitRepoPath } from '@/data/octokit-client';
 import { writeSnapshot } from '@/data/snapshots-repo';
@@ -15,6 +16,7 @@ import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { qk } from '@/data/query-keys';
+import { SnapshotRow } from './snapshots/SnapshotRow';
 
 function currentMonth(): string {
   const d = new Date();
@@ -29,6 +31,7 @@ export function Snapshots({ partner }: { partner: Partner }): JSX.Element {
   const octokit = useOctokit();
   const dataRepo = useAuthStore((s) => s.dataRepo);
   const queryClient = useQueryClient();
+  const snaps = useSnapshotsList();
 
   const currency = {
     currency_symbol: partner.currency_symbol,
@@ -49,7 +52,7 @@ export function Snapshots({ partner }: { partner: Partner }): JSX.Element {
         schema_version: 1,
         month,
         closed_at: new Date().toISOString(),
-        closed_at_commit_sha: '0000000', // best-effort; CI deploy tracks real sha
+        closed_at_commit_sha: '0000000',
         source_hash: sourceHash,
         totals: {
           total_hours_hundredths: totals.total_hours_hundredths,
@@ -67,6 +70,9 @@ export function Snapshots({ partner }: { partner: Partner }): JSX.Element {
       queryClient.invalidateQueries({
         queryKey: qk.snapshot(dataRepo ?? 'none', month),
       });
+      queryClient.invalidateQueries({
+        queryKey: qk.snapshotsList(dataRepo ?? 'none'),
+      });
     },
   });
 
@@ -83,30 +89,43 @@ export function Snapshots({ partner }: { partner: Partner }): JSX.Element {
     : null;
 
   return (
-    <div className="flex flex-col gap-4 max-w-3xl">
+    <div className="flex flex-col gap-6 max-w-3xl">
       <h1 className="font-display text-2xl">Snapshots</h1>
-      <FieldLabel label="Month to close">
-        <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
-      </FieldLabel>
-      {totals && (
-        <div className="p-4 rounded-2xl glass font-mono text-sm">
-          <div>
-            Billable: {formatHours(totals.billable_hours_hundredths)} ·{' '}
-            {formatCents(totals.billable_amount_cents, currency)}
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg">Close a month</h2>
+        <FieldLabel label="Month to close">
+          <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+        </FieldLabel>
+        {totals && (
+          <div className="p-4 rounded-2xl glass font-mono text-sm">
+            <div>
+              Billable: {formatHours(totals.billable_hours_hundredths)} ·{' '}
+              {formatCents(totals.billable_amount_cents, currency)}
+            </div>
+            <div>Non-billable: {formatHours(totals.non_billable_hours_hundredths)}</div>
+            <div>Needs review: {formatHours(totals.needs_review_hours_hundredths)}</div>
           </div>
-          <div>Non-billable: {formatHours(totals.non_billable_hours_hundredths)}</div>
-          <div>Needs review: {formatHours(totals.needs_review_hours_hundredths)}</div>
-        </div>
-      )}
-      {closeMutation.error && (
-        <Banner variant="error">{(closeMutation.error as Error).message}</Banner>
-      )}
-      <Button onClick={() => closeMutation.mutate()} disabled={closeMutation.isPending || !ready}>
-        {closeMutation.isPending ? 'Closing…' : `Close ${month}`}
-      </Button>
-      <Banner variant="warning">
-        Drift detection + snapshot list view land in post-MVP (see backlog).
-      </Banner>
+        )}
+        {closeMutation.error && (
+          <Banner variant="error">{(closeMutation.error as Error).message}</Banner>
+        )}
+        <Button onClick={() => closeMutation.mutate()} disabled={closeMutation.isPending || !ready}>
+          {closeMutation.isPending ? 'Closing…' : `Close ${month}`}
+        </Button>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-display text-lg">Closed snapshots</h2>
+        {snaps.isLoading && <div className="text-slate-500">Loading…</div>}
+        {snaps.error && <Banner variant="error">{(snaps.error as Error).message}</Banner>}
+        {(snaps.data ?? []).map((s) => (
+          <SnapshotRow key={s.month} snapshot={s} partner={partner} />
+        ))}
+        {snaps.data?.length === 0 && (
+          <div className="text-sm text-slate-500">No closed snapshots yet.</div>
+        )}
+      </section>
     </div>
   );
 }

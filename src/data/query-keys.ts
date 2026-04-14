@@ -13,4 +13,5 @@ export const qk = {
     [...qk.all, 'entries', repo, month] as const,
   snapshot: (repo: string, month: string) =>
     [...qk.all, 'snapshots', repo, month] as const,
+  snapshotsList: (repo: string) => [...qk.all, 'snapshots-list', repo] as const,
 };
