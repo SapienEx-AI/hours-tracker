@@ -136,6 +136,112 @@ html, body, #root {
   animation: page-enter 0.2s cubic-bezier(0.2, 0, 0, 1) both;
 }
 
+/* ── Form-receive sweep (data flowing from Assist panel into the form) ── */
+@keyframes assist-sweep {
+  0%   { transform: translateX(105%); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateX(-105%); opacity: 0; }
+}
+.anim-assist-sweep {
+  animation: assist-sweep 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Per-field magic fill (specific fields that received data) ──
+ *
+ * Color is themed to the source panel via CSS custom properties on the
+ * wrapper: the wrapper's inline style sets --magic-r, --magic-g, --magic-b
+ * (and --sparkle-r/g/b for sparkle hue). Default fallback is partner-cyan.
+ *
+ * Composite animation: glow ring + inner tint + subtle scale pulse +
+ * shimmer band that sweeps L→R + two twinkling sparkles. Ends on a
+ * faint colored tint that lingers (not a shimmer state) to mark the
+ * filled field after the flourish.
+ */
+.anim-field-magic {
+  --magic-r: 107;
+  --magic-g: 207;
+  --magic-b: 238;
+  --sparkle-r: 255;
+  --sparkle-g: 255;
+  --sparkle-b: 255;
+  --field-delay: 0ms;
+  border-radius: 0.75rem;
+  position: relative;
+  transform-origin: center;
+  animation: field-magic-fill 1100ms cubic-bezier(0.22, 1, 0.36, 1) var(--field-delay) forwards;
+}
+
+/* Shimmer layer — its own absolutely-positioned overlay so we can fade
+ * it to opacity 0 at the end without affecting the field's text contrast.
+ * Rendered in JSX as a sibling <span> above the field's children so it
+ * draws over the input surface as light passing through. */
+.anim-field-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  pointer-events: none;
+  /* Soft color wash — wide, blended gradient that sweeps as a translucent
+   * tide of colour rather than a focused beam. Most of the visible area
+   * is some hue at any time, with very gradual fall-offs at the edges. */
+  background-image: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.10) 12%,
+    rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.22) 30%,
+    rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.32) 45%,
+    rgba(255, 255, 255, 0.42) 50%,
+    rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.32) 55%,
+    rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.22) 70%,
+    rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.10) 88%,
+    transparent 100%
+  );
+  background-size: 180% 100%;
+  background-position: -90% 0;
+  opacity: 0;
+  animation: field-shimmer-sweep 1200ms cubic-bezier(0.22, 1, 0.36, 1) var(--field-delay) forwards;
+}
+
+@keyframes field-magic-fill {
+  0% {
+    transform: scale(0.985);
+    box-shadow: 0 0 0 0 rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0);
+    background-color: rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0);
+  }
+  10% {
+    transform: scale(1.025);
+    box-shadow:
+      0 0 0 5px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.55),
+      0 0 32px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.7),
+      0 0 64px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.3),
+      inset 0 0 24px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.22);
+    background-color: rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.16);
+  }
+  35% {
+    transform: scale(1.01);
+    box-shadow:
+      0 0 0 2px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.28),
+      0 0 18px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.32),
+      inset 0 0 12px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.1);
+    background-color: rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.18),
+      inset 0 0 8px rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.06);
+    background-color: rgb(var(--magic-r) var(--magic-g) var(--magic-b) / 0.07);
+  }
+}
+
+/* Wash sweeps fully across with smooth opacity envelope. */
+@keyframes field-shimmer-sweep {
+  0%   { background-position: -90% 0; opacity: 0; }
+  15%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { background-position: 180% 0; opacity: 0; }
+}
+
+
 /* ── Custom scrollbar (webkit) ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

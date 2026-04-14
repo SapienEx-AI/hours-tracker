@@ -15,10 +15,9 @@ import { qk } from '@/data/query-keys';
 import type { Route } from '@/ui/Router';
 import type { Suggestion } from '@/data/hooks/use-calendar-events';
 import { useTimerStore } from '@/store/timer-store';
-import type { TimerSession } from '@/store/timer-session';
-import { SuggestionsPanel } from './log/SuggestionsPanel';
+import { msToHundredths, type HistoricalRecording } from '@/store/timer-session';
 import { LogForm } from './log/LogForm';
-import { TimerBanner } from './log/TimerBanner';
+import { LogHelpersPanel } from './log/LogHelpersPanel';
 import { buildEntry, initialForm, type FormState } from './log/form-helpers';
 
 type QueryLike<T> = {
@@ -63,6 +62,11 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   const [form, setForm] = useState<FormState>(initialForm);
   const [toast, setToast] = useState<string | null>(null);
   const [prefillHint, setPrefillHint] = useState<string | null>(null);
+  const [loadAnimNonce, setLoadAnimNonce] = useState(0);
+  const [loadFlashFields, setLoadFlashFields] = useState<ReadonlySet<string>>(new Set());
+  const [loadFlashTone, setLoadFlashTone] = useState<{ r: number; g: number; b: number } | null>(
+    null,
+  );
   const projectRef = useRef<HTMLSelectElement | null>(null);
   const focusLogNonce = useUiStore((s) => s.focusLogNonce);
 
@@ -100,7 +104,7 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
     }
   }, [form.bucketId]);
 
-  const discardTimer = useTimerStore((s) => s.discard);
+  const updateTimerSnapshot = useTimerStore((s) => s.updateSnapshot);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -140,6 +144,9 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
         : null,
     }));
     setPrefillHint(s.description || '(no title)');
+    setLoadFlashFields(new Set(['date', 'hoursHundredths', 'description']));
+    setLoadFlashTone({ r: 99, g: 102, b: 241 }); // indigo-500 (Calendar tone)
+    setLoadAnimNonce((n) => n + 1);
   }
 
   function clearPrefill() {
@@ -147,49 +154,69 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
     setPrefillHint(null);
   }
 
-  function applyTimerSession(session: TimerSession, hoursHundredths: number) {
+  function applyHistoricalRecording(rec: HistoricalRecording) {
+    // Redrive: restore the full context of a past timer session. Unlike a
+    // live timer load, this replaces project/bucket/date — the user is
+    // explicitly asking to re-enter a previous context.
+    const hours = msToHundredths(rec.elapsed_ms);
     setForm((f) => ({
       ...f,
-      date: session.snapshot.date,
-      projectId: session.snapshot.projectId,
-      bucketId: session.snapshot.bucketId,
-      description: session.snapshot.description,
-      hoursHundredths,
-      source_ref: { kind: 'timer', id: session.id },
+      date: rec.date,
+      projectId: rec.project_id,
+      bucketId: rec.bucket_id,
+      hoursHundredths: hours,
+      source_ref: { kind: 'timer', id: rec.id },
     }));
-    setPrefillHint(
-      session.snapshot.description === ''
-        ? '(timer session, no description)'
-        : `timer: ${session.snapshot.description}`,
-    );
-    discardTimer();
+    setPrefillHint('timer · redriven');
+    setLoadFlashFields(new Set(['date', 'projectId', 'bucketId', 'hoursHundredths']));
+    setLoadFlashTone({ r: 245, g: 158, b: 11 });
+    setLoadAnimNonce((n) => n + 1);
+  }
+
+  function changeTimerProject(projectId: string) {
+    // Inline edit in the Timer panel: update form AND keep the session's
+    // snapshot in sync so the archived recording reflects the chosen context.
+    setForm((f) => ({ ...f, projectId, bucketId: null }));
+    updateTimerSnapshot({ projectId, bucketId: null });
+  }
+
+  function changeTimerBucket(bucketId: string | null) {
+    setForm((f) => ({ ...f, bucketId }));
+    updateTimerSnapshot({ bucketId });
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <TimerBanner onLoad={applyTimerSession} />
-      <div className="flex flex-col lg:flex-row gap-6">
-        <LogForm
-          form={form}
-          setForm={setForm}
-          activeProjects={activeProjects}
-          projectRef={projectRef}
-          toast={toast}
-          prefillHint={prefillHint}
-          onClearPrefill={clearPrefill}
-          mutationError={mutation.error as Error | null}
-          saving={mutation.isPending}
-          canSave={canSave}
-          onSave={() => mutation.mutate()}
-        />
-        <div className="w-full lg:w-[380px] shrink-0">
-          <SuggestionsPanel
-            date={form.date}
-            onSelect={applySuggestion}
-            onNavigate={onNavigate}
-          />
-        </div>
-      </div>
+    <div className="flex flex-col lg:flex-row gap-6">
+      <LogForm
+        form={form}
+        setForm={setForm}
+        activeProjects={activeProjects}
+        projectRef={projectRef}
+        toast={toast}
+        prefillHint={prefillHint}
+        onClearPrefill={clearPrefill}
+        mutationError={mutation.error as Error | null}
+        saving={mutation.isPending}
+        canSave={canSave}
+        onSave={() => mutation.mutate()}
+        loadAnimNonce={loadAnimNonce}
+        loadFlashFields={loadFlashFields}
+        loadFlashTone={loadFlashTone}
+      />
+      <LogHelpersPanel
+        form={{
+          projectId: form.projectId,
+          bucketId: form.bucketId,
+          description: form.description,
+          date: form.date,
+        }}
+        projects={activeProjects}
+        onSelectSuggestion={applySuggestion}
+        onRedriveRecording={applyHistoricalRecording}
+        onChangeProject={changeTimerProject}
+        onChangeBucket={changeTimerBucket}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

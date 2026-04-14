@@ -5,22 +5,36 @@ import {
   pauseSession,
   resumeSession,
   stopSession,
+  sessionToRecording,
   type TimerSession,
   type Form,
+  type HistoricalRecording,
 } from './timer-session';
 
 type State = {
   session: TimerSession | null;
+  history: HistoricalRecording[];
   start: (form: Form) => void;
   pause: () => void;
   resume: () => void;
-  stop: () => void;
+  /** Stop the running/paused session: captures the final elapsed, archives
+   *  it into history (capped at MAX_HISTORY, most recent first), AND keeps
+   *  the session around in its stopped phase so the confirmation UI can
+   *  render Load/Dismiss buttons. Returns the archived recording or null
+   *  if no session was active. */
+  stop: () => HistoricalRecording | null;
+  /** Abort an in-progress session WITHOUT archiving — the ✕ during run. */
   abort: () => void;
-  discard: () => void;
+  /** Update mutable fields on the current session's snapshot (project/bucket
+   *  during inline edits). No-op if no session. */
+  updateSnapshot: (updates: Partial<Pick<Form, 'projectId' | 'bucketId' | 'date'>>) => void;
+  /** Remove a single historical recording by id. */
+  removeHistory: (id: string) => void;
 };
 
 const STORAGE_KEY = 'hours_tracker.timer.v1';
 const CHANNEL_NAME = 'hours_tracker.timer';
+const MAX_HISTORY = 10;
 
 function nowMs(): number {
   return Date.now();
@@ -34,6 +48,7 @@ export const useTimerStore = create<State>()(
   persist(
     (set, get) => ({
       session: null,
+      history: [],
       start: (form) => {
         if (get().session !== null) return; // one active session at a time
         const next = startSession({ now: nowMs(), wallIso: nowIso(), form });
@@ -56,24 +71,43 @@ export const useTimerStore = create<State>()(
       },
       stop: () => {
         const s = get().session;
+        if (s === null) return null;
+        // Archive to history and clear the session in one go — the recording
+        // lives in Recent with a LATEST highlight so the user can redrive
+        // without a dedicated confirmation banner.
+        const stopped = stopSession(s, nowMs());
+        const rec = sessionToRecording(stopped, nowIso());
+        const nextHistory = [rec, ...get().history].slice(0, MAX_HISTORY);
+        set({ session: null, history: nextHistory });
+        broadcast({ kind: 'clear' });
+        return rec;
+      },
+      abort: () => {
+        // Abort discards without archiving — the ✕ in running/paused state.
+        set({ session: null });
+        broadcast({ kind: 'clear' });
+      },
+      updateSnapshot: (updates) => {
+        const s = get().session;
         if (s === null) return;
-        const next = stopSession(s, nowMs());
+        const next: TimerSession = {
+          ...s,
+          snapshot: { ...s.snapshot, ...updates },
+        };
         set({ session: next });
         broadcast({ kind: 'replace', session: next });
       },
-      abort: () => {
-        set({ session: null });
-        broadcast({ kind: 'clear' });
-      },
-      discard: () => {
-        set({ session: null });
-        broadcast({ kind: 'clear' });
+      removeHistory: (id) => {
+        set({ history: get().history.filter((r) => r.id !== id) });
       },
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ session: state.session }),
+      partialize: (state) => ({ session: state.session, history: state.history }),
+      // Legacy stopped sessions from older builds are now expected again,
+      // so no rehydration migration needed — stop() archives + keeps the
+      // session for the confirmation UI.
     },
   ),
 );

@@ -110,3 +110,34 @@ export function stopSession(session: TimerSession, now: number): TimerSession {
   const elapsed = liveElapsedMs(session.phase, now);
   return { ...session, phase: { kind: 'stopped', elapsed_ms: elapsed } };
 }
+
+/**
+ * A frozen snapshot of a completed timer session — the "receipt" left
+ * behind after the session was loaded into the form. Used to populate the
+ * timer panel's recent-history list so users can re-drive a similar entry
+ * without retyping context.
+ */
+export type HistoricalRecording = {
+  id: string;
+  started_wall: string;
+  archived_wall: string;
+  project_id: string;
+  bucket_id: string | null;
+  date: string;
+  elapsed_ms: number;
+};
+
+export function sessionToRecording(
+  session: TimerSession,
+  archivedWall: string,
+): HistoricalRecording {
+  return {
+    id: session.id,
+    started_wall: session.started_wall,
+    archived_wall: archivedWall,
+    project_id: session.snapshot.projectId,
+    bucket_id: session.snapshot.bucketId,
+    date: session.snapshot.date,
+    elapsed_ms: liveElapsedMs(session.phase),
+  };
+}

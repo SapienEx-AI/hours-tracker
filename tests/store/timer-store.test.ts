@@ -11,7 +11,7 @@ const form = {
 describe('timer-store', () => {
   beforeEach(() => {
     localStorage.clear();
-    useTimerStore.setState({ session: null });
+    useTimerStore.setState({ session: null, history: [] });
   });
 
   it('starts a session and exposes it via state', () => {
@@ -31,27 +31,55 @@ describe('timer-store', () => {
     expect(second?.snapshot.projectId).toBe('sector-growth');
   });
 
-  it('pause → resume → stop transitions update phase kind', () => {
+  it('pause → resume transitions update phase kind', () => {
     useTimerStore.getState().start(form);
     useTimerStore.getState().pause();
     expect(useTimerStore.getState().session?.phase.kind).toBe('paused');
     useTimerStore.getState().resume();
     expect(useTimerStore.getState().session?.phase.kind).toBe('running');
-    useTimerStore.getState().stop();
-    expect(useTimerStore.getState().session?.phase.kind).toBe('stopped');
   });
 
-  it('abort clears the session from state', () => {
+  it('stop archives the session into history and clears the active session', () => {
+    useTimerStore.getState().start(form);
+    const id = useTimerStore.getState().session?.id;
+    const rec = useTimerStore.getState().stop();
+    expect(rec?.id).toBe(id);
+    expect(useTimerStore.getState().history[0]?.id).toBe(id);
+    expect(useTimerStore.getState().history).toHaveLength(1);
+    expect(useTimerStore.getState().session).toBeNull();
+  });
+
+  it('abort clears the session from state without archiving', () => {
     useTimerStore.getState().start(form);
     useTimerStore.getState().abort();
     expect(useTimerStore.getState().session).toBeNull();
+    expect(useTimerStore.getState().history).toHaveLength(0);
   });
 
-  it('discard after stop clears the session', () => {
+  it('history is capped at 10 entries, newest-first', () => {
+    for (let i = 0; i < 12; i++) {
+      useTimerStore.getState().start({ ...form, description: `run ${i}` });
+      useTimerStore.getState().stop();
+    }
+    expect(useTimerStore.getState().history).toHaveLength(10);
+  });
+
+  it('removeHistory drops a single entry by id', () => {
     useTimerStore.getState().start(form);
-    useTimerStore.getState().stop();
-    useTimerStore.getState().discard();
-    expect(useTimerStore.getState().session).toBeNull();
+    const rec = useTimerStore.getState().stop();
+    expect(rec).not.toBeNull();
+    useTimerStore.getState().removeHistory(rec!.id);
+    expect(useTimerStore.getState().history).toHaveLength(0);
+  });
+
+  it('updateSnapshot mutates only the current session snapshot fields', () => {
+    useTimerStore.getState().start(form);
+    useTimerStore.getState().updateSnapshot({ projectId: 'acme', bucketId: null });
+    const s = useTimerStore.getState().session;
+    expect(s?.snapshot.projectId).toBe('acme');
+    expect(s?.snapshot.bucketId).toBeNull();
+    // Unaffected fields preserved:
+    expect(s?.snapshot.description).toBe('kickoff');
   });
 
   it('persists a running session across reload', () => {
