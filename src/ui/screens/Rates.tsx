@@ -13,6 +13,7 @@ import { Input } from '@/ui/components/Input';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
 import { qk } from '@/data/query-keys';
+import { BulkRateDialog } from './rates/BulkRateDialog';
 
 export function Rates({ partner }: { partner: Partner }): JSX.Element {
   const rates = useRates();
@@ -22,6 +23,7 @@ export function Rates({ partner }: { partner: Partner }): JSX.Element {
   const [dollars, setDollars] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState(() => new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState('');
+  const [showBulk, setShowBulk] = useState(false);
 
   const currency = {
     currency_symbol: partner.currency_symbol,
@@ -100,9 +102,14 @@ export function Rates({ partner }: { partner: Partner }): JSX.Element {
       {addMutation.error && (
         <Banner variant="error">{(addMutation.error as Error).message}</Banner>
       )}
-      <Banner variant="info">
-        Bulk rate update tool (spec §7 row 9) lands in post-MVP.
-      </Banner>
+      <section>
+        <Button variant="secondary" onClick={() => setShowBulk(true)}>
+          Bulk rate update…
+        </Button>
+      </section>
+      {showBulk && (
+        <BulkRateDialog partner={partner} onClose={() => setShowBulk(false)} />
+      )}
     </div>
   );
 }

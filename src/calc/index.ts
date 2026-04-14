@@ -18,3 +18,9 @@ export {
   type BillingStreamSplit,
 } from './totals';
 export { canonicalizeEntriesForHashing, hashEntries } from './hash';
+export {
+  matchesBulkFilter,
+  previewBulkRate,
+  type BulkRateFilter,
+  type BulkRatePreview,
+} from './bulk-rate';
