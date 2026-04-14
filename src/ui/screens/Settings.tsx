@@ -1,11 +1,12 @@
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/ui/components/Button';
 import { Banner } from '@/ui/components/Banner';
+import { CalendarSection } from './settings/CalendarSection';
 
 export function Settings(): JSX.Element {
   const auth = useAuthStore();
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-6 max-w-2xl">
       <h1 className="font-display text-2xl">Settings</h1>
       <section className="font-mono text-sm space-y-1">
         <div>
@@ -18,6 +19,7 @@ export function Settings(): JSX.Element {
           <span className="text-slate-500">data_repo:</span> {auth.dataRepo}
         </div>
       </section>
+      <CalendarSection />
       <Banner variant="warning">
         Signing out clears your token and sends you back to the first-run flow.
       </Banner>
