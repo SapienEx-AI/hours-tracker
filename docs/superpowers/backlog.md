@@ -11,6 +11,8 @@ Tracked features deferred from MVP (Phases 1–11). Each item references the spe
 - **Bucket CRUD (edit)** — inline edit name, budgeted hours, rate, status, and notes from Projects & Buckets (spec §8.5). Phase A.
 - **Bulk rate update tool** — filter + preview + apply dialog on Rates; commits one `bulk-edit:` per affected month (spec §7 row 9, §8.6). Phase A.
 - **Snapshot list + drift indicator + diff** — Snapshots screen lists every closed month, shows drift badge on expand, and surfaces added / removed / possibly-changed entry ids (spec §5.6, §8.7). Phase A.
+- **Log screen 2-column layout + date at top** — form left, calendar suggestions right. Phase B.
+- **Google Calendar integration (read-only)** — browser-native OAuth via GIS, multi-calendar support, click-to-prefill form, persistent dedupe via Entry `source_event_id` (schema v2). Phase C.
 
 ## Near-term
 
@@ -28,5 +30,4 @@ _(Phase-A items moved to Shipped above.)_
 
 - **OAuth device flow** to replace PAT (spec §6.1 "Future upgrade path"). Requires a tiny Cloudflare Worker.
 - **Additional partners** onboarded (see `docs/architecture/partner-onboarding.md`).
-- **Calendar integration** — log from Google Calendar events.
 - **Mobile PWA** with offline-first entry.
