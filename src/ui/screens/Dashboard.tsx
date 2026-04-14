@@ -8,10 +8,12 @@ import { useAllEntries } from '@/data/hooks/use-all-entries';
 import {
   computeMonthTotals,
   computeAllTimeBucketConsumption,
+  computeProjectBuildsForMonth,
   splitBillingStreams,
   sumHundredths,
   sumCents,
 } from '@/calc';
+import { MonthProjectBuildsTable } from './dashboard/MonthProjectBuildsTable';
 import type { Partner, ProjectsConfig } from '@/schema/types';
 import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
 import type { CurrencyDisplay } from '@/format/format';
@@ -185,6 +187,14 @@ export function Dashboard({
     return splitBillingStreams(entries.data.entries, month, projects.data);
   }, [entries.data, projects.data, month]);
 
+  const monthBuilds = useMemo(() => {
+    if (!entries.data || !projects.data || !rates.data) return null;
+    return computeProjectBuildsForMonth(
+      { entries: entries.data.entries, projects: projects.data, rates: rates.data },
+      month,
+    );
+  }, [entries.data, projects.data, rates.data, month]);
+
   if (entries.isLoading || projects.isLoading || rates.isLoading) return <div className="text-slate-500">Loading…</div>;
   if (entries.error) return <Banner variant="error">Failed to load: {(entries.error as Error).message}</Banner>;
   if (!totals || !streams) return <div className="text-slate-500">No data</div>;
@@ -223,6 +233,14 @@ export function Dashboard({
             <h2 className="font-display text-lg font-bold mb-1">Monthly Invoice &middot; {formatMonthLabel(month)}</h2>
             <p className="text-xs text-slate-400 mb-3">General consulting billed monthly — unbucketed billable entries.</p>
             <InvoiceTable rows={resolveNames(streams.monthly_invoice.by_project)} currency={currency} />
+          </section>
+
+          <section>
+            <h2 className="font-display text-lg font-bold mb-1">Project Builds &middot; {formatMonthLabel(month)}</h2>
+            <p className="text-xs text-slate-400 mb-3">Per-bucket, this month only.</p>
+            {projects.data && monthBuilds && (
+              <MonthProjectBuildsTable rows={monthBuilds} projects={projects.data} currency={currency} />
+            )}
           </section>
 
           {totals.needs_review_hours_hundredths > 0 && (
