@@ -14,6 +14,7 @@ import { Input } from '@/ui/components/Input';
 import { Select } from '@/ui/components/Select';
 import { Banner } from '@/ui/components/Banner';
 import { qk } from '@/data/query-keys';
+import { entriesToCSV, downloadCSV } from '@/export/csv';
 import { EditEntryModal } from './entries/EditEntryModal';
 
 const MONTH_NAMES = [
@@ -212,6 +213,16 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            const csv = entriesToCSV(visible);
+            downloadCSV(`entries-${month}.csv`, csv);
+          }}
+          disabled={visible.length === 0}
+        >
+          Export CSV
+        </Button>
       </div>
       {entries.isLoading && <div className="text-slate-500">Loading...</div>}
       {entries.error && <Banner variant="error">{(entries.error as Error).message}</Banner>}
