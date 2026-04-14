@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOctokit } from '@/data/hooks/use-octokit';
 import { useAuthStore } from '@/store/auth-store';
@@ -144,7 +145,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
   const activeBuckets = selectedProject?.buckets.filter((b) => b.status !== 'archived') ?? [];
   const canSave = hoursHundredths > 0 && description.trim().length > 0;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -267,6 +268,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
