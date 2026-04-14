@@ -6,7 +6,7 @@ import { useOctokit } from '@/data/hooks/use-octokit';
 import { useAuthStore } from '@/store/auth-store';
 import { writeProjects } from '@/data/projects-repo';
 import { splitRepoPath } from '@/data/octokit-client';
-import { configAddProjectMessage, configAddBucketMessage } from '@/data/commit-messages';
+import { configAddProjectMessage, configAddBucketMessage, configEditBucketMessage } from '@/data/commit-messages';
 import { computeAllTimeBucketConsumption } from '@/calc';
 import type { Project, Bucket, BucketType, BucketInvoice, ProjectsConfig, Partner } from '@/schema/types';
 import { formatHoursDecimal } from '@/format/format';
@@ -127,6 +127,34 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
     });
   }
 
+  function editBucket(
+    projectId: string,
+    bucketId: string,
+    updates: {
+      name: string;
+      budgeted_hours_hundredths: number;
+      rate_cents: number | null;
+      status: 'active' | 'closed';
+      notes: string;
+    },
+    changes: string[],
+  ) {
+    if (!projects.data) return;
+    mutation.mutate({
+      data: updateProject(projects.data, projectId, (p) =>
+        updateBucket(p, bucketId, (b) => ({
+          ...b,
+          name: updates.name,
+          budgeted_hours_hundredths: updates.budgeted_hours_hundredths,
+          rate_cents: updates.rate_cents,
+          status: updates.status,
+          notes: updates.notes,
+        })),
+      ),
+      message: configEditBucketMessage({ bucketId, projectId, changes }),
+    });
+  }
+
   function recordInvoice(projectId: string, bucketId: string, invoice: BucketInvoice) {
     if (!projects.data) return;
     mutation.mutate({
@@ -194,6 +222,7 @@ export function ProjectsAndBuckets({ partner }: { partner: Partner }): JSX.Eleme
                     onClose={() => closeBucket(p.id, b.id)}
                     onArchive={() => archiveBucket(p.id, b.id)}
                     onRecordInvoice={(inv) => recordInvoice(p.id, b.id, inv)}
+                    onEdit={(u, c) => editBucket(p.id, b.id, u, c)}
                     disabled={mutation.isPending}
                   />
                 ))}
