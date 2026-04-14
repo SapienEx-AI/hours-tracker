@@ -16,10 +16,12 @@ export function logMessage(args: {
   hours_hundredths: number;
   rate_cents: number;
   description: string;
+  source?: 'calendar';
 }): string {
   const hours = formatHoursDecimal(args.hours_hundredths);
   const rate = formatDollars(args.rate_cents);
-  return `log: ${args.project} ${args.date} ${hours}h @ ${rate} (${args.description})`;
+  const base = `log: ${args.project} ${args.date} ${hours}h @ ${rate} (${args.description})`;
+  return args.source === 'calendar' ? `${base} [calendar]` : base;
 }
 
 // ─── edit ───
@@ -77,4 +79,9 @@ export function snapshotCloseMessage(args: {
 // ─── import ───
 export function importMessage(month: string, source: string, count: number): string {
   return `import: ${month} from ${source} (${count} entries)`;
+}
+
+// ─── calendar config ───
+export function calendarConfigMessage(action: 'connect' | 'disconnect' | 'update'): string {
+  return `config: ${action} calendar integration`;
 }

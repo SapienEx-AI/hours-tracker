@@ -27,7 +27,7 @@ function ScreenForRoute({
 }): JSX.Element {
   switch (route) {
     case 'log':
-      return <QuickLog />;
+      return <QuickLog onNavigate={onNavigate} />;
     case 'dashboard':
       return <Dashboard partner={partner} onNavigate={onNavigate} />;
     case 'entries':
@@ -41,7 +41,7 @@ function ScreenForRoute({
     case 'settings':
       return <Settings />;
     default:
-      return <QuickLog />;
+      return <QuickLog onNavigate={onNavigate} />;
   }
 }
 

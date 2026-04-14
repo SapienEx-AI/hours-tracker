@@ -32,6 +32,7 @@ const entryArb = (month: string): fc.Arbitrary<Entry> =>
     review_flag: fc.boolean(),
     created_at: fc.constant('2026-03-01T00:00:00Z'),
     updated_at: fc.constant('2026-03-01T00:00:00Z'),
+    source_event_id: fc.constant<string | null>(null),
   });
 
 const projects: ProjectsConfig = {

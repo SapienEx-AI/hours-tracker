@@ -15,6 +15,7 @@ const baseEntry: Entry = {
   review_flag: false,
   created_at: '2026-03-25T22:15:04Z',
   updated_at: '2026-03-25T22:15:04Z',
+  source_event_id: null,
 };
 
 describe('hash', () => {

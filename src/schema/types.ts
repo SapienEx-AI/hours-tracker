@@ -141,10 +141,11 @@ export type Entry = {
   review_flag: boolean;
   created_at: string;
   updated_at: string;
+  source_event_id: string | null;
 };
 
 export type EntriesFile = {
-  schema_version: 1;
+  schema_version: 1 | 2;
   month: string;
   entries: Entry[];
 };
@@ -194,4 +195,13 @@ export type Snapshot = {
   };
   per_project: ProjectTotals[];
   entry_ids: string[];
+};
+
+// ─── Calendar integration ───
+
+export type CalendarConfig = {
+  schema_version: 1;
+  provider: 'google';
+  enabled_calendars: string[];
+  last_connected_at?: string;
 };

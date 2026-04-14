@@ -202,6 +202,7 @@ function parseLine(line: string): Entry | null {
     review_flag: annotations.reviewFlag,
     created_at: IMPORT_TS,
     updated_at: IMPORT_TS,
+    source_event_id: null,
   };
 }
 

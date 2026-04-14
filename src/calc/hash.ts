@@ -15,10 +15,9 @@ export function canonicalizeEntriesForHashing(entries: readonly Entry[]): string
 }
 
 function canonicalizeEntry(e: Entry): Record<string, unknown> {
-  // Emit keys in fixed order. Any future field addition must be appended here
-  // and will change existing hashes — intentional, since new fields can affect
-  // billing output.
-  return {
+  // Emit keys in fixed order. source_event_id is emitted only when non-null
+  // so v1 entries (no field) and v2 entries with null hash identically.
+  const base: Record<string, unknown> = {
     id: e.id,
     project: e.project,
     date: e.date,
@@ -32,6 +31,10 @@ function canonicalizeEntry(e: Entry): Record<string, unknown> {
     created_at: e.created_at,
     updated_at: e.updated_at,
   };
+  if (e.source_event_id !== null && e.source_event_id !== undefined) {
+    base.source_event_id = e.source_event_id;
+  }
+  return base;
 }
 
 /**
