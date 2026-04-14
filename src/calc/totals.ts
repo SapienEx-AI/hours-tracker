@@ -198,7 +198,7 @@ export type BillingStreamSplit = {
   };
 };
 
-function isMonthlyStream(entry: Entry, projects: ProjectsConfig): boolean {
+export function isMonthlyStream(entry: Entry, projects: ProjectsConfig): boolean {
   if (entry.bucket_id === null) return true;
   const project = projects.projects.find((p) => p.id === entry.project);
   if (!project) return true; // unbucketed fallback

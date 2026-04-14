@@ -1,6 +1,14 @@
 import { describe, it } from 'vitest';
 import fc from 'fast-check';
-import { computeMonthTotals, hashEntries } from '@/calc';
+import {
+  computeMonthTotals,
+  computeMonthDaily,
+  computeProjectBuildsForMonth,
+  hashEntries,
+  splitBillingStreams,
+  sumHundredths,
+  sumCents,
+} from '@/calc';
 import type { Entry, ProjectsConfig, RatesConfig } from '@/schema/types';
 
 // ─── Arbitraries ───
@@ -27,7 +35,11 @@ const entryArb = (month: string): fc.Arbitrary<Entry> =>
     rate_cents: rateArb,
     rate_source: fc.constant<Entry['rate_source']>('global_default'),
     billable_status: billableArb,
-    bucket_id: fc.constant(null),
+    bucket_id: fc.oneof(
+      fc.constant<string | null>(null),
+      fc.constant<string | null>('sprosty-skyvia-dev'),
+      fc.constant<string | null>('sprosty-hours'),
+    ),
     description: fc.string({ minLength: 1, maxLength: 100 }),
     review_flag: fc.boolean(),
     created_at: fc.constant('2026-03-01T00:00:00Z'),
@@ -45,7 +57,18 @@ const projects: ProjectsConfig = {
       active: true,
       is_internal: false,
       default_rate_cents: null,
-      buckets: [],
+      buckets: [
+        {
+          id: 'sprosty-skyvia-dev', type: 'dev', name: 'Skyvia Dev',
+          budgeted_hours_hundredths: 2000, rate_cents: 12500, status: 'active',
+          opened_at: '2026-03-01', closed_at: null, notes: '',
+        },
+        {
+          id: 'sprosty-hours', type: 'hour_block', name: 'Hours Block',
+          budgeted_hours_hundredths: 1000, rate_cents: 12500, status: 'active',
+          opened_at: '2026-03-01', closed_at: null, notes: '',
+        },
+      ],
     },
     {
       id: 'internal',
@@ -143,6 +166,71 @@ describe('calc invariants (property tests)', () => {
           return h1 === h2;
         },
       ),
+    );
+  });
+});
+
+describe('computeMonthDaily invariants', () => {
+  it('Per-day conservation: billable + non_billable + needs_review === total', () => {
+    fc.assert(
+      fc.property(fc.array(entryArb('2026-03'), { minLength: 0, maxLength: 50 }), (entries) => {
+        const r = computeMonthDaily({ entries, projects, rates }, '2026-03');
+        for (const d of r.days) {
+          if (
+            d.billable_hundredths + d.non_billable_hundredths + d.needs_review_hundredths !==
+            d.total_hundredths
+          ) {
+            return false;
+          }
+        }
+        return true;
+      }),
+    );
+  });
+
+  it('Monthly total agreement: sum(days.total) === computeMonthTotals.total_hours_hundredths', () => {
+    fc.assert(
+      fc.property(fc.array(entryArb('2026-03'), { minLength: 0, maxLength: 50 }), (entries) => {
+        const daily = computeMonthDaily({ entries, projects, rates }, '2026-03');
+        const totals = computeMonthTotals({ entries, projects, rates }, '2026-03');
+        const sum = sumHundredths(daily.days.map((d) => d.total_hundredths));
+        return sum === totals.total_hours_hundredths;
+      }),
+    );
+  });
+
+  it('Monthly billable $ agreement: sum(days.billable_amount) === computeMonthTotals.billable_amount_cents', () => {
+    fc.assert(
+      fc.property(fc.array(entryArb('2026-03'), { minLength: 0, maxLength: 50 }), (entries) => {
+        const daily = computeMonthDaily({ entries, projects, rates }, '2026-03');
+        const totals = computeMonthTotals({ entries, projects, rates }, '2026-03');
+        const sum = sumCents(daily.days.map((d) => d.billable_amount_cents));
+        return sum === totals.billable_amount_cents;
+      }),
+    );
+  });
+});
+
+describe('computeProjectBuildsForMonth invariants', () => {
+  it('Hours agreement with splitBillingStreams.project_builds', () => {
+    fc.assert(
+      fc.property(fc.array(entryArb('2026-03'), { minLength: 0, maxLength: 50 }), (entries) => {
+        const rows = computeProjectBuildsForMonth({ entries, projects, rates }, '2026-03');
+        const streams = splitBillingStreams(entries, '2026-03', projects);
+        const sum = sumHundredths(rows.map((r) => r.hours_hundredths));
+        return sum === streams.project_builds.hours_hundredths;
+      }),
+    );
+  });
+
+  it('Amount agreement with splitBillingStreams.project_builds', () => {
+    fc.assert(
+      fc.property(fc.array(entryArb('2026-03'), { minLength: 0, maxLength: 50 }), (entries) => {
+        const rows = computeProjectBuildsForMonth({ entries, projects, rates }, '2026-03');
+        const streams = splitBillingStreams(entries, '2026-03', projects);
+        const sum = sumCents(rows.map((r) => r.amount_cents));
+        return sum === streams.project_builds.amount_cents;
+      }),
     );
   });
 });
