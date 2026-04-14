@@ -89,7 +89,10 @@ export function computeProjectBuildsForMonth(
 
 Behavior:
 
-- Filters `input.entries` to where `entry.date.startsWith(`${month}-`) && entry.bucket_id !== null && entry.billable_status === 'billable'`.
+- Filters `input.entries` to where:
+  - `entry.date.startsWith(`${month}-`)` AND
+  - `entry.billable_status === 'billable'` AND
+  - The entry qualifies as **project-builds stream** (not monthly-invoice) — same definition as `splitBillingStreams` uses. Specifically: entry has `bucket_id !== null` AND the bucket exists in `input.projects` AND the bucket's `type` is NOT in the monthly-bucket set (`hour_block`, `discovery`). This matches the existing `isMonthlyStream` logic in `src/calc/totals.ts`; we'll export that helper for reuse rather than duplicating the rule.
 - Groups by `bucket_id`. For each group:
   - Look up the `project_id` that owns the bucket via `input.projects`.
   - `hours_hundredths` = `sumHundredths` of group.
