@@ -14,6 +14,8 @@ import {
   sumCents,
 } from '@/calc';
 import { MonthProjectBuildsTable } from './dashboard/MonthProjectBuildsTable';
+import { CalendarIcon } from './dashboard/CalendarIcon';
+import { CalendarModal } from './dashboard/CalendarModal';
 import type { Partner, ProjectsConfig } from '@/schema/types';
 import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
 import type { CurrencyDisplay } from '@/format/format';
@@ -162,6 +164,7 @@ export function Dashboard({
   onNavigate: (r: Route) => void;
 }): JSX.Element {
   const [month, setMonth] = useState(currentMonth);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const setPrefilter = useUiStore((s) => s.setEntriesPrefilter);
   const entries = useMonthEntries(month);
   const allEntriesQuery = useAllEntries();
@@ -211,7 +214,11 @@ export function Dashboard({
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between max-w-4xl">
         <h1 className="font-display text-2xl font-bold">{formatMonthLabel(month)}</h1>
-        <div className="flex gap-2 font-body text-sm font-medium">
+        <div className="flex items-center gap-2 font-body text-sm font-medium">
+          <CalendarIcon
+            onClick={() => setCalendarOpen(true)}
+            disabled={entries.isLoading || projects.isLoading || rates.isLoading || !!entries.error}
+          />
           <button className="text-slate-400 hover:text-sky-500 transition-colors" onClick={() => setMonth(prevMonth(month))}>← Prev</button>
           <button className="text-slate-400 hover:text-sky-500 transition-colors" onClick={() => setMonth(nextMonth(month))}>Next →</button>
         </div>
@@ -269,6 +276,13 @@ export function Dashboard({
         </div>
       </div>
 
+      {calendarOpen && (
+        <CalendarModal
+          initialMonth={month}
+          partner={partner}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
     </div>
   );
 }
