@@ -48,7 +48,7 @@ export function useCalendarEvents(date: string) {
       const flat = perCalendar.flat();
       const loggedIds = new Set(
         (entries.data?.entries ?? [])
-          .map((e) => e.source_event_id)
+          .map((e) => (e.source_ref?.kind === 'calendar' ? e.source_ref.id : null))
           .filter((v): v is string => !!v),
       );
       return flat

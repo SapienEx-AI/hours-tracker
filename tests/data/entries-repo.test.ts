@@ -23,7 +23,7 @@ const sampleEntry: Omit<Entry, 'id' | 'created_at' | 'updated_at'> = {
   bucket_id: null,
   description: 'test entry',
   review_flag: false,
-  source_event_id: null,
+  source_ref: null,
 };
 
 describe('loadMonthEntries', () => {

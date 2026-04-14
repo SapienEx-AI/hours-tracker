@@ -16,12 +16,14 @@ export function logMessage(args: {
   hours_hundredths: number;
   rate_cents: number;
   description: string;
-  source?: 'calendar';
+  source?: 'calendar' | 'timer';
 }): string {
   const hours = formatHoursDecimal(args.hours_hundredths);
   const rate = formatDollars(args.rate_cents);
   const base = `log: ${args.project} ${args.date} ${hours}h @ ${rate} (${args.description})`;
-  return args.source === 'calendar' ? `${base} [calendar]` : base;
+  if (args.source === 'calendar') return `${base} [calendar]`;
+  if (args.source === 'timer') return `${base} [timer]`;
+  return base;
 }
 
 // ─── edit ───
