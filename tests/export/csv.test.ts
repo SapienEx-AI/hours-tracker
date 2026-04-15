@@ -28,10 +28,10 @@ describe('entriesToCSV', () => {
     const csv = entriesToCSV([makeEntry()]);
     const lines = csv.split('\n');
     expect(lines[0]).toBe(
-      'id,date,project,bucket,hours,rate,billable_status,description,review_flag,rate_source',
+      'id,date,project,bucket,hours,rate,billable_status,description,review_flag,rate_source,effort_kind,effort_count',
     );
     expect(lines[1]).toBe(
-      '2026-03-25-sprosty-a3f9c1,2026-03-25,sprosty,,4.00,20.00,billable,did a thing,false,global_default',
+      '2026-03-25-sprosty-a3f9c1,2026-03-25,sprosty,,4.00,20.00,billable,did a thing,false,global_default,,',
     );
   });
 
