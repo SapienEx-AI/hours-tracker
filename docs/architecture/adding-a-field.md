@@ -41,6 +41,15 @@ Pick one explicitly and document it in the migration note below.
 
 ## Migrations
 
+### v4 → v5: source_ref.kind widens to include slack + gmail
+
+Purely additive: the `source_ref.kind` enum gains `'slack'` and `'gmail'` alongside `'calendar'` and `'timer'`. No entry-level field change.
+
+- **Hash canonicalization:** `canonicalizeEntry` emits `source_slack_id` / `source_gmail_id` for non-null slack/gmail refs. Existing entries (null, calendar, timer) produce the identical byte stream as v4 — March 2026 golden fixture preserved.
+- **Writer upgrade path:** `upgradeEntriesFileToV5` (renamed from `V4`) stamps `schema_version: 5` on any legacy file. Commit messages carry `[schema vN→v5]`.
+- **Tests:** `tests/schema/entry-v5-migration.test.ts` covers wire acceptance; `tests/calc/hash-v5.test.ts` covers order-insensitive hash for new kinds; `tests/data/entries-repo-v5-compat.test.ts` covers the v1–v4 legacy-version upgrade chain.
+- **Hash drift:** zero.
+
 ### v3 → v4: effort_kind and effort_count
 
 Added dual effort fields to `Entry` so a single record can tag qualitative activity (19-kind taxonomy) alongside quantitative hours. See [`effort-kinds.md`](effort-kinds.md) for the taxonomy.
