@@ -9,7 +9,7 @@ if [[ -z "$SLUG" || -z "$DISPLAY" ]]; then
   exit 1
 fi
 
-mkdir -p config data/entries data/snapshots schemas .github/workflows
+mkdir -p config data/entries data/snapshots .github/workflows
 
 # profile.json
 cat > config/profile.json <<EOF
@@ -62,22 +62,15 @@ exports/
 .DS_Store
 EOF
 
-# Copy schemas from the app repo if available (for CI validation).
-SCHEMAS_SRC="${HOURS_TRACKER_REPO:-}/schemas"
-if [[ -n "${HOURS_TRACKER_REPO:-}" && -d "$SCHEMAS_SRC" ]]; then
-  cp "$SCHEMAS_SRC"/*.json schemas/
-  echo "Copied schemas from $SCHEMAS_SRC"
-else
-  echo "Note: HOURS_TRACKER_REPO not set or schemas/ not found. Copy schemas/*.json manually."
-fi
-
-# validate.yml
+# validate.yml — fetches fresh schemas from the app repo on every run so the
+# data repo never carries a stale local copy. The app repo is public; no auth.
 cat > .github/workflows/validate.yml <<'EOF'
 name: Validate JSON
 
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -86,10 +79,20 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
-      - run: |
+      - name: Fetch schemas from app repo
+        run: |
+          mkdir -p _schemas
+          for s in partner profile rates projects entries snapshot calendar-config; do
+            curl -fsSL \
+              "https://raw.githubusercontent.com/SapienEx-AI/hours-tracker/main/schemas/${s}.schema.json" \
+              -o "_schemas/${s}.schema.json"
+          done
+      - name: Install validator
+        run: |
           npm init -y > /dev/null
           npm install ajv@8 ajv-formats@3 --save > /dev/null
-      - run: |
+      - name: Validate
+        run: |
           node -e "
             const Ajv = require('ajv').default;
             const addFormats = require('ajv-formats').default;
@@ -98,11 +101,12 @@ jobs:
             const ajv = new Ajv({ allErrors: true, strict: false });
             addFormats(ajv);
             const schemas = {
-              profile: require('./schemas/profile.schema.json'),
-              projects: require('./schemas/projects.schema.json'),
-              rates: require('./schemas/rates.schema.json'),
-              entries: require('./schemas/entries.schema.json'),
-              snapshot: require('./schemas/snapshot.schema.json'),
+              profile: require('./_schemas/profile.schema.json'),
+              projects: require('./_schemas/projects.schema.json'),
+              rates: require('./_schemas/rates.schema.json'),
+              entries: require('./_schemas/entries.schema.json'),
+              snapshot: require('./_schemas/snapshot.schema.json'),
+              calendar: require('./_schemas/calendar-config.schema.json'),
             };
             const validate = Object.fromEntries(
               Object.entries(schemas).map(([k, s]) => [k, ajv.compile(s)]),
@@ -117,6 +121,7 @@ jobs:
             if (fs.existsSync('config/profile.json')) check('config/profile.json', 'profile');
             if (fs.existsSync('config/projects.json')) check('config/projects.json', 'projects');
             if (fs.existsSync('config/rates.json')) check('config/rates.json', 'rates');
+            if (fs.existsSync('config/calendar.json')) check('config/calendar.json', 'calendar');
             if (fs.existsSync('data/entries')) {
               for (const f of fs.readdirSync('data/entries').filter((f) => f.endsWith('.json'))) {
                 check(path.join('data/entries', f), 'entries');
@@ -127,9 +132,12 @@ jobs:
                 check(path.join('data/snapshots', f), 'snapshot');
               }
             }
-            console.log('All files valid.');
+            console.log('All files valid against app-repo schemas.');
           "
 EOF
+
+# .gitignore addition for the ephemeral fetched schemas dir.
+printf '\n# Schemas are fetched fresh by CI; never commit.\n_schemas/\n' >> .gitignore
 
 # README
 cat > README.md <<EOF
