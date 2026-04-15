@@ -17,6 +17,7 @@ import type { Route } from '@/ui/Router';
 import type { Suggestion } from '@/data/hooks/use-calendar-events';
 import { useTimerStore } from '@/store/timer-store';
 import { msToHundredths, type HistoricalRecording } from '@/store/timer-session';
+import type { QuickAction } from './log/QuickActivityCard';
 import { LogForm } from './log/LogForm';
 import { LogHelpersPanel } from './log/LogHelpersPanel';
 import { buildEntry, initialForm, type FormState } from './log/form-helpers';
@@ -188,6 +189,30 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
     updateTimerSnapshot({ bucketId });
   }
 
+  function onQuickActivity(action: QuickAction) {
+    setForm((f) => ({
+      ...f,
+      effort_kind: action.kind,
+      effort_count: 1,
+      hoursHundredths: action.hoursHundredths,
+    }));
+    setPrefillHint(`quick: ${action.kind.replace(/_/g, ' ')}`);
+    setLoadFlashFields(
+      new Set(['effort_kind', 'effort_count', 'hoursHundredths']),
+    );
+    setLoadFlashTone({ r: 251, g: 146, b: 60 }); // orange-400 — distinct from indigo and amber
+    setLoadAnimNonce((n) => n + 1);
+  }
+
+  function onBounceProject() {
+    const el = projectRef.current;
+    if (el === null) return;
+    el.classList.add('ring-2', 'ring-red-500', 'animate-pulse');
+    window.setTimeout(() => {
+      el.classList.remove('ring-2', 'ring-red-500', 'animate-pulse');
+    }, 800);
+  }
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <LogForm
@@ -219,6 +244,8 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
         onRedriveRecording={applyHistoricalRecording}
         onChangeProject={changeTimerProject}
         onChangeBucket={changeTimerBucket}
+        onQuickActivity={onQuickActivity}
+        onBounceProject={onBounceProject}
         onNavigate={onNavigate}
       />
     </div>
