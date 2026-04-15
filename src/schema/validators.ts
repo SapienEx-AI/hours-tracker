@@ -8,6 +8,7 @@ import projectsSchema from '../../schemas/projects.schema.json';
 import entriesSchema from '../../schemas/entries.schema.json';
 import snapshotSchema from '../../schemas/snapshot.schema.json';
 import calendarConfigSchema from '../../schemas/calendar-config.schema.json';
+import integrationsSchema from '../../schemas/integrations.schema.json';
 
 import type {
   Partner,
@@ -18,6 +19,7 @@ import type {
   Entry,
   Snapshot,
   CalendarConfig,
+  IntegrationsConfig,
 } from './types';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
@@ -30,6 +32,7 @@ const _projects = ajv.compile<ProjectsConfig>(projectsSchema);
 const _entries = ajv.compile<EntriesFile>(entriesSchema);
 const _snapshot = ajv.compile<Snapshot>(snapshotSchema);
 const _calendarConfig = ajv.compile<CalendarConfig>(calendarConfigSchema);
+const _integrations = ajv.compile<IntegrationsConfig>(integrationsSchema);
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -48,6 +51,7 @@ export const validateRates = wrap<RatesConfig>(_rates);
 export const validateProjects = wrap<ProjectsConfig>(_projects);
 export const validateSnapshot = wrap<Snapshot>(_snapshot);
 export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
+export const validateIntegrationsConfig = wrap<IntegrationsConfig>(_integrations);
 
 /**
  * Validate an entries file. Accepts v1 / v2 / v3 / v4 / v5 on the wire; the

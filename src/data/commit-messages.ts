@@ -89,3 +89,8 @@ export function importMessage(month: string, source: string, count: number): str
 export function calendarConfigMessage(action: 'connect' | 'disconnect' | 'update'): string {
   return `config: ${action} calendar integration`;
 }
+
+// ─── integrations config ───
+export function integrationsMessage(action: 'create' | 'update'): string {
+  return `config: ${action} integrations.json`;
+}

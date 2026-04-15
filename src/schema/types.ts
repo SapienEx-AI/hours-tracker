@@ -232,3 +232,28 @@ export type CalendarConfig = {
   enabled_calendars: string[];
   last_connected_at?: string;
 };
+
+// ─── Effort source integrations ───
+
+export type IntegrationsConfig = {
+  schema_version: 1;
+  slack?: {
+    enabled?: boolean;
+    workspaces?: Array<{ id: string; name: string }>;
+    client_channel_prefixes?: string[];
+    internal_channel_prefixes?: string[];
+    project_by_workspace?: Record<string, string>;
+    project_by_channel_prefix?: Record<string, string>;
+  };
+  gmail?: {
+    enabled?: boolean;
+    client_domains?: string[];
+    internal_domains?: string[];
+    project_by_domain?: Record<string, string>;
+  };
+  calendar?: {
+    workshop_min_duration_minutes?: number;
+    client_training_title_keywords?: string[];
+    internal_only_attendee_domains?: string[];
+  };
+};
