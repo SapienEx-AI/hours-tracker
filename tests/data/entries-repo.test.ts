@@ -24,6 +24,8 @@ const sampleEntry: Omit<Entry, 'id' | 'created_at' | 'updated_at'> = {
   description: 'test entry',
   review_flag: false,
   source_ref: null,
+  effort_kind: null,
+  effort_count: null,
 };
 
 describe('loadMonthEntries', () => {

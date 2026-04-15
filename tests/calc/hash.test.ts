@@ -16,6 +16,8 @@ const baseEntry: Entry = {
   created_at: '2026-03-25T22:15:04Z',
   updated_at: '2026-03-25T22:15:04Z',
   source_ref: null,
+  effort_kind: null,
+  effort_count: null,
 };
 
 describe('hash', () => {

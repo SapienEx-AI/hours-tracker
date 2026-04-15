@@ -17,6 +17,8 @@ function makeEntry(overrides: Partial<Entry> = {}): Entry {
     created_at: '2026-03-25T10:00:00Z',
     updated_at: '2026-03-25T10:00:00Z',
     source_ref: null,
+    effort_kind: null,
+    effort_count: null,
     ...overrides,
   };
 }

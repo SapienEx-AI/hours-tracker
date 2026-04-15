@@ -46,6 +46,8 @@ function entry(p: Partial<Entry> & {
     created_at: '2026-04-14T00:00:00Z',
     updated_at: '2026-04-14T00:00:00Z',
     source_ref: null,
+    effort_kind: null,
+    effort_count: null,
     ...p,
   };
 }

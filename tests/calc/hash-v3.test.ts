@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { canonicalizeEntriesForHashing } from '@/calc/hash';
 import type { Entry } from '@/schema/types';
 
-const base: Omit<Entry, 'source_ref'> = {
+const base: Omit<Entry, 'source_ref' | 'effort_kind' | 'effort_count'> & {
+  effort_kind: null;
+  effort_count: null;
+} = {
+  effort_kind: null,
+  effort_count: null,
   id: '2026-04-14-sprosty-aaaaaa',
   project: 'sprosty',
   date: '2026-04-14',
