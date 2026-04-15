@@ -146,9 +146,13 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       source_ref: s.source_event_id
         ? { kind: 'calendar', id: s.source_event_id }
         : null,
+      effort_kind: 'meeting',
+      effort_count: 1,
     }));
     setPrefillHint(s.description || '(no title)');
-    setLoadFlashFields(new Set(['date', 'hoursHundredths', 'description']));
+    setLoadFlashFields(
+      new Set(['date', 'hoursHundredths', 'description', 'effort_kind', 'effort_count']),
+    );
     setLoadFlashTone({ r: 99, g: 102, b: 241 }); // indigo-500 (Calendar tone)
     setLoadAnimNonce((n) => n + 1);
   }
