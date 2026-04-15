@@ -78,7 +78,7 @@ describe('addEntry', () => {
     ).rejects.toThrow(/validation/i);
   });
 
-  it('appends [schema v2→v3] to the commit message when upgrading a v2 source file', async () => {
+  it('appends [schema v2→v4] to the commit message when upgrading a v2 source file', async () => {
     const mock = mockOctokit();
     const existingV2File = {
       schema_version: 2,
@@ -129,21 +129,21 @@ describe('addEntry', () => {
       message: string;
     };
     expect(call.message).toContain('log:');
-    expect(call.message).toContain('[schema v2→v3]');
+    expect(call.message).toContain('[schema v2→v4]');
   });
 
-  it('does not append a schema-upgrade suffix when writing to a v3 source file', async () => {
+  it('does not append a schema-upgrade suffix when writing to a v4 source file', async () => {
     const mock = mockOctokit();
-    const existingV3File = {
-      schema_version: 3,
+    const existingV4File = {
+      schema_version: 4,
       month: '2026-04',
       entries: [] as Entry[],
     };
     mock.rest.repos.getContent.mockResolvedValue({
       data: {
         type: 'file',
-        content: btoa(JSON.stringify(existingV3File)),
-        sha: 'v3sha',
+        content: btoa(JSON.stringify(existingV4File)),
+        sha: 'v4sha',
         encoding: 'base64',
       },
     });
