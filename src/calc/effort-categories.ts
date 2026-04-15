@@ -1,41 +1,39 @@
 import type { EffortKind, EffortCategory } from '@/schema/types';
 
 /**
- * Pure mapping from EffortKind to EffortCategory. Exhaustive switch —
- * adding a new EffortKind will fail to compile until it is mapped here.
+ * Pure mapping from EffortKind to EffortCategory. Record literal is
+ * exhaustiveness-checked by TypeScript — adding a new EffortKind will
+ * fail to compile until it is mapped here.
  *
  * Categories drive the dashboard's 5-way palette and the rollup summary
  * (EffortSummaryCard). "other" intentionally folds into "enablement" for
  * aggregation; dashboards may still surface "other" as its own line when
  * its count is significant.
  */
+const KIND_TO_CATEGORY: Record<EffortKind, EffortCategory> = {
+  workshop: 'client_sync',
+  meeting: 'client_sync',
+  client_training: 'client_sync',
+  config_work: 'technical',
+  build: 'technical',
+  integration: 'technical',
+  data_work: 'technical',
+  reporting: 'technical',
+  qa: 'technical',
+  slack: 'client_async',
+  email: 'client_async',
+  async_video: 'client_async',
+  ticket: 'client_async',
+  internal_sync: 'internal',
+  documentation: 'internal',
+  peer_review: 'internal',
+  learning: 'enablement',
+  scoping: 'enablement',
+  other: 'enablement',
+};
+
 export function categoryOf(kind: EffortKind): EffortCategory {
-  switch (kind) {
-    case 'workshop':
-    case 'meeting':
-    case 'client_training':
-      return 'client_sync';
-    case 'config_work':
-    case 'build':
-    case 'integration':
-    case 'data_work':
-    case 'reporting':
-    case 'qa':
-      return 'technical';
-    case 'slack':
-    case 'email':
-    case 'async_video':
-    case 'ticket':
-      return 'client_async';
-    case 'internal_sync':
-    case 'documentation':
-    case 'peer_review':
-      return 'internal';
-    case 'learning':
-    case 'scoping':
-    case 'other':
-      return 'enablement';
-  }
+  return KIND_TO_CATEGORY[kind];
 }
 
 export const ALL_EFFORT_KINDS: ReadonlyArray<EffortKind> = [
