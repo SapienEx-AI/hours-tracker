@@ -3,6 +3,7 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useUiStore } from '@/store/ui-store';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
+import { useProfile } from '@/data/hooks/use-profile';
 import { useOctokit } from '@/data/hooks/use-octokit';
 import { useAuthStore } from '@/store/auth-store';
 import { addEntry } from '@/data/entries-repo';
@@ -57,6 +58,8 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   const dataRepo = useAuthStore((s) => s.dataRepo);
   const projects = useProjects();
   const rates = useRates();
+  const profile = useProfile();
+  const loggingMode = profile.data?.logging_mode ?? 'hours';
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState<FormState>(initialForm);
@@ -202,6 +205,7 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
         loadAnimNonce={loadAnimNonce}
         loadFlashFields={loadFlashFields}
         loadFlashTone={loadFlashTone}
+        loggingMode={loggingMode}
       />
       <LogHelpersPanel
         form={{
