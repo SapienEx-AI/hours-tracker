@@ -93,6 +93,40 @@ function liftLegacyFieldToSourceRef(file: EntriesFile): void {
   }
 }
 
+/**
+ * Enforce the effort cross-field rule: `effort_kind` and `effort_count` must
+ * both be null or both be set. Returns null if clean, else an ErrorObject.
+ */
+function checkEffortCrossField(file: EntriesFile): ErrorObject | null {
+  for (let i = 0; i < file.entries.length; i++) {
+    const e = file.entries[i]!;
+    const kNull = e.effort_kind === null || e.effort_kind === undefined;
+    const cNull = e.effort_count === null || e.effort_count === undefined;
+    if (kNull !== cNull) {
+      return {
+        instancePath: `/entries/${i}`,
+        schemaPath: '#/properties/entries/items',
+        keyword: 'cross-field',
+        params: {},
+        message: 'effort_kind and effort_count must both be null or both set',
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Backfill effort_kind / effort_count to null on entries that lack them.
+ * Pre-v4 files never had these fields; after this pass the in-memory file
+ * is always v4 shape regardless of on-disk version.
+ */
+function backfillEffortFields(file: EntriesFile): void {
+  for (const e of file.entries) {
+    if (!('effort_kind' in e)) (e as Entry).effort_kind = null;
+    if (!('effort_count' in e)) (e as Entry).effort_count = null;
+  }
+}
+
 export const validateEntries = (data: unknown): ValidationResult<EntriesFile> => {
   // Clone FIRST — never mutate the caller's input.
   const cloned = structuredClone(data) as unknown;
@@ -100,6 +134,9 @@ export const validateEntries = (data: unknown): ValidationResult<EntriesFile> =>
   if (!_entries(cloned)) return { ok: false, errors: _entries.errors ?? [] };
   const file = cloned as EntriesFile;
   liftLegacyFieldToSourceRef(file);
+  const crossErr = checkEffortCrossField(file);
+  if (crossErr !== null) return { ok: false, errors: [crossErr] };
+  backfillEffortFields(file);
   return { ok: true, value: file };
 };
 

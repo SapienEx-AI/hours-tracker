@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/entries.schema.json",
-  "title": "Monthly entries file (v3)",
+  "title": "Monthly entries file (v4)",
   "type": "object",
   "required": ["schema_version", "month", "entries"],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "enum": [1, 2, 3] },
+    "schema_version": { "enum": [1, 2, 3, 4] },
     "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
     "entries": {
       "type": "array",
@@ -27,9 +27,6 @@
           "updated_at"
         ],
         "additionalProperties": false,
-        "not": {
-          "required": ["source_event_id", "source_ref"]
-        },
         "properties": {
           "id": {
             "type": "string",
@@ -59,6 +56,27 @@
                   "id": { "type": "string", "minLength": 1 }
                 }
               }
+            ]
+          },
+          "effort_kind": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "enum": [
+                  "workshop", "meeting", "client_training",
+                  "config_work", "build", "integration", "data_work", "reporting", "qa",
+                  "slack", "email", "async_video", "ticket",
+                  "internal_sync", "documentation", "peer_review",
+                  "learning", "scoping",
+                  "other"
+                ]
+              }
+            ]
+          },
+          "effort_count": {
+            "oneOf": [
+              { "type": "null" },
+              { "type": "integer", "minimum": 1, "maximum": 100 }
             ]
           }
         }

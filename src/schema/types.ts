@@ -133,6 +133,21 @@ export type SourceRef =
   | { kind: 'timer'; id: string }
   | null;
 
+export type EffortKind =
+  | 'workshop' | 'meeting' | 'client_training'
+  | 'config_work' | 'build' | 'integration' | 'data_work' | 'reporting' | 'qa'
+  | 'slack' | 'email' | 'async_video' | 'ticket'
+  | 'internal_sync' | 'documentation' | 'peer_review'
+  | 'learning' | 'scoping'
+  | 'other';
+
+export type EffortCategory =
+  | 'client_sync'
+  | 'technical'
+  | 'client_async'
+  | 'internal'
+  | 'enablement';
+
 export type Entry = {
   id: string;
   project: string;
@@ -147,10 +162,12 @@ export type Entry = {
   created_at: string;
   updated_at: string;
   source_ref: SourceRef;
+  effort_kind: EffortKind | null;
+  effort_count: number | null;
 };
 
 export type EntriesFile = {
-  schema_version: 1 | 2 | 3;
+  schema_version: 1 | 2 | 3 | 4;
   month: string;
   entries: Entry[];
 };
