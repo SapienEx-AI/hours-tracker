@@ -41,4 +41,20 @@ Pick one explicitly and document it in the migration note below.
 
 ## Migrations
 
-*(none yet — MVP is at schema_version 1)*
+### v3 → v4: effort_kind and effort_count
+
+Added dual effort fields to `Entry` so a single record can tag qualitative activity (19-kind taxonomy) alongside quantitative hours. See [`effort-kinds.md`](effort-kinds.md) for the taxonomy.
+
+- **Cross-field rule (enforced by validator):** `effort_kind` and `effort_count` are both null or both set. Partial states are rejected at write time.
+- **Hash canonicalization pattern:** `canonicalizeEntry` emits `effort_kind` + `effort_count` keys **only when non-null**. A v3 entry upgraded to v4 with null fields hashes byte-identically to its v3 form — the March 2026 golden fixture is preserved byte-for-byte.
+- **Writer upgrade path:** `upgradeEntriesFileToV4` (in `src/data/entries-repo.ts`) backfills null on legacy entries and stamps the file's `schema_version` to 4. Commit messages carry a `[schema vN→v4]` suffix for visibility.
+- **Test layers:** schema cross-field tests (`tests/schema/entry-v4-migration.test.ts`), hash-invariance tests (`tests/calc/hash-v4.test.ts`), effort unit + property tests (`tests/calc/effort.test.ts`, `tests/calc/effort-property.test.ts`), writer upgrade tests (`tests/data/entries-repo-v4.test.ts`).
+- **Hash drift:** zero for existing entries (null-effort fields are omitted from canonicalization).
+
+### v2 → v3
+
+Legacy `source_event_id` field on `Entry` replaced by polymorphic `source_ref: { kind, id } | null`. Upgrade path normalizes old entries.
+
+### MVP → v2
+
+Initial `Entry` schema used a top-level `source_event_id` string. v2 introduced the polymorphic `source_ref` wrapper to cover timer + calendar origins.

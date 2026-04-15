@@ -18,6 +18,16 @@ Every invariant the calc module must uphold, with the test that proves it.
 | 12 | Sprosty $20 override works on real March data | `tests/calc/golden-full.test.ts` "sprosty breakdown confirms $20 rate override applied to 9h of Skyvia work" |
 | 13 | Mini golden totals match expected | `tests/calc/golden-mini.test.ts` (2 tests) |
 
+### Effort invariants (added with v4 schema)
+
+| # | Invariant | Test |
+|---|---|---|
+| E1 | `total_activities = sum(by_kind) = sum(by_category)` — conservation | `tests/calc/effort-property.test.ts` |
+| E2 | `sum(per_project.total_activities) = total_activities` — additivity | `tests/calc/effort-property.test.ts` |
+| E3 | Entries outside target month excluded from effort totals | `tests/calc/effort-property.test.ts` |
+| E4 | Null-effort entries contribute nothing to any effort aggregate | `tests/calc/effort.test.ts` + property tests |
+| E5 | `categoryOf` is total over all `EffortKind` values | `tests/calc/effort.test.ts` (exhaustiveness) |
+
 ## Checklist for adding a new invariant
 
 - [ ] Invariant stated in prose in this table

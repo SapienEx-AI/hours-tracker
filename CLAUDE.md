@@ -4,7 +4,7 @@ Authoritative guide for AI agents working on this codebase. **Read before editin
 
 ## Project purpose
 
-A pure-static GitHub Pages app that logs consulting hours into per-consultant private GitHub data repos. Partner-branded (Sector Growth first), hosted by SapienEx. Full design: [`docs/superpowers/specs/2026-04-11-hours-tracker-design.md`](docs/superpowers/specs/2026-04-11-hours-tracker-design.md). Implementation plan: [`docs/superpowers/plans/2026-04-11-hours-tracker-plan.md`](docs/superpowers/plans/2026-04-11-hours-tracker-plan.md).
+A pure-static GitHub Pages app that logs consulting hours into per-consultant private GitHub data repos. Partner-branded (Sector Growth first), hosted by SapienEx. Full design: [`docs/superpowers/specs/2026-04-11-hours-tracker-design.md`](docs/superpowers/specs/2026-04-11-hours-tracker-design.md). Implementation plan: [`docs/superpowers/plans/2026-04-11-hours-tracker-plan.md`](docs/superpowers/plans/2026-04-11-hours-tracker-plan.md). Effort-tracking addition: [`docs/superpowers/specs/2026-04-14-effort-tracking-design.md`](docs/superpowers/specs/2026-04-14-effort-tracking-design.md).
 
 ## Non-negotiable invariants (spec §11)
 
@@ -15,10 +15,11 @@ A pure-static GitHub Pages app that logs consulting hours into per-consultant pr
 5. **`profile.partner_id` is validated** against the selected partner on every load (`src/ui/screens/first-run/validate-data-repo.ts`).
 6. **Rate is snapshotted on every entry** at log time (spec §5.3). Changing `config/rates.json` never moves historical numbers.
 7. **Snapshots are immutable.** Never rewrite a file in `data/snapshots/`.
+8. **Entry v4 effort fields.** `effort_kind` and `effort_count` are both null or both set — validator enforces. Do not log zero-hours entries even for lightweight activities — `hours_hundredths ≥ 1` stays invariant.
 
 ## Do-not-touch-without-review list
 
-- `src/calc/**` — every change re-runs **Gate A** (spec §7.2 Layer 4). Property tests + golden tests + multi-agent review must all pass.
+- `src/calc/**` — every change re-runs **Gate A** (spec §7.2 Layer 4). Property tests + golden tests + multi-agent review must all pass. This now includes `src/calc/effort.ts` and `src/calc/effort-categories.ts` — they back dashboard aggregations and category mapping.
 - `schemas/**` — any change is a schema bump. Update `src/schema/types.ts`, bump `schema_version`, write a migration note in `docs/architecture/adding-a-field.md`.
 - `public/partners/<partner-id>/partner.json` — partner-facing config. Verify with the partner before committing theme changes.
 - `tests/fixtures/2026-03-golden.json` and `tests/fixtures/2026-03-expected.json` — the immutable regression fixture. Regenerate only if the importer itself changes, and re-run **Gate C** when you do.
@@ -49,6 +50,8 @@ npm run import:march    # re-run the March 2026 importer (regenerates golden)
 
 ```
 src/calc/       → all billing math (pure, tested to death, Gate A)
+src/calc/effort.ts       → all effort aggregation (pure, Gate A)
+src/calc/effort-categories.ts → kind → category mapping (pure, Gate A)
 src/schema/     → types.ts + ajv validators.ts (single source of truth)
 src/data/       → Octokit I/O + commit messages + repo modules + hooks
 src/auth/       → TokenProvider interface + PAT implementation
@@ -79,6 +82,7 @@ docs/           → spec, plan, architecture playbooks
 - **Scaffold a new consultant data repo:** `docs/architecture/data-repo-scaffold.md`
 - **Every calc invariant and its test:** `docs/architecture/calc-invariants.md`
 - **Trace a log-hour write end to end:** `docs/architecture/data-flow.md`
+- **Add a new effort kind:** `docs/architecture/effort-kinds.md`
 
 ## When to STOP and ask the human
 
