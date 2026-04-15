@@ -50,19 +50,18 @@ export const validateSnapshot = wrap<Snapshot>(_snapshot);
 export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
 
 /**
- * Validate an entries file. Accepts v1 / v2 / v3 / v4 on the wire; the
- * returned value always has v4 shape (every entry carries `source_ref` and
- * `effort_kind` / `effort_count` fields, backfilled to null when absent).
+ * Validate an entries file. Accepts v1 / v2 / v3 / v4 / v5 on the wire; the
+ * returned value always has v5 shape. New in v5: source_ref.kind may be
+ * 'slack' or 'gmail' in addition to 'calendar' and 'timer'.
  *
- * NOTE: returns a *deep clone* of the input with the v4 shape applied.
- * The caller's original object is never mutated, so a diagnostic logger
- * holding the parsed JSON sees exactly what came off disk.
+ * NOTE: returns a *deep clone* of the input with the v5 shape applied.
+ * The caller's original object is never mutated.
  */
 /**
  * Strip `source_event_id` from any entry that also has `source_ref`.
  * This pattern is corruption from a pre-fix broken writer; self-healing on
  * read lets those files load, and the next write lands a clean file via
- * the fixed upgradeEntriesFileToV3.
+ * the fixed upgrade chain.
  */
 function stripCorruptedLegacyField(data: unknown): void {
   if (typeof data !== 'object' || data === null) return;

@@ -82,7 +82,7 @@ describe('Entry v1/v2/v3 acceptance + backfill', () => {
     const file = {
       schema_version: 3,
       month: '2026-05',
-      entries: [{ ...baseEntry, source_ref: { kind: 'slack', id: 'whatever' } }],
+      entries: [{ ...baseEntry, source_ref: { kind: 'outlook', id: 'whatever' } }],
     };
     const r = validateEntries(file);
     expect(r.ok).toBe(false);

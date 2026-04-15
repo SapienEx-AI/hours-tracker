@@ -134,6 +134,8 @@ export type BillableStatus = 'billable' | 'non_billable' | 'needs_review';
 export type SourceRef =
   | { kind: 'calendar'; id: string }
   | { kind: 'timer'; id: string }
+  | { kind: 'slack'; id: string }
+  | { kind: 'gmail'; id: string }
   | null;
 
 export type EffortKind =
@@ -170,7 +172,7 @@ export type Entry = {
 };
 
 export type EntriesFile = {
-  schema_version: 1 | 2 | 3 | 4;
+  schema_version: 1 | 2 | 3 | 4 | 5;
   month: string;
   entries: Entry[];
 };
