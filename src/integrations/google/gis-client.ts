@@ -32,7 +32,9 @@ declare global {
 
 import { GOOGLE_CLIENT_ID } from './client-id';
 
-const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+export const CALENDAR_READONLY_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+export const GMAIL_READONLY_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+const SCOPE = `${CALENDAR_READONLY_SCOPE} ${GMAIL_READONLY_SCOPE}`;
 const STORAGE_KEY = 'hours-tracker.google-token';
 
 type StoredToken = { access_token: string; expires_at: number };
