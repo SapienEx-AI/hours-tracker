@@ -2,6 +2,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/ui/components/Button';
 import { Banner } from '@/ui/components/Banner';
 import { CalendarSection } from './settings/CalendarSection';
+import { LoggingModeSection } from './settings/LoggingModeSection';
 
 export function Settings(): JSX.Element {
   const auth = useAuthStore();
@@ -19,6 +20,7 @@ export function Settings(): JSX.Element {
           <span className="text-slate-500">data_repo:</span> {auth.dataRepo}
         </div>
       </section>
+      <LoggingModeSection />
       <CalendarSection />
       <Banner variant="warning">
         Signing out clears your token and sends you back to the first-run flow.

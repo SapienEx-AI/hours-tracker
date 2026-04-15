@@ -7,6 +7,7 @@ type Props = {
   isToday: boolean;
   isWeekend: boolean;
   day: DailyBreakdown | null;
+  effortCount: number;
   maxHours: number;
   currency: CurrencyDisplay;
   onClick: (date: string) => void;
@@ -46,7 +47,7 @@ function StackedBar({ day }: { day: DailyBreakdown }): JSX.Element {
 }
 
 export function CalendarCell({
-  date, inMonth, isToday, isWeekend, day, maxHours, currency, onClick, selected,
+  date, inMonth, isToday, isWeekend, day, effortCount, maxHours, currency, onClick, selected,
 }: Props): JSX.Element {
   if (!inMonth) {
     return (
@@ -82,6 +83,11 @@ export function CalendarCell({
           {day.billable_amount_cents > 0 && (
             <div className="font-mono text-[11px] text-partner-mid mt-1">
               {formatCents(day.billable_amount_cents, currency)}
+            </div>
+          )}
+          {effortCount > 0 && (
+            <div className="font-mono text-[10px] text-slate-500 mt-0.5">
+              {effortCount} act{effortCount === 1 ? '' : 's'}
             </div>
           )}
         </>

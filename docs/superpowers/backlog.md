@@ -15,6 +15,7 @@ Tracked features deferred from MVP (Phases 1–11). Each item references the spe
 - **Google Calendar integration (read-only)** — browser-native OAuth via GIS, multi-calendar support, click-to-prefill form, persistent dedupe via Entry `source_event_id` (schema v2). Phase C.
 - **Dashboard calendar view** — month-grid modal launched from a calendar icon on the Dashboard header. Per-day billable / non-billable / needs-review stacked bars, heatmap tint, today ring, muted weekends, week totals column, click-day side panel with entry list, click-entry → existing EditEntryModal. Mobile list fallback below `lg`.
 - **Dashboard this-month Project Builds table** — bucket-level table for the selected month, styled like Monthly Invoice. Uses the same project-builds stream definition as the existing summary card.
+- **Effort tracking v0 (per-consultant).** Schema v4 adds optional `effort_kind` + `effort_count`. 19-kind taxonomy across 5 categories. Quick Activity card in the Assist panel. `profile.logging_mode` (hours/effort/both) controls the LogForm layout for HubSpot-lead consultants. Dashboard `EffortSummaryCard` + per-project effort column + calendar modal daily row. CSV export gains two trailing columns. Agency-wide roll-up, auto-pull integrations, and AI features are deferred to later specs.
 
 ## Near-term
 

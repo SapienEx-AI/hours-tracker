@@ -3,12 +3,13 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useUiStore } from '@/store/ui-store';
 import { useProjects } from '@/data/hooks/use-projects';
 import { useRates } from '@/data/hooks/use-rates';
+import { useProfile } from '@/data/hooks/use-profile';
 import { useOctokit } from '@/data/hooks/use-octokit';
 import { useAuthStore } from '@/store/auth-store';
 import { addEntry } from '@/data/entries-repo';
 import { splitRepoPath } from '@/data/octokit-client';
 import { resolveRateAtLogTime } from '@/calc';
-import type { ProjectsConfig, RatesConfig } from '@/schema/types';
+import type { EffortKind, ProjectsConfig, RatesConfig } from '@/schema/types';
 import { Banner } from '@/ui/components/Banner';
 import { formatHoursDecimal } from '@/format/format';
 import { qk } from '@/data/query-keys';
@@ -16,6 +17,7 @@ import type { Route } from '@/ui/Router';
 import type { Suggestion } from '@/data/hooks/use-calendar-events';
 import { useTimerStore } from '@/store/timer-store';
 import { msToHundredths, type HistoricalRecording } from '@/store/timer-session';
+import type { QuickAction } from './log/QuickActivityCard';
 import { LogForm } from './log/LogForm';
 import { LogHelpersPanel } from './log/LogHelpersPanel';
 import { buildEntry, initialForm, type FormState } from './log/form-helpers';
@@ -57,6 +59,8 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   const dataRepo = useAuthStore((s) => s.dataRepo);
   const projects = useProjects();
   const rates = useRates();
+  const profile = useProfile();
+  const loggingMode = profile.data?.logging_mode ?? 'hours';
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState<FormState>(initialForm);
@@ -142,9 +146,13 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       source_ref: s.source_event_id
         ? { kind: 'calendar', id: s.source_event_id }
         : null,
+      effort_kind: 'meeting',
+      effort_count: 1,
     }));
     setPrefillHint(s.description || '(no title)');
-    setLoadFlashFields(new Set(['date', 'hoursHundredths', 'description']));
+    setLoadFlashFields(
+      new Set(['date', 'hoursHundredths', 'description', 'effort_kind', 'effort_count']),
+    );
     setLoadFlashTone({ r: 99, g: 102, b: 241 }); // indigo-500 (Calendar tone)
     setLoadAnimNonce((n) => n + 1);
   }
@@ -165,10 +173,14 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       projectId: rec.project_id,
       bucketId: rec.bucket_id,
       hoursHundredths: hours,
+      effort_kind: rec.effort_kind,
+      effort_count: rec.effort_kind === null ? null : 1,
       source_ref: { kind: 'timer', id: rec.id },
     }));
     setPrefillHint('timer · redriven');
-    setLoadFlashFields(new Set(['date', 'projectId', 'bucketId', 'hoursHundredths']));
+    setLoadFlashFields(
+      new Set(['date', 'projectId', 'bucketId', 'hoursHundredths', 'effort_kind', 'effort_count']),
+    );
     setLoadFlashTone({ r: 245, g: 158, b: 11 });
     setLoadAnimNonce((n) => n + 1);
   }
@@ -183,6 +195,39 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   function changeTimerBucket(bucketId: string | null) {
     setForm((f) => ({ ...f, bucketId }));
     updateTimerSnapshot({ bucketId });
+  }
+
+  function changeTimerEffortKind(effort_kind: EffortKind | null) {
+    setForm((f) => ({
+      ...f,
+      effort_kind,
+      effort_count: effort_kind === null ? null : (f.effort_count ?? 1),
+    }));
+    updateTimerSnapshot({ effort_kind });
+  }
+
+  function onQuickActivity(action: QuickAction) {
+    setForm((f) => ({
+      ...f,
+      effort_kind: action.kind,
+      effort_count: 1,
+      hoursHundredths: action.hoursHundredths,
+    }));
+    setPrefillHint(`quick: ${action.kind.replace(/_/g, ' ')}`);
+    setLoadFlashFields(
+      new Set(['effort_kind', 'effort_count', 'hoursHundredths']),
+    );
+    setLoadFlashTone({ r: 251, g: 146, b: 60 }); // orange-400 — distinct from indigo and amber
+    setLoadAnimNonce((n) => n + 1);
+  }
+
+  function onBounceProject() {
+    const el = projectRef.current;
+    if (el === null) return;
+    el.classList.add('ring-2', 'ring-red-500', 'animate-pulse');
+    window.setTimeout(() => {
+      el.classList.remove('ring-2', 'ring-red-500', 'animate-pulse');
+    }, 800);
   }
 
   return (
@@ -202,6 +247,7 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
         loadAnimNonce={loadAnimNonce}
         loadFlashFields={loadFlashFields}
         loadFlashTone={loadFlashTone}
+        loggingMode={loggingMode}
       />
       <LogHelpersPanel
         form={{
@@ -209,12 +255,16 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
           bucketId: form.bucketId,
           description: form.description,
           date: form.date,
+          effort_kind: form.effort_kind,
         }}
         projects={activeProjects}
         onSelectSuggestion={applySuggestion}
         onRedriveRecording={applyHistoricalRecording}
         onChangeProject={changeTimerProject}
         onChangeBucket={changeTimerBucket}
+        onChangeEffortKind={changeTimerEffortKind}
+        onQuickActivity={onQuickActivity}
+        onBounceProject={onBounceProject}
         onNavigate={onNavigate}
       />
     </div>

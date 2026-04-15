@@ -44,3 +44,20 @@ export async function createProfile(
     message: `config: init profile for ${args.profile.consultant_id}`,
   });
 }
+
+export async function updateProfile(
+  octokit: Octokit,
+  args: { owner: string; repo: string; profile: Profile },
+): Promise<void> {
+  const v = validateProfile(args.profile);
+  if (!v.ok) {
+    throw new Error(`Profile failed validation:\n${formatValidationErrors(v.errors)}`);
+  }
+  await writeJsonFile(octokit, {
+    owner: args.owner,
+    repo: args.repo,
+    path: PATH,
+    content: args.profile,
+    message: `config: update profile for ${args.profile.consultant_id}`,
+  });
+}

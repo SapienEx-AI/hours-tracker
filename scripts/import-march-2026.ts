@@ -203,6 +203,8 @@ function parseLine(line: string): Entry | null {
     created_at: IMPORT_TS,
     updated_at: IMPORT_TS,
     source_ref: null,
+    effort_kind: null,
+    effort_count: null,
   };
 }
 

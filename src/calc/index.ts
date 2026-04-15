@@ -33,3 +33,15 @@ export {
   type ProjectBuildsMonthRow,
 } from './daily';
 export { isMonthlyStream } from './totals';
+export {
+  computeMonthEffort,
+  type MonthEffortTotals,
+  type PerProjectEffort,
+} from './effort';
+export {
+  categoryOf,
+  ALL_EFFORT_KINDS,
+  ALL_EFFORT_CATEGORIES,
+  emptyByKind,
+  emptyByCategory,
+} from './effort-categories';

@@ -1,13 +1,20 @@
 import type { RefObject } from 'react';
-import type { BillableStatus, Project } from '@/schema/types';
+import type { LoggingMode, Project } from '@/schema/types';
 import { Button } from '@/ui/components/Button';
-import { Input } from '@/ui/components/Input';
-import { Select } from '@/ui/components/Select';
-import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
-import { HoursChips } from '@/ui/components/HoursChips';
-import { formatHoursDecimal } from '@/format/format';
-import { formatRateDollars, type FormState } from './form-helpers';
+import { type FormState } from './form-helpers';
+import type { FlashTone } from './FieldFlash';
+import {
+  ActivityField,
+  BucketField,
+  DateField,
+  DescriptionField,
+  HoursField,
+  ProjectField,
+  RateField,
+  StatusField,
+  type FieldProps,
+} from './LogFormFields';
 
 type Props = {
   form: FormState;
@@ -21,76 +28,48 @@ type Props = {
   saving: boolean;
   canSave: boolean;
   onSave: () => void;
-  /**
-   * Increments each time data is loaded into the form from the Assist panel.
-   * Used to re-trigger the right-to-left sweep + per-field magic fill.
-   */
   loadAnimNonce: number;
-  /** Set of FormState field keys that received new values on the latest load. */
   loadFlashFields: ReadonlySet<string>;
-  /** RGB hue of the source panel — Timer = amber, Calendar = indigo, etc. */
-  loadFlashTone: { r: number; g: number; b: number } | null;
+  loadFlashTone: FlashTone;
+  loggingMode: LoggingMode;
 };
 
-// Order in which fields visually appear in the form, used to stagger the magic
-// fill so the animation cascades top-to-bottom in sync with the sweep streak.
-const FLASH_ORDER: ReadonlyArray<string> = [
-  'date',
-  'projectId',
-  'hoursHundredths',
-  'bucketId',
-  'description',
-];
-
-function FieldFlash({
-  field,
-  flashFields,
-  nonce,
-  tone,
-  children,
-}: {
-  field: string;
-  flashFields: ReadonlySet<string>;
-  nonce: number;
-  tone: { r: number; g: number; b: number } | null;
-  children: React.ReactNode;
-}): JSX.Element {
-  const shouldFlash = nonce > 0 && flashFields.has(field);
-  if (!shouldFlash) return <>{children}</>;
-  const idx = FLASH_ORDER.indexOf(field);
-  const delayMs = idx >= 0 ? idx * 90 : 0;
-  const toneStyle =
-    tone !== null
-      ? ({
-          '--magic-r': tone.r,
-          '--magic-g': tone.g,
-          '--magic-b': tone.b,
-        } as React.CSSProperties)
-      : {};
-  return (
-    <div
-      key={`${field}-${nonce}`}
-      className="anim-field-magic"
-      style={{ '--field-delay': `${delayMs}ms`, ...toneStyle } as React.CSSProperties}
-    >
-      <span className="anim-field-shimmer" />
-      {children}
-    </div>
-  );
-}
-
 export function LogForm(props: Props): JSX.Element {
-  const { form, setForm, activeProjects, projectRef, toast, prefillHint, onClearPrefill,
-    mutationError, saving, canSave, onSave, loadAnimNonce, loadFlashFields, loadFlashTone } = props;
+  const {
+    form,
+    setForm,
+    activeProjects,
+    projectRef,
+    toast,
+    prefillHint,
+    onClearPrefill,
+    mutationError,
+    saving,
+    canSave,
+    onSave,
+    loadAnimNonce,
+    loadFlashFields,
+    loadFlashTone,
+    loggingMode,
+  } = props;
 
   const selectedProject = activeProjects.find((p) => p.id === form.projectId);
-  const activeBuckets = selectedProject?.buckets.filter((b) => b.status !== 'archived') ?? [];
-  const selectedBucket = activeBuckets.find((b) => b.id === form.bucketId);
+  const activeBuckets =
+    selectedProject?.buckets.filter((b) => b.status !== 'archived') ?? [];
+
+  const fp: FieldProps = {
+    form,
+    setForm,
+    flashFields: loadFlashFields,
+    nonce: loadAnimNonce,
+    tone: loadFlashTone,
+  };
+
+  const isEffortMode = loggingMode === 'effort';
+  const headerTitle = isEffortMode ? 'Log activity' : 'Log hours';
 
   return (
     <div className="relative flex-1 max-w-[480px]">
-      {/* Data-flowing-in animation overlay. Re-mounts on nonce change so the
-          CSS keyframes restart for every load. */}
       {loadAnimNonce > 0 && (
         <div
           key={loadAnimNonce}
@@ -107,155 +86,56 @@ export function LogForm(props: Props): JSX.Element {
       )}
 
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl">Log hours</h1>
-      {toast && <Banner variant="success">{toast}</Banner>}
+        <h1 className="font-display text-2xl">{headerTitle}</h1>
+        {toast && <Banner variant="success">{toast}</Banner>}
 
-      <FieldLabel label="Date">
-        <FieldFlash field="date" flashFields={loadFlashFields} nonce={loadAnimNonce} tone={loadFlashTone}>
-          <Input
-            type="date"
-            value={form.date}
-            onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-          />
-        </FieldFlash>
-      </FieldLabel>
+        <DateField {...fp} />
+        <ProjectField {...fp} activeProjects={activeProjects} projectRef={projectRef} />
 
-      <FieldLabel label="Project">
-        <FieldFlash field="projectId" flashFields={loadFlashFields} nonce={loadAnimNonce} tone={loadFlashTone}>
-          <Select
-            ref={projectRef}
-            value={form.projectId}
-            onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value, bucketId: null }))}
-          >
-            <option value="">— select —</option>
-            {activeProjects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </Select>
-        </FieldFlash>
-      </FieldLabel>
+        {isEffortMode && <ActivityField {...fp} />}
+        <HoursField {...fp} />
+        {!isEffortMode && <ActivityField {...fp} />}
 
-      <FieldLabel label="Hours">
-        <FieldFlash field="hoursHundredths" flashFields={loadFlashFields} nonce={loadAnimNonce} tone={loadFlashTone}>
-          <Input
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={form.hoursHundredths === 0 ? '' : formatHoursDecimal(form.hoursHundredths)}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                hoursHundredths: Math.round(parseFloat(e.target.value || '0') * 100),
-              }))
-            }
-          />
-        </FieldFlash>
-      </FieldLabel>
-      <HoursChips onPick={(h) => setForm((f) => ({ ...f, hoursHundredths: h }))} />
+        <BucketField {...fp} activeBuckets={activeBuckets} />
 
-      <FieldLabel label="Bucket">
-        <FieldFlash field="bucketId" flashFields={loadFlashFields} nonce={loadAnimNonce} tone={loadFlashTone}>
-          <Select
-            value={form.bucketId ?? ''}
-            onChange={(e) => setForm((f) => ({ ...f, bucketId: e.target.value || null }))}
-          >
-            <option value="">(none — general billable)</option>
-            {activeBuckets.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}{b.status === 'closed' ? ' (closed)' : ''}
-              </option>
-            ))}
-          </Select>
-        </FieldFlash>
-      </FieldLabel>
-      {selectedBucket?.status === 'closed' && (
-        <Banner variant="warning">
-          This bucket is closed. New entries are allowed but may need review — the bucket was
-          likely invoiced already.
-        </Banner>
-      )}
+        {isEffortMode ? (
+          <details className="glass-input rounded-xl p-3">
+            <summary className="text-xs font-mono uppercase tracking-wider text-slate-500 cursor-pointer select-none">
+              Advanced (billable status, rate)
+            </summary>
+            <div className="mt-3 flex flex-col gap-4">
+              <StatusField {...fp} />
+              <RateField {...fp} />
+            </div>
+          </details>
+        ) : (
+          <>
+            <StatusField {...fp} />
+            <RateField {...fp} />
+          </>
+        )}
 
-      <FieldLabel label="Status">
-        <div className="flex gap-4 font-body text-sm">
-          {(['billable', 'non_billable', 'needs_review'] as const).map((s) => (
-            <StatusRadio
-              key={s}
-              value={s}
-              currentValue={form.status}
-              disabled={form.bucketId !== null}
-              onChange={(next) => setForm((f) => ({ ...f, status: next }))}
-            />
-          ))}
-        </div>
-      </FieldLabel>
+        <DescriptionField {...fp} />
 
-      <FieldLabel label="Rate ($/hr)" hint={form.rateOverridden ? 'override' : 'inherited'}>
-        <Input
-          type="number"
-          step="0.01"
-          value={formatRateDollars(form.rateCents)}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              rateCents: Math.round(parseFloat(e.target.value || '0') * 100),
-              rateOverridden: true,
-            }))
-          }
-        />
-      </FieldLabel>
+        {prefillHint && (
+          <div className="text-xs text-slate-500">
+            Prefilled from <span className="italic">{prefillHint}</span>{' '}
+            <button
+              type="button"
+              onClick={onClearPrefill}
+              className="underline text-slate-600"
+            >
+              clear
+            </button>
+          </div>
+        )}
 
-      <FieldLabel label="Description">
-        <FieldFlash field="description" flashFields={loadFlashFields} nonce={loadAnimNonce} tone={loadFlashTone}>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            maxLength={500}
-            rows={3}
-            className="w-full px-3.5 py-2.5 rounded-xl glass-input text-slate-800 font-body text-sm transition-all duration-200 focus:outline-none focus:border-partner-cyan/50 focus:glass-strong focus:glow-focus placeholder:text-slate-500/60"
-          />
-        </FieldFlash>
-      </FieldLabel>
-      {prefillHint && (
-        <div className="text-xs text-slate-500">
-          Prefilled from <span className="italic">{prefillHint}</span>{' '}
-          <button type="button" onClick={onClearPrefill} className="underline text-slate-600">
-            clear
-          </button>
-        </div>
-      )}
-
-      {mutationError && <Banner variant="error">{mutationError.message}</Banner>}
+        {mutationError && <Banner variant="error">{mutationError.message}</Banner>}
 
         <Button onClick={onSave} disabled={saving || !canSave}>
           {saving ? 'Saving…' : 'Save (⌘↵)'}
         </Button>
       </div>
     </div>
-  );
-}
-
-function StatusRadio({
-  value,
-  currentValue,
-  disabled,
-  onChange,
-}: {
-  value: BillableStatus;
-  currentValue: BillableStatus;
-  disabled: boolean;
-  onChange: (v: BillableStatus) => void;
-}): JSX.Element {
-  return (
-    <label className={`flex items-center gap-1 ${disabled ? 'opacity-50' : ''}`}>
-      <input
-        type="radio"
-        name="status"
-        value={value}
-        checked={currentValue === value}
-        onChange={() => onChange(value)}
-        disabled={disabled}
-      />
-      {value.replace('_', '-')}
-    </label>
   );
 }

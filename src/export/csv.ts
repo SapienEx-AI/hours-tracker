@@ -4,6 +4,7 @@ import { formatHoursDecimal } from '@/format/format';
 const HEADER = [
   'id', 'date', 'project', 'bucket', 'hours', 'rate',
   'billable_status', 'description', 'review_flag', 'rate_source',
+  'effort_kind', 'effort_count',
 ].join(',');
 
 const INJECTION_PREFIXES = ['=', '+', '-', '@'];
@@ -37,6 +38,8 @@ export function entriesToCSV(entries: Entry[]): string {
     e.description,
     e.review_flag ? 'true' : 'false',
     e.rate_source,
+    e.effort_kind ?? '',
+    e.effort_count === null ? '' : String(e.effort_count),
   ].map(escapeCell).join(','));
   return [HEADER, ...rows].join('\n');
 }

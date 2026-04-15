@@ -1,5 +1,5 @@
 import type { Form, TimerSession } from '@/store/timer-session';
-import type { Project } from '@/schema/types';
+import type { EffortKind, Project } from '@/schema/types';
 import { liveElapsedMs, msToHundredths } from '@/store/timer-session';
 import { formatHoursDecimal } from '@/format/format';
 import { TimerInlineEdit } from './TimerInlineEdit';
@@ -62,8 +62,10 @@ type RunningPausedProps = {
   projects: Project[];
   projectId: string;
   bucketId: string | null;
+  effortKind: EffortKind | null;
   onChangeProject: (id: string) => void;
   onChangeBucket: (id: string | null) => void;
+  onChangeEffortKind: (k: EffortKind | null) => void;
   onStop: () => void;
   onAbort: () => void;
 };

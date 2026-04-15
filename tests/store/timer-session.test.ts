@@ -14,6 +14,7 @@ const formLike = {
   bucketId: 'discovery' as string | null,
   description: 'kickoff',
   date: '2026-04-14',
+  effort_kind: null,
 };
 
 describe("msToHundredths (banker's rounding to nearest 0.01h)", () => {

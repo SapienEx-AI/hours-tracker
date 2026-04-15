@@ -130,6 +130,8 @@ Before any [A] feature is real, one of these has to be chosen:
 
 The most differentiated ideas. Grouped by what kind of AI work is needed, ordered roughly by value-to-effort.
 
+> **Update 2026-04-14:** Effort data (shipped via [`2026-04-14-effort-tracking-design.md`](../specs/2026-04-14-effort-tracking-design.md)) is the primary substrate for many AI features catalogued below — AI8 (work-type classification), AI6 (weekly narrative), AI13 (project scope planner) benefit directly from `effort_kind` labels already present on entries.
+
 ### 5.1 Input/capture (make logging disappear)
 
 | # | Idea | What it does | Effort | Model class |

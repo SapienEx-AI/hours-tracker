@@ -4,6 +4,7 @@ import { formatCents, formatHoursDecimal } from '@/format/format';
 
 type Props = {
   daily: MonthDaily;
+  effortByDate: Map<string, number>;
   currency: CurrencyDisplay;
   onDayClick: (date: string) => void;
   selectedDate: string | null;
@@ -29,7 +30,7 @@ function barPercents(day: DailyBreakdown): { billable: number; nonBillable: numb
 }
 
 export function CalendarMobileList({
-  daily, currency, onDayClick, selectedDate, todayISO,
+  daily, effortByDate, currency, onDayClick, selectedDate, todayISO,
 }: Props): JSX.Element {
   if (daily.days.length === 0) {
     return <div className="text-sm text-slate-400 py-6 text-center">No entries this month.</div>;
@@ -58,6 +59,11 @@ export function CalendarMobileList({
               <div className="bg-slate-400" style={{ width: `${pct.nonBillable}%` }} />
               <div className="bg-amber-400" style={{ width: `${pct.needsReview}%` }} />
             </div>
+            {(effortByDate.get(d.date) ?? 0) > 0 && (
+              <div className="w-16 text-right font-mono text-[10px] text-slate-500">
+                {effortByDate.get(d.date)} acts
+              </div>
+            )}
             {d.billable_amount_cents > 0 && (
               <div className="w-24 text-right font-mono text-xs text-partner-mid">
                 {formatCents(d.billable_amount_cents, currency)}

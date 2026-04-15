@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Route } from '@/ui/Router';
-import type { Project } from '@/schema/types';
+import type { EffortKind, Project } from '@/schema/types';
 import type { Suggestion } from '@/data/hooks/use-calendar-events';
 import type { Form, HistoricalRecording } from '@/store/timer-session';
 import { SapienExMark } from '@/ui/components/SapienExMark';
 import { AnimatedHeight } from '@/ui/components/AnimatedHeight';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { TimerCard } from './TimerCard';
+import { QuickActivityCard, type QuickAction } from './QuickActivityCard';
 
 // Viewport must be at least this wide for horizontal stacking to fit.
 const MIN_WIDTH_FOR_HORIZONTAL = 1280;
@@ -48,6 +49,9 @@ type Props = {
   onRedriveRecording: (rec: HistoricalRecording) => void;
   onChangeProject: (id: string) => void;
   onChangeBucket: (id: string | null) => void;
+  onChangeEffortKind: (k: EffortKind | null) => void;
+  onQuickActivity: (action: QuickAction) => void;
+  onBounceProject: () => void;
   onNavigate: (r: Route) => void;
 };
 
@@ -66,6 +70,9 @@ export function LogHelpersPanel({
   onRedriveRecording,
   onChangeProject,
   onChangeBucket,
+  onChangeEffortKind,
+  onQuickActivity,
+  onBounceProject,
   onNavigate,
 }: Props): JSX.Element {
   const [isWide, setIsWide] = useState(false);
@@ -157,6 +164,7 @@ export function LogHelpersPanel({
                   projects={projects}
                   onChangeProject={onChangeProject}
                   onChangeBucket={onChangeBucket}
+                  onChangeEffortKind={onChangeEffortKind}
                   onRedrive={onRedriveRecording}
                 />
               </AnimatedHeight>
@@ -173,6 +181,16 @@ export function LogHelpersPanel({
                 />
               </AnimatedHeight>
             </MeasuredBlock>
+          </div>
+
+          <div className="w-[360px] max-w-full">
+            <AnimatedHeight>
+              <QuickActivityCard
+                projectSelected={form.projectId !== ''}
+                onPrefill={onQuickActivity}
+                onBounceProject={onBounceProject}
+              />
+            </AnimatedHeight>
           </div>
         </div>
       </div>

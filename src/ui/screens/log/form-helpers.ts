@@ -1,4 +1,11 @@
-import type { BillableStatus, Entry, ProjectsConfig, RatesConfig, SourceRef } from '@/schema/types';
+import type {
+  BillableStatus,
+  EffortKind,
+  Entry,
+  ProjectsConfig,
+  RatesConfig,
+  SourceRef,
+} from '@/schema/types';
 import { resolveRateAtLogTime } from '@/calc';
 import { newEntryId } from '@/data/new-entry-id';
 
@@ -12,6 +19,8 @@ export type FormState = {
   rateOverridden: boolean;
   description: string;
   source_ref: SourceRef;
+  effort_kind: EffortKind | null;
+  effort_count: number | null;
 };
 
 export function todayISO(): string {
@@ -32,6 +41,8 @@ export const initialForm: FormState = {
   rateOverridden: false,
   description: '',
   source_ref: null,
+  effort_kind: null,
+  effort_count: null,
 };
 
 export function formatRateDollars(rateCents: number): string {
@@ -65,5 +76,7 @@ export function buildEntry(
     created_at: now,
     updated_at: now,
     source_ref: form.source_ref,
+    effort_kind: form.effort_kind,
+    effort_count: form.effort_count,
   };
 }

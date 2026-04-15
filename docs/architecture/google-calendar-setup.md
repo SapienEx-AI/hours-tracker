@@ -58,6 +58,10 @@ Commit. Deploy.
 
 Not a Cloud-side change — just add their Google address to the **Test users** list in the consent screen. They can Connect in the app immediately after.
 
+## Calendar-sourced entries auto-tag effort
+
+When a consultant applies a calendar suggestion to the Quick Log form, `effort_kind` is prefilled as `meeting` and `effort_count` as `1`. This keeps meetings off the pure-hours path and onto the effort dashboard by default. Both fields are user-overridable before save.
+
 ## Adding a new origin (custom domain, new localhost port)
 
 "APIs & Services" → "Credentials" → click the OAuth client → add to Authorized JavaScript origins → Save. Takes a minute or two to propagate.
