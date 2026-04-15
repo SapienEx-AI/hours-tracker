@@ -50,11 +50,11 @@ export const validateSnapshot = wrap<Snapshot>(_snapshot);
 export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
 
 /**
- * Validate an entries file. Accepts v1 / v2 / v3 on the wire; the returned
- * value always has v3 shape (every entry carries `source_ref`, never the
- * legacy `source_event_id`).
+ * Validate an entries file. Accepts v1 / v2 / v3 / v4 on the wire; the
+ * returned value always has v4 shape (every entry carries `source_ref` and
+ * `effort_kind` / `effort_count` fields, backfilled to null when absent).
  *
- * NOTE: returns a *deep clone* of the input with the v3 shape applied.
+ * NOTE: returns a *deep clone* of the input with the v4 shape applied.
  * The caller's original object is never mutated, so a diagnostic logger
  * holding the parsed JSON sees exactly what came off disk.
  */

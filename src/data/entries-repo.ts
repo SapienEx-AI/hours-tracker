@@ -173,7 +173,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
     owner: args.owner,
     repo: args.repo,
     path,
-    // Message is built per-attempt so the [schema vN→v3] suffix reflects
+    // Message is built per-attempt so the [schema vN→v4] suffix reflects
     // the actual on-disk version read during this attempt (retries may see
     // a different version if another writer landed in between).
     message: (current) => {
