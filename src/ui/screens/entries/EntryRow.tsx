@@ -1,6 +1,7 @@
 import type { Entry } from '@/schema/types';
 import { formatHours, formatCents, type CurrencyDisplay } from '@/format/format';
 import { Button } from '@/ui/components/Button';
+import { EffortBadge } from '@/ui/components/EffortBadge';
 import { BucketCell } from './BucketCell';
 
 type Props = {
@@ -52,7 +53,14 @@ export function EntryRow({
           busy={assignBusy}
         />
       </td>
-      <td className="py-2 px-3 text-slate-600 max-w-sm">{entry.description}</td>
+      <td className="py-2 px-3 text-slate-600 max-w-sm">
+        {entry.effort_kind !== null && entry.effort_count !== null && (
+          <span className="inline-block mr-1.5 align-middle">
+            <EffortBadge kind={entry.effort_kind} count={entry.effort_count} />
+          </span>
+        )}
+        {entry.description}
+      </td>
       <td className="py-2 px-3" onClick={(ev) => ev.stopPropagation()}>
         <Button
           variant="danger"

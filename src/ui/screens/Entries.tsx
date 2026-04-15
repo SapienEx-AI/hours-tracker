@@ -8,11 +8,12 @@ import { useUiStore } from '@/store/ui-store';
 import { deleteEntry, updateEntry } from '@/data/entries-repo';
 import { splitRepoPath } from '@/data/octokit-client';
 import { deleteMessage, editMessage } from '@/data/commit-messages';
-import type { Partner, Entry } from '@/schema/types';
+import type { Partner, Entry, EffortKind } from '@/schema/types';
 import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
 import { Select } from '@/ui/components/Select';
 import { Banner } from '@/ui/components/Banner';
+import { EffortKindSelect } from '@/ui/components/EffortKindSelect';
 import { qk } from '@/data/query-keys';
 import { entriesToCSV, downloadCSV } from '@/export/csv';
 import { EditEntryModal } from './entries/EditEntryModal';
@@ -56,6 +57,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   const [month, setMonth] = useState(currentMonth);
   const [filter, setFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [effortKindFilter, setEffortKindFilter] = useState<EffortKind | null>(null);
   const [editing, setEditing] = useState<Entry | null>(null);
   const entries = useMonthEntries(month);
   const projects = useProjects();
@@ -114,6 +116,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   const visible = (entries.data?.entries ?? []).filter(
     (e) =>
       (statusFilter === 'all' || e.billable_status === statusFilter) &&
+      (effortKindFilter === null || e.effort_kind === effortKindFilter) &&
       (!filter ||
         e.project.toLowerCase().includes(filter.toLowerCase()) ||
         e.description.toLowerCase().includes(filter.toLowerCase())),
@@ -168,6 +171,12 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
             <option value="non_billable">non-billable</option>
             <option value="needs_review">needs-review</option>
           </Select>
+        </div>
+        <div className="w-56">
+          <EffortKindSelect
+            value={effortKindFilter}
+            onChange={(k) => setEffortKindFilter(k)}
+          />
         </div>
         <Button
           variant="secondary"
