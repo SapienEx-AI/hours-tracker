@@ -33,6 +33,14 @@ function canonicalizeEntry(e: Entry): Record<string, unknown> {
     created_at: e.created_at,
     updated_at: e.updated_at,
   };
+  // Effort fields emitted ONLY when non-null — mirrors source_ref projection.
+  // Pre-v4 entries hash identically; March 2026 golden fixture untouched.
+  if (e.effort_kind !== null && e.effort_kind !== undefined) {
+    base.effort_kind = e.effort_kind;
+  }
+  if (e.effort_count !== null && e.effort_count !== undefined) {
+    base.effort_count = e.effort_count;
+  }
   const source = canonicalSource(e.source_ref);
   for (const [k, v] of Object.entries(source)) {
     base[k] = v;
