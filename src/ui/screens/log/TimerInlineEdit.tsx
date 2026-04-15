@@ -1,11 +1,14 @@
-import type { Project } from '@/schema/types';
+import type { EffortKind, Project } from '@/schema/types';
+import { EffortKindSelect } from '@/ui/components/EffortKindSelect';
 
 type Props = {
   projects: Project[];
   projectId: string;
   bucketId: string | null;
+  effortKind: EffortKind | null;
   onChangeProject: (id: string) => void;
   onChangeBucket: (id: string | null) => void;
+  onChangeEffortKind: (k: EffortKind | null) => void;
 };
 
 /**
@@ -18,8 +21,10 @@ export function TimerInlineEdit({
   projects,
   projectId,
   bucketId,
+  effortKind,
   onChangeProject,
   onChangeBucket,
+  onChangeEffortKind,
 }: Props): JSX.Element {
   const selectedProject = projects.find((p) => p.id === projectId);
   const activeBuckets =
@@ -71,6 +76,11 @@ export function TimerInlineEdit({
           </option>
         ))}
       </select>
+
+      <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+        activity
+      </span>
+      <EffortKindSelect value={effortKind} onChange={onChangeEffortKind} />
     </div>
   );
 }

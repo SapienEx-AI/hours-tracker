@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Route } from '@/ui/Router';
-import type { Project } from '@/schema/types';
+import type { EffortKind, Project } from '@/schema/types';
 import type { Suggestion } from '@/data/hooks/use-calendar-events';
 import type { Form, HistoricalRecording } from '@/store/timer-session';
 import { SapienExMark } from '@/ui/components/SapienExMark';
@@ -49,6 +49,7 @@ type Props = {
   onRedriveRecording: (rec: HistoricalRecording) => void;
   onChangeProject: (id: string) => void;
   onChangeBucket: (id: string | null) => void;
+  onChangeEffortKind: (k: EffortKind | null) => void;
   onQuickActivity: (action: QuickAction) => void;
   onBounceProject: () => void;
   onNavigate: (r: Route) => void;
@@ -69,6 +70,7 @@ export function LogHelpersPanel({
   onRedriveRecording,
   onChangeProject,
   onChangeBucket,
+  onChangeEffortKind,
   onQuickActivity,
   onBounceProject,
   onNavigate,
@@ -162,6 +164,7 @@ export function LogHelpersPanel({
                   projects={projects}
                   onChangeProject={onChangeProject}
                   onChangeBucket={onChangeBucket}
+                  onChangeEffortKind={onChangeEffortKind}
                   onRedrive={onRedriveRecording}
                 />
               </AnimatedHeight>

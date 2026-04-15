@@ -9,7 +9,13 @@ import {
   msToHundredths,
 } from '@/store/timer-session';
 
-const snapshot = { projectId: 'p', bucketId: null, description: '', date: '2026-04-14' };
+const snapshot = {
+  projectId: 'p',
+  bucketId: null,
+  description: '',
+  date: '2026-04-14',
+  effort_kind: null,
+};
 
 describe('Timer session invariants', () => {
   it('live elapsed is monotonic under arbitrary start/pause/resume/stop sequences', () => {

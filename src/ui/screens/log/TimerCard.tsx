@@ -5,7 +5,7 @@ import {
   type Form,
   type HistoricalRecording,
 } from '@/store/timer-session';
-import type { Project } from '@/schema/types';
+import type { EffortKind, Project } from '@/schema/types';
 import { IdleState, RunningState, PausedState } from './TimerCardStates';
 import { TimerHistory } from './TimerHistory';
 
@@ -14,6 +14,7 @@ type Props = {
   projects: Project[];
   onChangeProject: (id: string) => void;
   onChangeBucket: (id: string | null) => void;
+  onChangeEffortKind: (k: EffortKind | null) => void;
   onRedrive: (rec: HistoricalRecording) => void;
 };
 
@@ -72,6 +73,7 @@ export function TimerCard({
   projects,
   onChangeProject,
   onChangeBucket,
+  onChangeEffortKind,
   onRedrive,
 }: Props): JSX.Element {
   const session = useTimerStore((s) => s.session);
@@ -120,8 +122,10 @@ export function TimerCard({
           projects={projects}
           projectId={form.projectId}
           bucketId={form.bucketId}
+          effortKind={form.effort_kind}
           onChangeProject={onChangeProject}
           onChangeBucket={onChangeBucket}
+          onChangeEffortKind={onChangeEffortKind}
           onPause={pause}
           onStop={() => stop()}
           onAbort={abort}
@@ -133,8 +137,10 @@ export function TimerCard({
           projects={projects}
           projectId={form.projectId}
           bucketId={form.bucketId}
+          effortKind={form.effort_kind}
           onChangeProject={onChangeProject}
           onChangeBucket={onChangeBucket}
+          onChangeEffortKind={onChangeEffortKind}
           onResume={resume}
           onStop={() => stop()}
           onAbort={abort}

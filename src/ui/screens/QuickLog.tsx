@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { addEntry } from '@/data/entries-repo';
 import { splitRepoPath } from '@/data/octokit-client';
 import { resolveRateAtLogTime } from '@/calc';
-import type { ProjectsConfig, RatesConfig } from '@/schema/types';
+import type { EffortKind, ProjectsConfig, RatesConfig } from '@/schema/types';
 import { Banner } from '@/ui/components/Banner';
 import { formatHoursDecimal } from '@/format/format';
 import { qk } from '@/data/query-keys';
@@ -169,10 +169,14 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       projectId: rec.project_id,
       bucketId: rec.bucket_id,
       hoursHundredths: hours,
+      effort_kind: rec.effort_kind,
+      effort_count: rec.effort_kind === null ? null : 1,
       source_ref: { kind: 'timer', id: rec.id },
     }));
     setPrefillHint('timer · redriven');
-    setLoadFlashFields(new Set(['date', 'projectId', 'bucketId', 'hoursHundredths']));
+    setLoadFlashFields(
+      new Set(['date', 'projectId', 'bucketId', 'hoursHundredths', 'effort_kind', 'effort_count']),
+    );
     setLoadFlashTone({ r: 245, g: 158, b: 11 });
     setLoadAnimNonce((n) => n + 1);
   }
@@ -187,6 +191,15 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   function changeTimerBucket(bucketId: string | null) {
     setForm((f) => ({ ...f, bucketId }));
     updateTimerSnapshot({ bucketId });
+  }
+
+  function changeTimerEffortKind(effort_kind: EffortKind | null) {
+    setForm((f) => ({
+      ...f,
+      effort_kind,
+      effort_count: effort_kind === null ? null : (f.effort_count ?? 1),
+    }));
+    updateTimerSnapshot({ effort_kind });
   }
 
   function onQuickActivity(action: QuickAction) {
@@ -238,12 +251,14 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
           bucketId: form.bucketId,
           description: form.description,
           date: form.date,
+          effort_kind: form.effort_kind,
         }}
         projects={activeProjects}
         onSelectSuggestion={applySuggestion}
         onRedriveRecording={applyHistoricalRecording}
         onChangeProject={changeTimerProject}
         onChangeBucket={changeTimerBucket}
+        onChangeEffortKind={changeTimerEffortKind}
         onQuickActivity={onQuickActivity}
         onBounceProject={onBounceProject}
         onNavigate={onNavigate}

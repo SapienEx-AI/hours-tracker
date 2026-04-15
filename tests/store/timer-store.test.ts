@@ -6,6 +6,7 @@ const form = {
   bucketId: null,
   description: 'kickoff',
   date: '2026-04-14',
+  effort_kind: null,
 };
 
 describe('timer-store', () => {
@@ -80,6 +81,25 @@ describe('timer-store', () => {
     expect(s?.snapshot.bucketId).toBeNull();
     // Unaffected fields preserved:
     expect(s?.snapshot.description).toBe('kickoff');
+    expect(s?.snapshot.effort_kind).toBeNull();
+  });
+
+  it('updateSnapshot accepts effort_kind and leaves other fields unchanged', () => {
+    useTimerStore.getState().start(form);
+    useTimerStore.getState().updateSnapshot({ effort_kind: 'slack' });
+    const s = useTimerStore.getState().session;
+    expect(s?.snapshot.effort_kind).toBe('slack');
+    expect(s?.snapshot.projectId).toBe('sector-growth');
+    expect(s?.snapshot.bucketId).toBeNull();
+    expect(s?.snapshot.description).toBe('kickoff');
+  });
+
+  it('stop archives the snapshot effort_kind into the recording', () => {
+    useTimerStore.getState().start(form);
+    useTimerStore.getState().updateSnapshot({ effort_kind: 'meeting' });
+    const rec = useTimerStore.getState().stop();
+    expect(rec?.effort_kind).toBe('meeting');
+    expect(useTimerStore.getState().history[0]?.effort_kind).toBe('meeting');
   });
 
   it('persists a running session across reload', () => {
