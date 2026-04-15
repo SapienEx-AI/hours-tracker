@@ -12,6 +12,7 @@
     "display_name": { "type": "string", "minLength": 1 },
     "email": { "type": "string", "format": "email" },
     "timezone": { "type": "string" },
-    "created_at": { "type": "string", "format": "date-time" }
+    "created_at": { "type": "string", "format": "date-time" },
+    "logging_mode": { "enum": ["hours", "effort", "both"] }
   }
 }

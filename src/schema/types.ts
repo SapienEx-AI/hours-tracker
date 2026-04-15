@@ -60,6 +60,8 @@ export type PartnersIndex = {
 
 // ─── Profile ───
 
+export type LoggingMode = 'hours' | 'effort' | 'both';
+
 export type Profile = {
   schema_version: 1;
   partner_id: string;
@@ -68,6 +70,7 @@ export type Profile = {
   email?: string;
   timezone?: string;
   created_at: string;
+  logging_mode?: LoggingMode;
 };
 
 // ─── Rates ───
