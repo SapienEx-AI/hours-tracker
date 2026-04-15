@@ -7,6 +7,7 @@ import { useMonthEntries } from '@/data/hooks/use-month-entries';
 import { useAllEntries } from '@/data/hooks/use-all-entries';
 import {
   computeMonthTotals,
+  computeMonthEffort,
   computeAllTimeBucketConsumption,
   computeProjectBuildsForMonth,
   splitBillingStreams,
@@ -16,6 +17,7 @@ import {
 import { MonthProjectBuildsTable } from './dashboard/MonthProjectBuildsTable';
 import { CalendarIcon } from './dashboard/CalendarIcon';
 import { CalendarModal } from './dashboard/CalendarModal';
+import { EffortSummaryCard } from './dashboard/EffortSummaryCard';
 import type { Partner, ProjectsConfig } from '@/schema/types';
 import { formatCents, formatHours, formatHoursDecimal } from '@/format/format';
 import type { CurrencyDisplay } from '@/format/format';
@@ -67,29 +69,47 @@ function SummaryCard({ label, hours, amount, accent }: {
   );
 }
 
+type InvoiceTableRow = {
+  project: string;
+  hours_hundredths: number;
+  amount_cents: number;
+  activities?: number;
+};
+
 function InvoiceTable({ rows, currency }: {
-  rows: Array<{ project: string; hours_hundredths: number; amount_cents: number }>;
+  rows: InvoiceTableRow[];
   currency: CurrencyDisplay;
 }): JSX.Element {
   if (rows.length === 0) return <div className="text-sm text-slate-400 py-3">No entries this month.</div>;
   const totalH = sumHundredths(rows.map((r) => r.hours_hundredths));
   const totalA = sumCents(rows.map((r) => r.amount_cents));
+  const totalActs = rows.reduce((acc, r) => acc + (r.activities ?? 0), 0);
+  const showActs = totalActs > 0;
   return (
     <div className="glass rounded-2xl overflow-hidden">
       <div className="flex items-center py-2.5 px-4 bg-white/30 text-xs font-bold uppercase tracking-wider text-slate-400 gap-3">
         <div className="flex-1">Project</div>
+        {showActs && <div className="w-20 text-right">Effort</div>}
         <div className="w-24 text-right">Hours</div>
         <div className="w-36 text-right">Amount</div>
       </div>
       {rows.map((r) => (
         <div key={r.project} className="flex items-center py-2.5 px-4 text-sm border-t border-black/5 hover:bg-white/20 transition-colors gap-3">
           <div className="flex-1 font-medium text-slate-800">{r.project}</div>
+          {showActs && (
+            <div className="w-20 text-right font-mono text-slate-500">
+              {(r.activities ?? 0) > 0 ? `${r.activities} acts` : '—'}
+            </div>
+          )}
           <div className="w-24 text-right font-mono text-slate-700">{formatHours(r.hours_hundredths)}</div>
           <div className="w-36 text-right font-mono font-semibold text-partner-mid">{formatCents(r.amount_cents, currency)}</div>
         </div>
       ))}
       <div className="flex items-center py-2.5 px-4 border-t-2 border-black/10 bg-white/20 gap-3">
         <div className="flex-1 font-semibold text-slate-800">Total</div>
+        {showActs && (
+          <div className="w-20 text-right font-mono font-bold text-slate-900">{totalActs}</div>
+        )}
         <div className="w-24 text-right font-mono font-bold text-slate-900">{formatHours(totalH)}</div>
         <div className="w-36 text-right font-mono font-bold text-slate-900">{formatCents(totalA, currency)}</div>
       </div>
@@ -198,6 +218,16 @@ export function Dashboard({
     );
   }, [entries.data, projects.data, rates.data, month]);
 
+  const monthEffort = useMemo(
+    () => computeMonthEffort({ entries: entries.data?.entries ?? [] }, month),
+    [entries.data, month],
+  );
+
+  const effortByProjectId = useMemo(
+    () => new Map(monthEffort.per_project.map((p) => [p.project, p.total_activities])),
+    [monthEffort],
+  );
+
   if (entries.isLoading || projects.isLoading || rates.isLoading) return <div className="text-slate-500">Loading…</div>;
   if (entries.error) return <Banner variant="error">Failed to load: {(entries.error as Error).message}</Banner>;
   if (!totals || !streams) return <div className="text-slate-500">No data</div>;
@@ -208,7 +238,11 @@ export function Dashboard({
   };
 
   const resolveNames = (rows: Array<{ project: string; hours_hundredths: number; amount_cents: number }>) =>
-    rows.map((r) => ({ ...r, project: projects.data?.projects.find((p) => p.id === r.project)?.name ?? r.project }));
+    rows.map((r) => ({
+      ...r,
+      project: projects.data?.projects.find((p) => p.id === r.project)?.name ?? r.project,
+      activities: effortByProjectId.get(r.project) ?? 0,
+    }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -230,6 +264,10 @@ export function Dashboard({
         <SummaryCard label="Non-billable" hours={totals.non_billable_hours_hundredths} />
         <SummaryCard label="Needs Review" hours={totals.needs_review_hours_hundredths} />
         <SummaryCard label="Total" hours={totals.total_hours_hundredths} />
+      </section>
+
+      <section className="max-w-4xl">
+        <EffortSummaryCard totals={monthEffort} onClick={() => onNavigate('entries')} />
       </section>
 
       {/* Two-column layout: monthly invoice (left) + project builds (right) */}

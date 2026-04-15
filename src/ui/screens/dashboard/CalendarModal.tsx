@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useMonthEntries } from '@/data/hooks/use-month-entries';
 import { useProjects } from '@/data/hooks/use-projects';
@@ -81,6 +81,16 @@ export function CalendarModal({ initialMonth, partner, onClose }: Props): JSX.El
       )
     : null;
 
+  const effortByDate = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!entries.data) return map;
+    for (const e of entries.data.entries) {
+      if (e.effort_kind === null || e.effort_count === null) continue;
+      map.set(e.date, (map.get(e.date) ?? 0) + e.effort_count);
+    }
+    return map;
+  }, [entries.data]);
+
   const selectedDayEntries: Entry[] = ready && selectedDate
     ? entries.data!.entries.filter((e) => e.date === selectedDate)
     : [];
@@ -123,6 +133,7 @@ export function CalendarModal({ initialMonth, partner, onClose }: Props): JSX.El
                   year={y ?? 0}
                   month1to12={mo ?? 1}
                   daily={daily}
+                  effortByDate={effortByDate}
                   currency={currency}
                   onDayClick={setSelectedDate}
                   selectedDate={selectedDate}
@@ -132,6 +143,7 @@ export function CalendarModal({ initialMonth, partner, onClose }: Props): JSX.El
               <div className="lg:hidden">
                 <CalendarMobileList
                   daily={daily}
+                  effortByDate={effortByDate}
                   currency={currency}
                   onDayClick={setSelectedDate}
                   selectedDate={selectedDate}

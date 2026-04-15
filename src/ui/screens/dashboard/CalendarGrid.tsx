@@ -10,6 +10,7 @@ type Props = {
   year: number;
   month1to12: number;
   daily: MonthDaily;
+  effortByDate: Map<string, number>;
   currency: CurrencyDisplay;
   onDayClick: (date: string) => void;
   selectedDate: string | null;
@@ -21,6 +22,7 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 function RowFragment(props: {
   row: CellLayout[];
   dayByDate: Map<string, DailyBreakdown>;
+  effortByDate: Map<string, number>;
   maxHours: number;
   currency: CurrencyDisplay;
   onDayClick: (date: string) => void;
@@ -29,7 +31,7 @@ function RowFragment(props: {
   weekTotalH: number;
   weekTotalA: number;
 }): JSX.Element {
-  const { row, dayByDate, maxHours, currency, onDayClick, selectedDate, todayISO, weekTotalH, weekTotalA } = props;
+  const { row, dayByDate, effortByDate, maxHours, currency, onDayClick, selectedDate, todayISO, weekTotalH, weekTotalA } = props;
   return (
     <>
       {row.map((cell, colIdx) => {
@@ -43,6 +45,7 @@ function RowFragment(props: {
             isToday={cell.date === todayISO}
             isWeekend={isWeekend}
             day={day}
+            effortCount={effortByDate.get(cell.date) ?? 0}
             maxHours={maxHours}
             currency={currency}
             onClick={onDayClick}
@@ -61,7 +64,7 @@ function RowFragment(props: {
 }
 
 export function CalendarGrid({
-  year, month1to12, daily, currency, onDayClick, selectedDate, todayISO,
+  year, month1to12, daily, effortByDate, currency, onDayClick, selectedDate, todayISO,
 }: Props): JSX.Element {
   const cells = useMemo(() => computeCalendarLayout(year, month1to12), [year, month1to12]);
   const dayByDate = useMemo(
@@ -92,6 +95,7 @@ export function CalendarGrid({
             key={rowIdx}
             row={row}
             dayByDate={dayByDate}
+            effortByDate={effortByDate}
             maxHours={daily.max_hours_hundredths}
             currency={currency}
             onDayClick={onDayClick}
