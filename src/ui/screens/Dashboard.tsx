@@ -98,7 +98,7 @@ function InvoiceTable({ rows, currency }: {
           <div className="flex-1 font-medium text-slate-800">{r.project}</div>
           {showActs && (
             <div className="w-20 text-right font-mono text-slate-500">
-              {(r.activities ?? 0) > 0 ? `${r.activities} acts` : '—'}
+              {(r.activities ?? 0) > 0 ? `${r.activities} events` : '—'}
             </div>
           )}
           <div className="w-24 text-right font-mono text-slate-700">{formatHours(r.hours_hundredths)}</div>

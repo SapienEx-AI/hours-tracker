@@ -30,7 +30,7 @@ export function EffortSummaryCard({ totals, onClick }: Props): JSX.Element {
         <div className="font-display text-sm uppercase tracking-wide text-slate-500 mb-1">
           Effort · {totals.month}
         </div>
-        <div className="text-xs text-slate-500">No activities tagged this month.</div>
+        <div className="text-xs text-slate-500">No events tagged this month.</div>
       </div>
     );
   }
@@ -58,7 +58,9 @@ export function EffortSummaryCard({ totals, onClick }: Props): JSX.Element {
           <div className="text-3xl font-semibold tabular-nums text-slate-800">
             {totals.total_activities}
           </div>
-          <div className="text-xs text-slate-500">activities</div>
+          <div className="text-xs text-slate-500" title="Count of tagged events across all activity kinds — see per-kind list below for unit-consistent breakdown">
+            events
+          </div>
           <ul className="mt-3 flex flex-col gap-0.5 text-xs text-slate-600">
             {topKinds.map(([k, n]) => (
               <li key={k}>

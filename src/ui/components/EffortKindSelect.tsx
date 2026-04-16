@@ -41,6 +41,33 @@ export const EFFORT_KIND_LABEL: Record<EffortKind, string> = {
   other: 'Other',
 };
 
+export const EFFORT_UNIT_LABEL: Record<EffortKind, { singular: string; plural: string }> = {
+  workshop: { singular: 'workshop', plural: 'workshops' },
+  meeting: { singular: 'meeting', plural: 'meetings' },
+  client_training: { singular: 'session', plural: 'sessions' },
+  config_work: { singular: 'task', plural: 'tasks' },
+  build: { singular: 'task', plural: 'tasks' },
+  integration: { singular: 'integration', plural: 'integrations' },
+  data_work: { singular: 'task', plural: 'tasks' },
+  reporting: { singular: 'report', plural: 'reports' },
+  qa: { singular: 'pass', plural: 'passes' },
+  slack: { singular: 'thread', plural: 'threads' },
+  email: { singular: 'email', plural: 'emails' },
+  async_video: { singular: 'video', plural: 'videos' },
+  ticket: { singular: 'ticket', plural: 'tickets' },
+  internal_sync: { singular: 'sync', plural: 'syncs' },
+  documentation: { singular: 'doc', plural: 'docs' },
+  peer_review: { singular: 'review', plural: 'reviews' },
+  learning: { singular: 'session', plural: 'sessions' },
+  scoping: { singular: 'SOW', plural: 'SOWs' },
+  other: { singular: 'item', plural: 'items' },
+};
+
+export function effortUnitLabel(kind: EffortKind, count: number): string {
+  const u = EFFORT_UNIT_LABEL[kind];
+  return count === 1 ? u.singular : u.plural;
+}
+
 export function EffortKindSelect({
   value,
   onChange,

@@ -9,7 +9,7 @@ import { updateEntry } from '@/data/entries-repo';
 import { editMessage } from '@/data/commit-messages';
 import { splitRepoPath } from '@/data/octokit-client';
 import { resolveRateAtLogTime } from '@/calc';
-import type { Entry, BillableStatus } from '@/schema/types';
+import type { Entry, BillableStatus, EffortKind } from '@/schema/types';
 import { formatHoursDecimal } from '@/format/format';
 import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
@@ -17,6 +17,8 @@ import { Select } from '@/ui/components/Select';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
 import { HoursChips } from '@/ui/components/HoursChips';
+import { EFFORT_KIND_LABEL } from '@/ui/components/EffortKindSelect';
+import { EditActivityField } from './EditActivityField';
 import { qk } from '@/data/query-keys';
 
 type FormState = {
@@ -29,7 +31,44 @@ type FormState = {
   rateOverridden: boolean;
   description: string;
   reviewFlag: boolean;
+  effortKind: EffortKind | null;
+  effortCount: number | null;
 };
+
+function StatusField({
+  status,
+  onChange,
+  bucketLocked,
+}: {
+  status: BillableStatus;
+  onChange: (s: BillableStatus) => void;
+  bucketLocked: boolean;
+}): JSX.Element {
+  return (
+    <FieldLabel label="Status">
+      <div className="flex gap-4 font-body text-sm">
+        {(['billable', 'non_billable', 'needs_review'] as const).map((s) => (
+          <label key={s} className={`flex items-center gap-1 ${bucketLocked ? 'opacity-50' : ''}`}>
+            <input
+              type="radio"
+              name="edit-status"
+              value={s}
+              checked={status === s}
+              onChange={() => onChange(s)}
+              disabled={bucketLocked}
+            />
+            {s.replace('_', '-')}
+          </label>
+        ))}
+      </div>
+    </FieldLabel>
+  );
+}
+
+function effortLabel(kind: EffortKind | null | undefined, count: number | null | undefined): string {
+  if (kind === null || kind === undefined || count === null || count === undefined) return 'none';
+  return `${count} ${EFFORT_KIND_LABEL[kind]}`;
+}
 
 function buildChangeDescription(entry: Entry, form: FormState, newRateCents: number): string {
   const changes: string[] = [];
@@ -42,6 +81,9 @@ function buildChangeDescription(entry: Entry, form: FormState, newRateCents: num
   if (entry.description !== form.description) changes.push('description updated');
   if (entry.bucket_id !== form.bucketId) changes.push(`bucket ${entry.bucket_id ?? 'none'} → ${form.bucketId ?? 'none'}`);
   if (entry.date !== form.date) changes.push(`date ${entry.date} → ${form.date}`);
+  if (entry.effort_kind !== form.effortKind || entry.effort_count !== form.effortCount) {
+    changes.push(`activity ${effortLabel(entry.effort_kind, entry.effort_count)} → ${effortLabel(form.effortKind, form.effortCount)}`);
+  }
   return changes.join(', ') || 'no field changes';
 }
 
@@ -66,6 +108,8 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
   const [rateOverridden, setRateOverridden] = useState(entry.rate_source === 'entry_override');
   const [description, setDescription] = useState(entry.description);
   const [reviewFlag, setReviewFlag] = useState(entry.review_flag);
+  const [effortKind, setEffortKind] = useState<EffortKind | null>(entry.effort_kind);
+  const [effortCount, setEffortCount] = useState<number | null>(entry.effort_count);
 
   useEffect(() => {
     if (bucketId !== null) setStatus('billable');
@@ -87,7 +131,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
     }
   }, [projectId, bucketId, date, projects.data, rates.data, rateOverridden]);
 
-  const form: FormState = { date, hoursHundredths, bucketId, status, rateCents, rateOverridden, description, reviewFlag, projectId };
+  const form: FormState = { date, hoursHundredths, bucketId, status, rateCents, rateOverridden, description, reviewFlag, projectId, effortKind, effortCount };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -121,6 +165,8 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
         rate_source: finalSource,
         billable_status: status, bucket_id: bucketId,
         description, review_flag: reviewFlag,
+        effort_kind: effortKind,
+        effort_count: effortCount,
         updated_at: new Date().toISOString(),
       };
       await updateEntry(octokit, {
@@ -203,26 +249,18 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
             </Select>
           </FieldLabel>
 
-          <FieldLabel label="Status">
-            <div className="flex gap-4 font-body text-sm">
-              {(['billable', 'non_billable', 'needs_review'] as const).map((s) => (
-                <label
-                  key={s}
-                  className={`flex items-center gap-1 ${bucketId ? 'opacity-50' : ''}`}
-                >
-                  <input
-                    type="radio"
-                    name="edit-status"
-                    value={s}
-                    checked={status === s}
-                    onChange={() => setStatus(s)}
-                    disabled={bucketId !== null}
-                  />
-                  {s.replace('_', '-')}
-                </label>
-              ))}
-            </div>
-          </FieldLabel>
+          <EditActivityField
+            effortKind={effortKind}
+            effortCount={effortCount}
+            onKindChange={setEffortKind}
+            onCountChange={setEffortCount}
+          />
+
+          <StatusField
+            status={status}
+            onChange={setStatus}
+            bucketLocked={bucketId !== null}
+          />
 
           <FieldLabel label="Rate ($/hr)" hint={rateOverridden ? 'override' : 'inherited'}>
             <Input

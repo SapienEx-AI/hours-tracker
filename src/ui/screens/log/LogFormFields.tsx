@@ -5,7 +5,7 @@ import { Select } from '@/ui/components/Select';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
 import { HoursChips } from '@/ui/components/HoursChips';
-import { EffortKindSelect } from '@/ui/components/EffortKindSelect';
+import { EffortKindSelect, effortUnitLabel } from '@/ui/components/EffortKindSelect';
 import { formatHoursDecimal } from '@/format/format';
 import { formatRateDollars, type FormState } from './form-helpers';
 import { FieldFlash, type FlashTone } from './FieldFlash';
@@ -101,7 +101,7 @@ export function ActivityField(p: FieldProps): JSX.Element {
             />,
           )}
         </div>
-        <div className="w-24 shrink-0">
+        <div className="w-28 shrink-0 flex flex-col gap-0.5">
           {wrap(
             'effort_count',
             p,
@@ -123,6 +123,11 @@ export function ActivityField(p: FieldProps): JSX.Element {
                 }));
               }}
             />,
+          )}
+          {p.form.effort_kind !== null && p.form.effort_count !== null && (
+            <span className="text-[10px] text-slate-500 font-mono px-1">
+              {effortUnitLabel(p.form.effort_kind, p.form.effort_count)}
+            </span>
           )}
         </div>
       </div>
