@@ -16,10 +16,18 @@ Tracked features deferred from MVP (Phases 1–11). Each item references the spe
 - **Dashboard calendar view** — month-grid modal launched from a calendar icon on the Dashboard header. Per-day billable / non-billable / needs-review stacked bars, heatmap tint, today ring, muted weekends, week totals column, click-day side panel with entry list, click-entry → existing EditEntryModal. Mobile list fallback below `lg`.
 - **Dashboard this-month Project Builds table** — bucket-level table for the selected month, styled like Monthly Invoice. Uses the same project-builds stream definition as the existing summary card.
 - **Effort tracking v0 (per-consultant).** Schema v4 adds optional `effort_kind` + `effort_count`. 19-kind taxonomy across 5 categories. Quick Activity card in the Assist panel. `profile.logging_mode` (hours/effort/both) controls the LogForm layout for HubSpot-lead consultants. Dashboard `EffortSummaryCard` + per-project effort column + calendar modal daily row. CSV export gains two trailing columns. Agency-wide roll-up, auto-pull integrations, and AI features are deferred to later specs.
+- **Effort source integrations (v1, per-consultant).** `EffortSourceAdapter` interface with three concrete adapters: Calendar (extended beyond `meeting` → `workshop` / `client_training` / `internal_sync`), Gmail (sent-folder digest, classification by recipient domain), Slack (BYO bot-token, classification by channel prefix + DM domain). Daily-digest UX groups rows into CLIENT / INTERNAL / AMBIGUOUS. One Entry per accepted row with heuristic hours pre-fill. Schema v5 (additive enum widening on `source_ref.kind`). New `config/integrations.json`. JSON editor in Settings. Live QuickLog wiring (replacing SuggestionsPanel) deferred as a follow-up commit.
 
 ## Near-term
 
-_(Phase-A items moved to Shipped above.)_
+- **DigestPanel live wiring on Log screen** — mount below the form, composed adapters with real Google + Slack tokens, per-row Accept calling `addEntry`.
+- **Outlook / Microsoft Graph email adapter** — mirrors Gmail pattern, new OAuth provider.
+- **Jira / Linear adapter** — ticket activity.
+- **Zendesk / Intercom adapter** — support activity.
+- **Cloudflare Worker OAuth exchange** — replaces Slack BYO bot-token with proper OAuth.
+- **Slack multi-workspace per consultant** — mirror calendar multi-calendar pattern.
+- **Historical backfill** — "scan last 30 days" tool for Slack / Gmail.
+- **First-class form UI for `integrations.json`** — per-field editors replacing the JSON textarea.
 
 ## Medium-term
 

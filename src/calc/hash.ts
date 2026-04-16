@@ -55,6 +55,8 @@ function canonicalSource(ref: SourceRef | undefined): Record<string, string> {
   if (ref === null || ref === undefined) return {};
   if (ref.kind === 'calendar') return { source_event_id: ref.id };
   if (ref.kind === 'timer') return { source_timer_id: ref.id };
+  if (ref.kind === 'slack') return { source_slack_id: ref.id };
+  if (ref.kind === 'gmail') return { source_gmail_id: ref.id };
   // Exhaustiveness check — if a new kind is added without updating this file,
   // TypeScript will error here at compile time.
   const _exhaustive: never = ref;

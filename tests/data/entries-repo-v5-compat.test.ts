@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { upgradeEntriesFileToV4 } from '@/data/entries-repo';
+import { upgradeEntriesFileToV5 } from '@/data/entries-repo';
 import { validateEntries } from '@/schema/validators';
 import type { EntriesFile } from '@/schema/types';
 
@@ -18,7 +18,7 @@ const baseEntry = {
   updated_at: '2026-04-14T10:00:00Z',
 };
 
-describe('upgradeEntriesFileToV4', () => {
+describe('upgradeEntriesFileToV5 legacy-version acceptance', () => {
   it('upgrades a v1 file with null source_ref / effort fields', () => {
     const v1: EntriesFile = {
       schema_version: 1,
@@ -32,8 +32,8 @@ describe('upgradeEntriesFileToV4', () => {
         },
       ],
     };
-    const up = upgradeEntriesFileToV4(v1);
-    expect(up.schema_version).toBe(4);
+    const up = upgradeEntriesFileToV5(v1);
+    expect(up.schema_version).toBe(5);
     expect(up.entries[0]?.effort_kind).toBeNull();
     expect(up.entries[0]?.effort_count).toBeNull();
     expect(validateEntries(up).ok).toBe(true);
@@ -52,12 +52,12 @@ describe('upgradeEntriesFileToV4', () => {
         },
       ],
     };
-    const up = upgradeEntriesFileToV4(v3);
-    expect(up.schema_version).toBe(4);
+    const up = upgradeEntriesFileToV5(v3);
+    expect(up.schema_version).toBe(5);
     expect(up.entries[0]?.source_ref).toEqual({ kind: 'calendar', id: 'gcal-1' });
   });
 
-  it('no-ops a v4 file', () => {
+  it('upgrades a v4 file preserving effort fields', () => {
     const v4: EntriesFile = {
       schema_version: 4,
       month: '2026-05',
@@ -70,18 +70,37 @@ describe('upgradeEntriesFileToV4', () => {
         },
       ],
     };
-    const up = upgradeEntriesFileToV4(v4);
-    expect(up.schema_version).toBe(4);
+    const up = upgradeEntriesFileToV5(v4);
+    expect(up.schema_version).toBe(5);
     expect(up.entries[0]?.effort_kind).toBe('workshop');
     expect(up.entries[0]?.effort_count).toBe(1);
   });
 
-  it('backfills null effort fields on an entry missing them', () => {
+  it('no-ops a v5 file', () => {
+    const v5: EntriesFile = {
+      schema_version: 5,
+      month: '2026-05',
+      entries: [
+        {
+          ...baseEntry,
+          source_ref: { kind: 'slack', id: 'daily:2026-04-14:client:T012AB:sprosty' },
+          effort_kind: 'slack',
+          effort_count: 12,
+        },
+      ],
+    };
+    const up = upgradeEntriesFileToV5(v5);
+    expect(up.schema_version).toBe(5);
+    expect(up.entries[0]?.source_ref).toEqual({
+      kind: 'slack',
+      id: 'daily:2026-04-14:client:T012AB:sprosty',
+    });
+  });
+
+  it('backfills null effort fields on a legacy entry missing them', () => {
     const legacy: EntriesFile = {
       schema_version: 3,
       month: '2026-04',
-      // Cast through unknown: simulate a v3 file on disk whose entries lack
-      // the new effort fields entirely.
       entries: [
         {
           ...baseEntry,
@@ -89,7 +108,7 @@ describe('upgradeEntriesFileToV4', () => {
         } as unknown as EntriesFile['entries'][number],
       ],
     };
-    const up = upgradeEntriesFileToV4(legacy);
+    const up = upgradeEntriesFileToV5(legacy);
     expect(up.entries[0]?.effort_kind).toBeNull();
     expect(up.entries[0]?.effort_count).toBeNull();
   });

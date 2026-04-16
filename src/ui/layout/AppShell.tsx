@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { Partner } from '@/schema/types';
 import type { Route } from '@/ui/Router';
 import { useGlobalShortcut } from '@/ui/use-global-shortcut';
+import { startBackgroundRefresh, stopBackgroundRefresh } from '@/integrations/google/gis-client';
 import { Footer } from './Footer';
 
 const NAV_ITEMS: Array<{ id: Route; label: string }> = [
@@ -40,6 +41,10 @@ export function AppShell({
   children,
 }: Props): JSX.Element {
   useGlobalShortcut(onNavigate);
+  useEffect(() => {
+    startBackgroundRefresh();
+    return () => stopBackgroundRefresh();
+  }, []);
   const base = import.meta.env.BASE_URL;
   const logoFilter = partner.assets.logo_dark_filter ?? undefined;
   const gradientBg = `linear-gradient(135deg, ${partner.theme.bg_deep} 0%, ${partner.theme.accent_deep} 40%, ${partner.theme.accent_mid} 70%, ${partner.theme.bg_deep} 100%)`;

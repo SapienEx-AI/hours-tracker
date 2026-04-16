@@ -8,6 +8,7 @@ import projectsSchema from '../../schemas/projects.schema.json';
 import entriesSchema from '../../schemas/entries.schema.json';
 import snapshotSchema from '../../schemas/snapshot.schema.json';
 import calendarConfigSchema from '../../schemas/calendar-config.schema.json';
+import integrationsSchema from '../../schemas/integrations.schema.json';
 
 import type {
   Partner,
@@ -18,6 +19,7 @@ import type {
   Entry,
   Snapshot,
   CalendarConfig,
+  IntegrationsConfig,
 } from './types';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
@@ -30,6 +32,7 @@ const _projects = ajv.compile<ProjectsConfig>(projectsSchema);
 const _entries = ajv.compile<EntriesFile>(entriesSchema);
 const _snapshot = ajv.compile<Snapshot>(snapshotSchema);
 const _calendarConfig = ajv.compile<CalendarConfig>(calendarConfigSchema);
+const _integrations = ajv.compile<IntegrationsConfig>(integrationsSchema);
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -48,21 +51,21 @@ export const validateRates = wrap<RatesConfig>(_rates);
 export const validateProjects = wrap<ProjectsConfig>(_projects);
 export const validateSnapshot = wrap<Snapshot>(_snapshot);
 export const validateCalendarConfig = wrap<CalendarConfig>(_calendarConfig);
+export const validateIntegrationsConfig = wrap<IntegrationsConfig>(_integrations);
 
 /**
- * Validate an entries file. Accepts v1 / v2 / v3 / v4 on the wire; the
- * returned value always has v4 shape (every entry carries `source_ref` and
- * `effort_kind` / `effort_count` fields, backfilled to null when absent).
+ * Validate an entries file. Accepts v1 / v2 / v3 / v4 / v5 on the wire; the
+ * returned value always has v5 shape. New in v5: source_ref.kind may be
+ * 'slack' or 'gmail' in addition to 'calendar' and 'timer'.
  *
- * NOTE: returns a *deep clone* of the input with the v4 shape applied.
- * The caller's original object is never mutated, so a diagnostic logger
- * holding the parsed JSON sees exactly what came off disk.
+ * NOTE: returns a *deep clone* of the input with the v5 shape applied.
+ * The caller's original object is never mutated.
  */
 /**
  * Strip `source_event_id` from any entry that also has `source_ref`.
  * This pattern is corruption from a pre-fix broken writer; self-healing on
  * read lets those files load, and the next write lands a clean file via
- * the fixed upgradeEntriesFileToV3.
+ * the fixed upgrade chain.
  */
 function stripCorruptedLegacyField(data: unknown): void {
   if (typeof data !== 'object' || data === null) return;

@@ -134,6 +134,8 @@ export type BillableStatus = 'billable' | 'non_billable' | 'needs_review';
 export type SourceRef =
   | { kind: 'calendar'; id: string }
   | { kind: 'timer'; id: string }
+  | { kind: 'slack'; id: string }
+  | { kind: 'gmail'; id: string }
   | null;
 
 export type EffortKind =
@@ -170,7 +172,7 @@ export type Entry = {
 };
 
 export type EntriesFile = {
-  schema_version: 1 | 2 | 3 | 4;
+  schema_version: 1 | 2 | 3 | 4 | 5;
   month: string;
   entries: Entry[];
 };
@@ -229,4 +231,29 @@ export type CalendarConfig = {
   provider: 'google';
   enabled_calendars: string[];
   last_connected_at?: string;
+};
+
+// ─── Effort source integrations ───
+
+export type IntegrationsConfig = {
+  schema_version: 1;
+  slack?: {
+    enabled?: boolean;
+    workspaces?: Array<{ id: string; name: string }>;
+    client_channel_prefixes?: string[];
+    internal_channel_prefixes?: string[];
+    project_by_workspace?: Record<string, string>;
+    project_by_channel_prefix?: Record<string, string>;
+  };
+  gmail?: {
+    enabled?: boolean;
+    client_domains?: string[];
+    internal_domains?: string[];
+    project_by_domain?: Record<string, string>;
+  };
+  calendar?: {
+    workshop_min_duration_minutes?: number;
+    client_training_title_keywords?: string[];
+    internal_only_attendee_domains?: string[];
+  };
 };

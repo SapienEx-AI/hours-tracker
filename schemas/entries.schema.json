@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/entries.schema.json",
-  "title": "Monthly entries file (v4)",
+  "title": "Monthly entries file (v5)",
   "type": "object",
   "required": ["schema_version", "month", "entries"],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "enum": [1, 2, 3, 4] },
+    "schema_version": { "enum": [1, 2, 3, 4, 5] },
     "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
     "entries": {
       "type": "array",
@@ -52,7 +52,7 @@
                 "required": ["kind", "id"],
                 "additionalProperties": false,
                 "properties": {
-                  "kind": { "enum": ["calendar", "timer"] },
+                  "kind": { "enum": ["calendar", "timer", "slack", "gmail"] },
                   "id": { "type": "string", "minLength": 1 }
                 }
               }

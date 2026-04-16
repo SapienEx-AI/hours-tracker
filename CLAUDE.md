@@ -4,7 +4,7 @@ Authoritative guide for AI agents working on this codebase. **Read before editin
 
 ## Project purpose
 
-A pure-static GitHub Pages app that logs consulting hours into per-consultant private GitHub data repos. Partner-branded (Sector Growth first), hosted by SapienEx. Full design: [`docs/superpowers/specs/2026-04-11-hours-tracker-design.md`](docs/superpowers/specs/2026-04-11-hours-tracker-design.md). Implementation plan: [`docs/superpowers/plans/2026-04-11-hours-tracker-plan.md`](docs/superpowers/plans/2026-04-11-hours-tracker-plan.md). Effort-tracking addition: [`docs/superpowers/specs/2026-04-14-effort-tracking-design.md`](docs/superpowers/specs/2026-04-14-effort-tracking-design.md).
+A pure-static GitHub Pages app that logs consulting hours into per-consultant private GitHub data repos. Partner-branded (Sector Growth first), hosted by SapienEx. Full design: [`docs/superpowers/specs/2026-04-11-hours-tracker-design.md`](docs/superpowers/specs/2026-04-11-hours-tracker-design.md). Implementation plan: [`docs/superpowers/plans/2026-04-11-hours-tracker-plan.md`](docs/superpowers/plans/2026-04-11-hours-tracker-plan.md). Effort-tracking addition: [`docs/superpowers/specs/2026-04-14-effort-tracking-design.md`](docs/superpowers/specs/2026-04-14-effort-tracking-design.md). Effort source integrations (Slack + Gmail + extended calendar): [`docs/superpowers/specs/2026-04-15-effort-source-integrations-design.md`](docs/superpowers/specs/2026-04-15-effort-source-integrations-design.md).
 
 ## Non-negotiable invariants (spec §11)
 
@@ -16,6 +16,7 @@ A pure-static GitHub Pages app that logs consulting hours into per-consultant pr
 6. **Rate is snapshotted on every entry** at log time (spec §5.3). Changing `config/rates.json` never moves historical numbers.
 7. **Snapshots are immutable.** Never rewrite a file in `data/snapshots/`.
 8. **Entry v4 effort fields.** `effort_kind` and `effort_count` are both null or both set — validator enforces. Do not log zero-hours entries even for lightweight activities — `hours_hundredths ≥ 1` stays invariant.
+9. **Source-integration entries flow through the DigestPanel Accept path.** No background writes, no silent entry creation. Every Slack/Gmail/calendar auto-suggested row waits for a user click. Every resulting entry carries `source_ref` + `effort_kind` + `effort_count`.
 
 ## Do-not-touch-without-review list
 

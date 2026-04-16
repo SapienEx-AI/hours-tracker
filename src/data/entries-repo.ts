@@ -9,18 +9,16 @@ function entriesPath(month: string): string {
 }
 
 /**
- * Upgrade a v1 / v2 / v3 file to v4. Strips any legacy `source_event_id`
- * from each entry (forbidden in v3+) and synthesizes `source_ref` when
- * missing — either as a calendar-kinded ref lifted from the legacy id, or
- * null. Also backfills the v4 effort fields (`effort_kind`, `effort_count`)
- * to null when absent.
+ * Upgrade any legacy file (v1 / v2 / v3 / v4) to v5. Strips any legacy
+ * `source_event_id` (forbidden in v3+); synthesizes `source_ref` when
+ * missing; backfills v4 effort fields (`effort_kind`, `effort_count`) to
+ * null when absent. v5 is a pure additive enum widening on
+ * `source_ref.kind` — no entry-level changes.
  *
- * Passing an already-v4 file still runs the cleanup pass as a
- * belt-and-suspenders recovery: if a prior broken write left a v4 entry
- * carrying a stray legacy field or missing the effort columns, this
- * normalizes it so the next write lands a clean file.
+ * Passing an already-v5 file still runs the cleanup pass as a
+ * belt-and-suspenders recovery.
  */
-export function upgradeEntriesFileToV4(file: EntriesFile): EntriesFile {
+export function upgradeEntriesFileToV5(file: EntriesFile): EntriesFile {
   const entries = file.entries.map((e) => {
     const anyE = e as Entry & { source_event_id?: string | null };
     const legacyId = anyE.source_event_id;
@@ -40,18 +38,18 @@ export function upgradeEntriesFileToV4(file: EntriesFile): EntriesFile {
     }
     return cleaned as Entry;
   });
-  if (file.schema_version === 4) {
+  if (file.schema_version === 5) {
     return { ...file, entries };
   }
-  return { ...file, schema_version: 4, entries };
+  return { ...file, schema_version: 5, entries };
 }
 
 function schemaUpgradeSuffix(fromVersion: EntriesFile['schema_version']): string {
-  if (fromVersion === 4) return '';
-  return ` [schema v${fromVersion}→v4]`;
+  if (fromVersion === 5) return '';
+  return ` [schema v${fromVersion}→v5]`;
 }
 
-function sourceTag(entry: Entry): 'calendar' | 'timer' | undefined {
+function sourceTag(entry: Entry): 'calendar' | 'timer' | 'slack' | 'gmail' | undefined {
   if (entry.source_ref === null) return undefined;
   return entry.source_ref.kind;
 }
@@ -143,7 +141,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
   const month = args.entry.date.slice(0, 7);
   const path = entriesPath(month);
 
-  const probe: EntriesFile = { schema_version: 4, month, entries: [args.entry] };
+  const probe: EntriesFile = { schema_version: 5, month, entries: [args.entry] };
   const validation = validateEntries(probe);
   if (!validation.ok) {
     throw new Error(`Entry failed validation:\n${formatValidationErrors(validation.errors)}`);
@@ -173,23 +171,23 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
     owner: args.owner,
     repo: args.repo,
     path,
-    // Message is built per-attempt so the [schema vN→v4] suffix reflects
+    // Message is built per-attempt so the [schema vN→v5] suffix reflects
     // the actual on-disk version read during this attempt (retries may see
     // a different version if another writer landed in between).
     message: (current) => {
-      const fromVersion: EntriesFile['schema_version'] = current?.schema_version ?? 4;
+      const fromVersion: EntriesFile['schema_version'] = current?.schema_version ?? 5;
       return baseMessage + schemaUpgradeSuffix(fromVersion);
     },
     transform: (current) => {
       const base: EntriesFile = current ?? {
-        schema_version: 4,
+        schema_version: 5,
         month,
         entries: [],
       };
       if (base.entries.some((e) => e.id === args.entry.id)) {
         throw new Error(`Duplicate entry id ${args.entry.id} — refusing to overwrite.`);
       }
-      const upgraded = upgradeEntriesFileToV4(base);
+      const upgraded = upgradeEntriesFileToV5(base);
       return {
         ...upgraded,
         entries: [...upgraded.entries, args.entry],
@@ -221,7 +219,7 @@ export async function updateEntry(
       if (!current) {
         throw new Error(`Cannot update entry in missing month file: ${path}`);
       }
-      const upgraded = upgradeEntriesFileToV4(current);
+      const upgraded = upgradeEntriesFileToV5(current);
       const idx = upgraded.entries.findIndex((e) => e.id === args.entry.id);
       if (idx < 0) {
         throw new Error(`Entry id ${args.entry.id} not found in ${path}`);
@@ -260,7 +258,7 @@ export async function deleteEntry(
     message: args.message,
     transform: (current) => {
       if (!current) throw new Error(`Cannot delete from missing file ${path}`);
-      const upgraded = upgradeEntriesFileToV4(current);
+      const upgraded = upgradeEntriesFileToV5(current);
       return {
         ...upgraded,
         entries: upgraded.entries.filter((e) => e.id !== args.entryId),

@@ -32,7 +32,9 @@ declare global {
 
 import { GOOGLE_CLIENT_ID } from './client-id';
 
-const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+export const CALENDAR_READONLY_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+export const GMAIL_READONLY_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+const SCOPE = `${CALENDAR_READONLY_SCOPE} ${GMAIL_READONLY_SCOPE}`;
 const STORAGE_KEY = 'hours-tracker.google-token';
 
 type StoredToken = { access_token: string; expires_at: number };
@@ -113,9 +115,21 @@ export function connect(): Promise<string> {
   });
 }
 
+// Refresh when under 5 min remaining — gives React Query and other
+// call sites a comfortable margin so in-flight requests don't race into
+// an expiring token.
+const REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
+// Background refresh cadence: re-mint the token every 50 min while the tab
+// is open. Google access tokens cap at 1 h; 50 min keeps a long session
+// warm without visible re-auth. Does NOT help the "closed the tab for a
+// day" case — that requires offline access via a Cloudflare Worker
+// (parked as backlog).
+const BACKGROUND_REFRESH_INTERVAL_MS = 50 * 60 * 1000;
+
 export async function getAccessToken(): Promise<string> {
   const stored = readStored();
-  if (stored && stored.expires_at > Date.now() + 60_000) return stored.access_token;
+  if (stored && stored.expires_at > Date.now() + REFRESH_BUFFER_MS) return stored.access_token;
   return new Promise((resolve, reject) => {
     try {
       ensureClientIdConfigured();
@@ -150,4 +164,23 @@ export async function getAccessToken(): Promise<string> {
     });
     client.requestAccessToken({ prompt: '' });
   });
+}
+
+let backgroundRefreshTimer: number | null = null;
+
+export function startBackgroundRefresh(): void {
+  if (backgroundRefreshTimer !== null) return;
+  backgroundRefreshTimer = window.setInterval(() => {
+    if (!isConnected()) return;
+    getAccessToken().catch(() => {
+      // Silent refresh failed. Don't disconnect — the next user interaction
+      // will surface a re-auth prompt via the normal connect flow.
+    });
+  }, BACKGROUND_REFRESH_INTERVAL_MS);
+}
+
+export function stopBackgroundRefresh(): void {
+  if (backgroundRefreshTimer === null) return;
+  window.clearInterval(backgroundRefreshTimer);
+  backgroundRefreshTimer = null;
 }

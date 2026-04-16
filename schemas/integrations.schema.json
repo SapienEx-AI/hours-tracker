@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/integrations.schema.json",
+  "title": "Per-consultant integrations config (v1)",
+  "type": "object",
+  "required": ["schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "enum": [1] },
+    "slack": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "workspaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "client_channel_prefixes": { "type": "array", "items": { "type": "string" } },
+        "internal_channel_prefixes": { "type": "array", "items": { "type": "string" } },
+        "project_by_workspace": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+        },
+        "project_by_channel_prefix": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+        }
+      }
+    },
+    "gmail": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "client_domains": { "type": "array", "items": { "type": "string" } },
+        "internal_domains": { "type": "array", "items": { "type": "string" } },
+        "project_by_domain": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+        }
+      }
+    },
+    "calendar": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workshop_min_duration_minutes": { "type": "integer", "minimum": 30 },
+        "client_training_title_keywords": { "type": "array", "items": { "type": "string" } },
+        "internal_only_attendee_domains": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

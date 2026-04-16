@@ -3,6 +3,7 @@ import { Button } from '@/ui/components/Button';
 import { Banner } from '@/ui/components/Banner';
 import { CalendarSection } from './settings/CalendarSection';
 import { LoggingModeSection } from './settings/LoggingModeSection';
+import { IntegrationsSection } from './settings/IntegrationsSection';
 
 export function Settings(): JSX.Element {
   const auth = useAuthStore();
@@ -22,6 +23,7 @@ export function Settings(): JSX.Element {
       </section>
       <LoggingModeSection />
       <CalendarSection />
+      <IntegrationsSection />
       <Banner variant="warning">
         Signing out clears your token and sends you back to the first-run flow.
       </Banner>

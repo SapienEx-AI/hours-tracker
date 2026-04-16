@@ -16,13 +16,15 @@ export function logMessage(args: {
   hours_hundredths: number;
   rate_cents: number;
   description: string;
-  source?: 'calendar' | 'timer';
+  source?: 'calendar' | 'timer' | 'slack' | 'gmail';
 }): string {
   const hours = formatHoursDecimal(args.hours_hundredths);
   const rate = formatDollars(args.rate_cents);
   const base = `log: ${args.project} ${args.date} ${hours}h @ ${rate} (${args.description})`;
   if (args.source === 'calendar') return `${base} [calendar]`;
   if (args.source === 'timer') return `${base} [timer]`;
+  if (args.source === 'slack') return `${base} [slack]`;
+  if (args.source === 'gmail') return `${base} [gmail]`;
   return base;
 }
 
@@ -86,4 +88,9 @@ export function importMessage(month: string, source: string, count: number): str
 // ─── calendar config ───
 export function calendarConfigMessage(action: 'connect' | 'disconnect' | 'update'): string {
   return `config: ${action} calendar integration`;
+}
+
+// ─── integrations config ───
+export function integrationsMessage(action: 'create' | 'update'): string {
+  return `config: ${action} integrations.json`;
 }
