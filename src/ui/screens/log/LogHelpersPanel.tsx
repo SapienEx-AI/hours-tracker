@@ -44,6 +44,7 @@ function MeasuredBlock({
 
 type Props = {
   form: Form;
+  currentHoursHundredths: number;
   projects: Project[];
   onSelectSuggestion: (s: Suggestion) => void;
   onRedriveRecording: (rec: HistoricalRecording) => void;
@@ -65,6 +66,7 @@ type Props = {
  */
 export function LogHelpersPanel({
   form,
+  currentHoursHundredths,
   projects,
   onSelectSuggestion,
   onRedriveRecording,
@@ -187,6 +189,7 @@ export function LogHelpersPanel({
             <AnimatedHeight>
               <QuickActivityCard
                 projectSelected={form.projectId !== ''}
+                currentHoursHundredths={currentHoursHundredths}
                 onPrefill={onQuickActivity}
                 onBounceProject={onBounceProject}
               />

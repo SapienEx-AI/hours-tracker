@@ -207,12 +207,19 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   }
 
   function onQuickActivity(action: QuickAction) {
-    setForm((f) => ({
-      ...f,
-      effort_kind: action.kind,
-      effort_count: 1,
-      hoursHundredths: action.hoursHundredths,
-    }));
+    setForm((f) => {
+      const sameKind = f.effort_kind === action.kind;
+      const nextCount = sameKind ? (f.effort_count ?? 0) + 1 : 1;
+      // Hours always accumulate — whether they came from manual typing,
+      // another assist panel, or a prior quick-activity click.
+      const nextHours = f.hoursHundredths + action.hoursHundredths;
+      return {
+        ...f,
+        effort_kind: action.kind,
+        effort_count: nextCount,
+        hoursHundredths: nextHours,
+      };
+    });
     setPrefillHint(`quick: ${action.kind.replace(/_/g, ' ')}`);
     setLoadFlashFields(
       new Set(['effort_kind', 'effort_count', 'hoursHundredths']),
@@ -257,6 +264,7 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
           date: form.date,
           effort_kind: form.effort_kind,
         }}
+        currentHoursHundredths={form.hoursHundredths}
         projects={activeProjects}
         onSelectSuggestion={applySuggestion}
         onRedriveRecording={applyHistoricalRecording}
