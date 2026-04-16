@@ -33,13 +33,12 @@ function canonicalizeEntry(e: Entry): Record<string, unknown> {
     created_at: e.created_at,
     updated_at: e.updated_at,
   };
-  // Effort fields emitted ONLY when non-null — mirrors source_ref projection.
-  // Pre-v4 entries hash identically; March 2026 golden fixture untouched.
-  if (e.effort_kind !== null && e.effort_kind !== undefined) {
-    base.effort_kind = e.effort_kind;
-  }
-  if (e.effort_count !== null && e.effort_count !== undefined) {
-    base.effort_count = e.effort_count;
+  // Emit `effort` only when non-empty, sorted by kind.
+  // Empty array → omit entirely, so v1-v5 migrated entries (effort: [])
+  // canonicalize identically to their pre-v6 form. Keeps golden fixture hash
+  // stable. Sort by kind so insertion order doesn't affect hash.
+  if (e.effort.length > 0) {
+    base.effort = [...e.effort].sort((a, b) => a.kind.localeCompare(b.kind));
   }
   const source = canonicalSource(e.source_ref);
   for (const [k, v] of Object.entries(source)) {
