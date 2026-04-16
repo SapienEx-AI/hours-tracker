@@ -140,10 +140,10 @@ function SlackConnectCard(): JSX.Element {
             className="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono"
             placeholder="xoxb-..."
             value={token}
-            onChange={(e) => setToken(e.target.value)}
+            onChange={(e) => setToken(e.target.value.trim())}
           />
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={busy || !token.startsWith('xoxb-')}>
+            <Button onClick={handleSave} disabled={busy || token.length === 0}>
               {busy ? 'Validating…' : 'Save'}
             </Button>
             <Button variant="secondary" onClick={() => setShowForm(false)}>
