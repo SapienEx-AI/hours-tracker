@@ -1,7 +1,7 @@
 import type { Octokit } from '@octokit/rest';
 import type { Profile } from '@/schema/types';
 import { validateProfile, formatValidationErrors } from '@/schema/validators';
-import { readJsonFile, writeJsonFile, FileNotFoundError } from './github-file';
+import { readJsonFile, writeJsonFile, writeJsonFileWithRetry, FileNotFoundError } from './github-file';
 
 const PATH = 'config/profile.json';
 
@@ -53,11 +53,11 @@ export async function updateProfile(
   if (!v.ok) {
     throw new Error(`Profile failed validation:\n${formatValidationErrors(v.errors)}`);
   }
-  await writeJsonFile(octokit, {
+  await writeJsonFileWithRetry<Profile>(octokit, {
     owner: args.owner,
     repo: args.repo,
     path: PATH,
-    content: args.profile,
     message: `config: update profile for ${args.profile.consultant_id}`,
+    transform: () => args.profile,
   });
 }
