@@ -10,8 +10,7 @@ function makeEntry(p: Partial<Entry> = {}): Entry {
     bucket_id: null, description: 'd', review_flag: false,
     created_at: '2026-03-10T00:00:00Z', updated_at: '2026-03-10T00:00:00Z',
     source_ref: null,
-    effort_kind: null,
-    effort_count: null,
+    effort: [],
     ...p,
   };
 }

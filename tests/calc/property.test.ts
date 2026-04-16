@@ -45,8 +45,7 @@ const entryArb = (month: string): fc.Arbitrary<Entry> =>
     created_at: fc.constant('2026-03-01T00:00:00Z'),
     updated_at: fc.constant('2026-03-01T00:00:00Z'),
     source_ref: fc.constant<Entry['source_ref']>(null),
-    effort_kind: fc.constant<Entry['effort_kind']>(null),
-    effort_count: fc.constant<Entry['effort_count']>(null),
+    effort: fc.constant<Entry['effort']>([]),
   });
 
 const projects: ProjectsConfig = {
