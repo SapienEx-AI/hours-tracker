@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapienex-ai.github.io/hours-tracker/schemas/entries.schema.json",
-  "title": "Monthly entries file (v5, forward-compat v6)",
+  "title": "Monthly entries file (v6)",
   "type": "object",
   "required": ["schema_version", "month", "entries"],
   "additionalProperties": false,
