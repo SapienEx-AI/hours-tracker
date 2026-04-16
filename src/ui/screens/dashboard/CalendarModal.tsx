@@ -85,8 +85,10 @@ export function CalendarModal({ initialMonth, partner, onClose }: Props): JSX.El
     const map = new Map<string, number>();
     if (!entries.data) return map;
     for (const e of entries.data.entries) {
-      if (e.effort_kind === null || e.effort_count === null) continue;
-      map.set(e.date, (map.get(e.date) ?? 0) + e.effort_count);
+      if (e.effort.length === 0) continue;
+      let total = 0;
+      for (const item of e.effort) total += item.count;
+      map.set(e.date, (map.get(e.date) ?? 0) + total);
     }
     return map;
   }, [entries.data]);

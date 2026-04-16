@@ -1,7 +1,6 @@
 import type { Entry } from '@/schema/types';
 import { formatHours, formatCents, type CurrencyDisplay } from '@/format/format';
 import { Button } from '@/ui/components/Button';
-import { EffortBadge } from '@/ui/components/EffortBadge';
 import { BucketCell } from './BucketCell';
 
 type Props = {
@@ -54,9 +53,12 @@ export function EntryRow({
         />
       </td>
       <td className="py-2 px-3 text-slate-600 max-w-sm">
-        {entry.effort_kind !== null && entry.effort_count !== null && (
-          <span className="inline-block mr-1.5 align-middle">
-            <EffortBadge kind={entry.effort_kind} count={entry.effort_count} />
+        {entry.effort.length > 0 && (
+          <span className="mr-1.5 align-middle text-xs text-slate-500 font-mono">
+            {entry.effort.slice(0, 3).map((item) =>
+              `${item.count}·${item.kind.slice(0, 3)}`,
+            ).join(' · ')}
+            {entry.effort.length > 3 ? ` +${entry.effort.length - 3} more` : ''}
           </span>
         )}
         {entry.description}
