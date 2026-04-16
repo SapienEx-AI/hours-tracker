@@ -20,7 +20,8 @@ export type MonthEffortTotals = {
  * month-scoping semantics of computeMonthTotals.
  *
  * - Entries outside the target month are ignored.
- * - Entries with effort_kind === null are ignored (pure-hours entries).
+ * - Entries with empty effort arrays contribute nothing.
+ * - Multi-kind entries contribute to every kind they carry.
  * - per_project is sorted by project id for deterministic output.
  */
 export function computeMonthEffort(
@@ -37,18 +38,19 @@ export function computeMonthEffort(
 
   for (const e of args.entries) {
     if (!e.date.startsWith(month)) continue;
-    if (e.effort_kind === null || e.effort_count === null) continue;
-    total += e.effort_count;
-    by_kind[e.effort_kind] += e.effort_count;
-    by_category[categoryOf(e.effort_kind)] += e.effort_count;
+    for (const item of e.effort) {
+      total += item.count;
+      by_kind[item.kind] += item.count;
+      by_category[categoryOf(item.kind)] += item.count;
 
-    let p = perProject.get(e.project);
-    if (p === undefined) {
-      p = { total: 0, by_kind: emptyByKind() };
-      perProject.set(e.project, p);
+      let p = perProject.get(e.project);
+      if (p === undefined) {
+        p = { total: 0, by_kind: emptyByKind() };
+        perProject.set(e.project, p);
+      }
+      p.total += item.count;
+      p.by_kind[item.kind] += item.count;
     }
-    p.total += e.effort_count;
-    p.by_kind[e.effort_kind] += e.effort_count;
   }
 
   const per_project: PerProjectEffort[] = Array.from(perProject.entries())

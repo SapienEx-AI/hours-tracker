@@ -29,8 +29,23 @@ function entry(
     id: `${date}-${project}-aaaa${String(count ?? 0).padStart(2, '0')}`,
     date,
     hours_hundredths: hours,
-    effort_kind: kind,
-    effort_count: count,
+    effort: kind !== null && count !== null ? [{ kind, count }] : [],
+  };
+}
+
+function entryWithEffort(
+  date: string,
+  hours: number,
+  effort: Array<{ kind: EffortKind; count: number }>,
+  project = 'sprosty',
+): Entry {
+  return {
+    ...base,
+    project,
+    id: `${date}-${project}-aaaaff`,
+    date,
+    hours_hundredths: hours,
+    effort,
   };
 }
 
@@ -41,12 +56,29 @@ describe('computeMonthEffort', () => {
     expect(r.per_project).toEqual([]);
   });
 
-  it('ignores null-effort entries', () => {
+  it('ignores entries with empty effort arrays (pure-hours entries)', () => {
     const r = computeMonthEffort(
       { entries: [entry('2026-04-05', 200, null, null)] },
       '2026-04',
     );
     expect(r.total_activities).toBe(0);
+  });
+
+  it('counts multiple kinds from one entry into by_kind independently', () => {
+    const r = computeMonthEffort(
+      {
+        entries: [
+          entryWithEffort('2026-04-05', 250, [
+            { kind: 'meeting', count: 2 },
+            { kind: 'slack', count: 1 },
+          ]),
+        ],
+      },
+      '2026-04',
+    );
+    expect(r.by_kind.meeting).toBe(2);
+    expect(r.by_kind.slack).toBe(1);
+    expect(r.total_activities).toBe(3);
   });
 
   it('ignores entries outside the target month', () => {
