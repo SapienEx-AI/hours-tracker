@@ -192,6 +192,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
           rate_cents: args.entry.rate_cents,
           description: args.entry.description,
           source: src,
+          effort: args.entry.effort,
         }
       : {
           project: args.entry.project,
@@ -199,6 +200,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
           hours_hundredths: args.entry.hours_hundredths,
           rate_cents: args.entry.rate_cents,
           description: args.entry.description,
+          effort: args.entry.effort,
         },
   );
 

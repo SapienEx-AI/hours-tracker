@@ -17,8 +17,7 @@ function makeEntry(overrides: Partial<Entry> = {}): Entry {
     created_at: '2026-03-25T10:00:00Z',
     updated_at: '2026-03-25T10:00:00Z',
     source_ref: null,
-    effort_kind: null,
-    effort_count: null,
+    effort: [],
     ...overrides,
   };
 }
@@ -28,10 +27,10 @@ describe('entriesToCSV', () => {
     const csv = entriesToCSV([makeEntry()]);
     const lines = csv.split('\n');
     expect(lines[0]).toBe(
-      'id,date,project,bucket,hours,rate,billable_status,description,review_flag,rate_source,effort_kind,effort_count',
+      'id,date,project,bucket,hours,rate,billable_status,description,review_flag,rate_source,effort',
     );
     expect(lines[1]).toBe(
-      '2026-03-25-sprosty-a3f9c1,2026-03-25,sprosty,,4.00,20.00,billable,did a thing,false,global_default,,',
+      '2026-03-25-sprosty-a3f9c1,2026-03-25,sprosty,,4.00,20.00,billable,did a thing,false,global_default,',
     );
   });
 

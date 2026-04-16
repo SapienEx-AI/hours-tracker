@@ -1,11 +1,19 @@
-import type { Entry } from '@/schema/types';
+import type { Entry, EffortItem } from '@/schema/types';
 import { formatHoursDecimal } from '@/format/format';
 
 const HEADER = [
   'id', 'date', 'project', 'bucket', 'hours', 'rate',
   'billable_status', 'description', 'review_flag', 'rate_source',
-  'effort_kind', 'effort_count',
+  'effort',
 ].join(',');
+
+function formatEffort(items: EffortItem[]): string {
+  if (items.length === 0) return '';
+  return [...items]
+    .sort((a, b) => a.kind.localeCompare(b.kind))
+    .map((it) => `${it.kind}:${it.count}`)
+    .join(';');
+}
 
 const INJECTION_PREFIXES = ['=', '+', '-', '@'];
 
@@ -38,8 +46,7 @@ export function entriesToCSV(entries: Entry[]): string {
     e.description,
     e.review_flag ? 'true' : 'false',
     e.rate_source,
-    e.effort_kind ?? '',
-    e.effort_count === null ? '' : String(e.effort_count),
+    formatEffort(e.effort),
   ].map(escapeCell).join(','));
   return [HEADER, ...rows].join('\n');
 }

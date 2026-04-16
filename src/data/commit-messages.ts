@@ -1,3 +1,4 @@
+import type { EffortItem } from '@/schema/types';
 import { formatHoursDecimal, formatCents } from '@/format/format';
 
 // Commit-message formatters use a currency-agnostic display so they embed in
@@ -9,6 +10,14 @@ function formatDollars(cents: number): string {
   return formatCents(cents, noSuffix).trim();
 }
 
+function formatEffortShort(items: EffortItem[] | undefined): string {
+  if (!items || items.length === 0) return '';
+  const parts = [...items]
+    .sort((a, b) => a.kind.localeCompare(b.kind))
+    .map((i) => `${i.count} ${i.kind}`);
+  return ` [activity: ${parts.join(', ')}]`;
+}
+
 // ─── log ───
 export function logMessage(args: {
   project: string;
@@ -17,15 +26,18 @@ export function logMessage(args: {
   rate_cents: number;
   description: string;
   source?: 'calendar' | 'timer' | 'slack' | 'gmail';
+  effort?: EffortItem[];
 }): string {
   const hours = formatHoursDecimal(args.hours_hundredths);
   const rate = formatDollars(args.rate_cents);
   const base = `log: ${args.project} ${args.date} ${hours}h @ ${rate} (${args.description})`;
-  if (args.source === 'calendar') return `${base} [calendar]`;
-  if (args.source === 'timer') return `${base} [timer]`;
-  if (args.source === 'slack') return `${base} [slack]`;
-  if (args.source === 'gmail') return `${base} [gmail]`;
-  return base;
+  const effort = formatEffortShort(args.effort);
+  let source = '';
+  if (args.source === 'calendar') source = ' [calendar]';
+  else if (args.source === 'timer') source = ' [timer]';
+  else if (args.source === 'slack') source = ' [slack]';
+  else if (args.source === 'gmail') source = ' [gmail]';
+  return base + effort + source;
 }
 
 // ─── edit ───

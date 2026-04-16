@@ -73,4 +73,47 @@ describe('commit-messages', () => {
       'import: 2026-03 from Apple Notes (95 entries)',
     );
   });
+
+  it('logMessage appends [activity: ...] when effort is present', () => {
+    expect(
+      logMessage({
+        project: 'sprosty',
+        date: '2026-03-25',
+        hours_hundredths: 400,
+        rate_cents: 2000,
+        description: 'x',
+        effort: [
+          { kind: 'slack', count: 1 },
+          { kind: 'meeting', count: 2 },
+        ],
+      }),
+    ).toBe('log: sprosty 2026-03-25 4.00h @ $20.00 (x) [activity: 2 meeting, 1 slack]');
+  });
+
+  it('logMessage omits the activity suffix when effort is empty', () => {
+    expect(
+      logMessage({
+        project: 'sprosty',
+        date: '2026-03-25',
+        hours_hundredths: 400,
+        rate_cents: 2000,
+        description: 'x',
+        effort: [],
+      }),
+    ).toBe('log: sprosty 2026-03-25 4.00h @ $20.00 (x)');
+  });
+
+  it('logMessage renders activity and source tags in that order', () => {
+    expect(
+      logMessage({
+        project: 'sprosty',
+        date: '2026-03-25',
+        hours_hundredths: 400,
+        rate_cents: 2000,
+        description: 'x',
+        source: 'calendar',
+        effort: [{ kind: 'meeting', count: 1 }],
+      }),
+    ).toBe('log: sprosty 2026-03-25 4.00h @ $20.00 (x) [activity: 1 meeting] [calendar]');
+  });
 });
