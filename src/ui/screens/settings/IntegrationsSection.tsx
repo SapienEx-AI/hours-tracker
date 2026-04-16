@@ -1,76 +1,19 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import {
-  loadIntegrationsConfig,
-  saveIntegrationsConfig,
-} from '@/data/integrations-repo';
-import { integrationsMessage } from '@/data/commit-messages';
 import {
   validateSlackBotToken,
   loadSlackSession,
   storeSlackSession,
   clearSlackSession,
 } from '@/integrations/slack/auth';
-import {
-  validateIntegrationsConfig,
-  formatValidationErrors,
-} from '@/schema/validators';
-import { useOctokit } from '@/data/hooks/use-octokit';
-import { useAuthStore } from '@/store/auth-store';
-import { splitRepoPath } from '@/data/octokit-client';
-import { qk } from '@/data/query-keys';
+import { slackAppManifestJson } from '@/integrations/slack/manifest';
 import { Button } from '@/ui/components/Button';
 import { Banner } from '@/ui/components/Banner';
-import type { IntegrationsConfig } from '@/schema/types';
+import {
+  IntegrationsConfigEditor,
+  parseAndValidateConfigJson,
+} from './IntegrationsConfigEditor';
 
-export type ParseResult =
-  | { ok: true; value: IntegrationsConfig }
-  | { ok: false; error: string };
-
-export function parseAndValidateConfigJson(text: string): ParseResult {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return { ok: false, error: 'Invalid JSON' };
-  }
-  const v = validateIntegrationsConfig(parsed);
-  if (!v.ok) return { ok: false, error: formatValidationErrors(v.errors) };
-  return { ok: true, value: v.value };
-}
-
-const SAMPLE_CONFIG: IntegrationsConfig = {
-  schema_version: 1,
-  slack: {
-    enabled: false,
-    client_channel_prefixes: ['#client-'],
-    internal_channel_prefixes: ['#team-'],
-  },
-  gmail: {
-    enabled: false,
-    client_domains: ['example-client.com'],
-    internal_domains: ['sapienex.com'],
-  },
-  calendar: {
-    workshop_min_duration_minutes: 120,
-    client_training_title_keywords: ['training', 'workshop'],
-    internal_only_attendee_domains: ['sapienex.com'],
-  },
-};
-
-function useIntegrationsConfigQuery() {
-  const octokit = useOctokit();
-  const dataRepo = useAuthStore((s) => s.dataRepo);
-  return useQuery({
-    queryKey: [...qk.all, 'integrations-config', dataRepo ?? 'none'] as const,
-    enabled: !!octokit && !!dataRepo,
-    queryFn: async () => {
-      if (!octokit || !dataRepo) return null;
-      const { owner, repo } = splitRepoPath(dataRepo);
-      return loadIntegrationsConfig(octokit, { owner, repo });
-    },
-  });
-}
+export { parseAndValidateConfigJson };
 
 function SlackConnectCard(): JSX.Element {
   const existing = loadSlackSession();
@@ -125,34 +68,108 @@ function SlackConnectCard(): JSX.Element {
           </Button>
         )}
       </div>
-      {showForm && !existing && (
-        <div className="space-y-2 mt-2">
+      {showForm && !existing && <SlackConnectForm
+        token={token}
+        setToken={setToken}
+        busy={busy}
+        err={err}
+        onSave={handleSave}
+        onCancel={() => setShowForm(false)}
+      />}
+    </div>
+  );
+}
+
+type SlackConnectFormProps = {
+  token: string;
+  setToken: (v: string) => void;
+  busy: boolean;
+  err: string | null;
+  onSave: () => void;
+  onCancel: () => void;
+};
+
+function SlackConnectForm({
+  token,
+  setToken,
+  busy,
+  err,
+  onSave,
+  onCancel,
+}: SlackConnectFormProps): JSX.Element {
+  const manifest = slackAppManifestJson();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(manifest);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Older browsers — user can still select-all + copy from the textarea.
+    }
+  };
+
+  return (
+    <div className="space-y-3 mt-2 text-xs">
+      <ol className="space-y-2 list-decimal list-inside text-slate-700">
+        <li>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="text-sky-700 underline"
+          >
+            {copied ? 'Copied ✓' : 'Copy app manifest'}
+          </button>
+        </li>
+        <li>
           <a
             href="https://api.slack.com/apps?new_app=1"
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-sky-700 underline"
+            className="text-sky-700 underline"
           >
-            Create the Slack app →
-          </a>
-          <input
-            type="password"
-            className="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono"
-            placeholder="xoxb-..."
-            value={token}
-            onChange={(e) => setToken(e.target.value.trim())}
-          />
-          <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={busy || token.length === 0}>
-              {busy ? 'Validating…' : 'Save'}
-            </Button>
-            <Button variant="secondary" onClick={() => setShowForm(false)}>
-              Cancel
-            </Button>
-          </div>
-          {err !== null && <Banner variant="error">{err}</Banner>}
-        </div>
-      )}
+            Open Slack app creator →
+          </a>{' '}
+          choose <b>From a manifest</b>, pick your workspace, paste the
+          manifest, review, and click <b>Create</b>.
+        </li>
+        <li>
+          In the new app page, go to <b>Install App</b> and click{' '}
+          <b>Install to Workspace</b>. Grant the requested scopes.
+        </li>
+        <li>
+          Open <b>OAuth &amp; Permissions</b>, copy the{' '}
+          <b>Bot User OAuth Token</b> (starts with <code>xoxb-</code>), and
+          paste it below.
+        </li>
+      </ol>
+      <details className="text-[11px] text-slate-500">
+        <summary className="cursor-pointer">Show manifest</summary>
+        <textarea
+          readOnly
+          rows={10}
+          className="w-full mt-1 border border-slate-200 rounded px-2 py-1 text-[11px] font-mono bg-slate-50"
+          value={manifest}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+      </details>
+      <input
+        type="password"
+        className="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono"
+        placeholder="xoxb-..."
+        value={token}
+        onChange={(e) => setToken(e.target.value.trim())}
+      />
+      <div className="flex gap-2">
+        <Button onClick={onSave} disabled={busy || token.length === 0}>
+          {busy ? 'Validating…' : 'Save'}
+        </Button>
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+      {err !== null && <Banner variant="error">{err}</Banner>}
     </div>
   );
 }
@@ -170,87 +187,13 @@ function GmailConnectCard(): JSX.Element {
   );
 }
 
-function ConfigEditor(): JSX.Element {
-  const query = useIntegrationsConfigQuery();
-  const octokit = useOctokit();
-  const dataRepo = useAuthStore((s) => s.dataRepo);
-  const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-
-  const current = query.data ?? SAMPLE_CONFIG;
-  const initial = JSON.stringify(current, null, 2);
-  const text = draft ?? initial;
-
-  const save = useMutation({
-    mutationFn: async (): Promise<void> => {
-      if (!octokit || !dataRepo) throw new Error('Not authenticated');
-      const parsed = parseAndValidateConfigJson(text);
-      if (!parsed.ok) throw new Error(parsed.error);
-      const { owner, repo } = splitRepoPath(dataRepo);
-      await saveIntegrationsConfig(octokit, {
-        owner,
-        repo,
-        config: parsed.value,
-        message: integrationsMessage(query.data ? 'update' : 'create'),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [...qk.all, 'integrations-config', dataRepo ?? 'none'],
-      });
-      setDraft(null);
-      setErr(null);
-    },
-    onError: (e) => {
-      setErr(e instanceof Error ? e.message : String(e));
-    },
-  });
-
-  return (
-    <div className="glass rounded-xl p-4">
-      <div className="font-body font-medium mb-2">integrations.json</div>
-      <textarea
-        className="w-full h-72 border border-slate-300 rounded px-2 py-1 text-xs font-mono"
-        value={text}
-        onChange={(e) => setDraft(e.target.value)}
-        spellCheck={false}
-      />
-      <div className="flex gap-2 mt-2 items-center">
-        <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending ? 'Saving…' : 'Save'}
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setDraft(null);
-            setErr(null);
-          }}
-        >
-          Reset
-        </Button>
-        {query.data === null && draft === null && (
-          <span className="text-[11px] text-slate-500">
-            No config file yet. Sample shown — edit and Save to create.
-          </span>
-        )}
-      </div>
-      {err !== null && (
-        <Banner variant="error">
-          <pre className="text-xs whitespace-pre-wrap">{err}</pre>
-        </Banner>
-      )}
-    </div>
-  );
-}
-
 export function IntegrationsSection(): JSX.Element {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-lg">Effort source integrations</h2>
       <SlackConnectCard />
       <GmailConnectCard />
-      <ConfigEditor />
+      <IntegrationsConfigEditor />
     </section>
   );
 }
