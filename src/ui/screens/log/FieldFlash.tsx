@@ -10,8 +10,7 @@
 export const FLASH_ORDER: ReadonlyArray<string> = [
   'date',
   'projectId',
-  'effort_kind',
-  'effort_count',
+  'effort',
   'hoursHundredths',
   'bucketId',
   'description',

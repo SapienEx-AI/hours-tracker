@@ -5,14 +5,14 @@
  * BroadcastChannel; this file is the unit-testable kernel.
  */
 
-import type { EffortKind } from '@/schema/types';
+import type { EffortItem } from '@/schema/types';
 
 export type Form = {
   projectId: string;
   bucketId: string | null;
   description: string;
   date: string;
-  effort_kind: EffortKind | null;
+  effort: EffortItem[];
 };
 
 export type TimerPhase =
@@ -33,7 +33,7 @@ export function snapshotFromForm(form: Form): Form {
     bucketId: form.bucketId,
     description: form.description,
     date: form.date,
-    effort_kind: form.effort_kind,
+    effort: [...form.effort],
   };
 }
 
@@ -129,7 +129,7 @@ export type HistoricalRecording = {
   bucket_id: string | null;
   date: string;
   elapsed_ms: number;
-  effort_kind: EffortKind | null;
+  effort: EffortItem[];
 };
 
 export function sessionToRecording(
@@ -144,6 +144,6 @@ export function sessionToRecording(
     bucket_id: session.snapshot.bucketId,
     date: session.snapshot.date,
     elapsed_ms: liveElapsedMs(session.phase),
-    effort_kind: session.snapshot.effort_kind,
+    effort: [...session.snapshot.effort],
   };
 }
