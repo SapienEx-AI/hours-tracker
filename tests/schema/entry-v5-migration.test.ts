@@ -60,9 +60,19 @@ describe('Entry v5 schema migration', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('rejects schema_version 6 (not widened)', () => {
+  it('accepts schema_version 6 (forward-compat)', () => {
     const file = {
       schema_version: 6,
+      month: '2026-04',
+      entries: [],
+    };
+    const result = validateEntries(file as unknown as EntriesFile);
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects schema_version 7 (upper bound)', () => {
+    const file = {
+      schema_version: 7,
       month: '2026-04',
       entries: [],
     };
