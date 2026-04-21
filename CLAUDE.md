@@ -39,6 +39,7 @@ npm run test:unit       # just the int unit tests
 npm run build           # production build
 npm run preview         # preview the production build locally
 npm run import:march    # re-run the March 2026 importer (regenerates golden)
+npm run release:patch "summary"   # bump app version + append release entry (see below)
 ```
 
 **Before claiming any change is complete:**
@@ -46,6 +47,14 @@ npm run import:march    # re-run the March 2026 importer (regenerates golden)
 2. `npm run lint` passes (max-warnings 0)
 3. `npm test` — ALL tests pass
 4. For calc changes: re-dispatch Gate A review (see spec §7.2)
+
+**Before pushing a user-visible change to `main`:** bump the version.
+- Run `npm run release:patch "short summary"` (or `:minor` / `:major`).
+- The script reads `public/version.json`, bumps `app.version`, captures the `git log` since the previous release, and appends a new release entry with commit + changes.
+- Commit `public/version.json` alongside the release payload: `git commit -m "release: vX.Y.Z — <summary>"`.
+- The bottom-left Version badge in the UI reflects this; hovering surfaces the latest release's summary + commit list.
+- Local dev builds render the badge in red bold as `v0.0.0-local` — never bump during local work.
+- `version.json` also carries the authoritative `data.schema_versions` table. Schema bumps must update this.
 
 ## Where to find things
 
