@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { EffortItem } from '@/schema/types';
 import {
   startSession,
   pauseSession,
@@ -37,6 +38,52 @@ type State = {
 const STORAGE_KEY = 'hours_tracker.timer.v1';
 const CHANNEL_NAME = 'hours_tracker.timer';
 const MAX_HISTORY = 10;
+const PERSIST_VERSION = 1;   // bump when the rehydrated shape changes
+
+// Pre-v6 persisted sessions carry effort_kind/effort_count scalars; v6 uses
+// an effort: EffortItem[] array. Normalize any legacy shape on load so
+// consumers that spread/iterate .effort don't crash with "not iterable".
+type LegacyEffortShape = {
+  effort?: EffortItem[];
+  effort_kind?: string | null;
+  effort_count?: number | null;
+};
+
+function normalizeEffort(obj: LegacyEffortShape | undefined | null): EffortItem[] {
+  if (!obj) return [];
+  if (Array.isArray(obj.effort)) return obj.effort;
+  if (
+    obj.effort_kind !== null && obj.effort_kind !== undefined &&
+    obj.effort_count !== null && obj.effort_count !== undefined
+  ) {
+    return [{ kind: obj.effort_kind as EffortItem['kind'], count: obj.effort_count }];
+  }
+  return [];
+}
+
+function migratePersistedState(state: unknown): Pick<State, 'session' | 'history'> {
+  const s = state as { session?: unknown; history?: unknown } | null | undefined;
+  if (!s || typeof s !== 'object') return { session: null, history: [] };
+  const sessionRaw = s.session as
+    | (TimerSession & { snapshot?: LegacyEffortShape })
+    | null
+    | undefined;
+  const session: TimerSession | null = sessionRaw
+    ? {
+        ...sessionRaw,
+        snapshot: {
+          ...(sessionRaw.snapshot as Form),
+          effort: normalizeEffort(sessionRaw.snapshot),
+        },
+      }
+    : null;
+  const historyRaw = Array.isArray(s.history) ? (s.history as LegacyEffortShape[]) : [];
+  const history: HistoricalRecording[] = historyRaw.map((rec) => ({
+    ...(rec as HistoricalRecording),
+    effort: normalizeEffort(rec),
+  }));
+  return { session, history };
+}
 
 function nowMs(): number {
   return Date.now();
@@ -105,11 +152,21 @@ export const useTimerStore = create<State>()(
     }),
     {
       name: STORAGE_KEY,
+      version: PERSIST_VERSION,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ session: state.session, history: state.history }),
-      // Legacy stopped sessions from older builds are now expected again,
-      // so no rehydration migration needed — stop() archives + keeps the
-      // session for the confirmation UI.
+      // migrate runs when stored version < PERSIST_VERSION (e.g. pre-v6
+      // builds that had no version field). onRehydrateStorage runs on
+      // every rehydrate regardless of version — belt-and-suspenders so a
+      // same-version stored blob missing effort[] still normalizes.
+      migrate: (persistedState, _v) =>
+        migratePersistedState(persistedState) as unknown as State,
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const normalized = migratePersistedState(state);
+        state.session = normalized.session;
+        state.history = normalized.history;
+      },
     },
   ),
 );
@@ -142,19 +199,11 @@ function broadcast(msg: Message): void {
 }
 
 /**
- * Test-only: simulates a page reload by reading localStorage back into the
- * store. The persist middleware does this automatically on first import,
- * but tests want to exercise rehydrate after they wipe in-memory state.
+ * Test-only: simulates a page reload. Routes through zustand's real
+ * rehydrate() so the migrate + merge path runs — a hand-rolled read-and-
+ * setState would skip those and hide bugs like "pre-v6 session effort is
+ * not iterable."
  */
-export function _rehydrateFromStorageForTests(): void {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw === null) return;
-  try {
-    const parsed = JSON.parse(raw) as { state: { session: TimerSession | null } };
-    if (parsed.state?.session !== undefined) {
-      useTimerStore.setState({ session: parsed.state.session });
-    }
-  } catch {
-    // corrupt storage — leave state alone
-  }
+export async function _rehydrateFromStorageForTests(): Promise<void> {
+  await useTimerStore.persist.rehydrate();
 }

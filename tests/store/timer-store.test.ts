@@ -102,7 +102,70 @@ describe('timer-store', () => {
     expect(useTimerStore.getState().history[0]?.effort).toEqual([{ kind: 'meeting', count: 1 }]);
   });
 
-  it('persists a running session across reload', () => {
+  it('normalizes a pre-v6 persisted session (effort_kind/effort_count) into effort: []', async () => {
+    // Simulate a timer session persisted by an older build — no effort array,
+    // scalar effort_kind/effort_count fields still present. Rehydrate must
+    // not crash and must produce an iterable effort array.
+    const legacy = {
+      state: {
+        session: {
+          id: 'legacy-sid',
+          started_wall: '2026-04-10T12:00:00Z',
+          snapshot: {
+            projectId: 'sector-growth',
+            bucketId: null,
+            description: 'legacy',
+            date: '2026-04-10',
+            effort_kind: 'slack',
+            effort_count: 3,
+          },
+          phase: { kind: 'running', started_at: Date.now(), base_elapsed_ms: 0 },
+        },
+        history: [
+          {
+            id: 'legacy-rec-1',
+            started_wall: '2026-04-09T12:00:00Z',
+            archived_wall: '2026-04-09T13:00:00Z',
+            project_id: 'sector-growth',
+            bucket_id: null,
+            date: '2026-04-09',
+            elapsed_ms: 3600000,
+            effort_kind: 'meeting',
+            effort_count: 1,
+          },
+          {
+            id: 'legacy-rec-2',
+            started_wall: '2026-04-08T12:00:00Z',
+            archived_wall: '2026-04-08T13:00:00Z',
+            project_id: 'sector-growth',
+            bucket_id: null,
+            date: '2026-04-08',
+            elapsed_ms: 1800000,
+            // Deliberately missing BOTH effort fields — mimics a pre-v5 session.
+          },
+        ],
+      },
+      version: 0,
+    };
+    // Order matters: setState triggers persist serialization back to
+    // localStorage, which would wipe the legacy fixture. Set in-memory
+    // state to empty FIRST, then seed the fixture, then rehydrate.
+    useTimerStore.setState({ session: null, history: [] });
+    localStorage.setItem('hours_tracker.timer.v1', JSON.stringify(legacy));
+    await _rehydrateFromStorageForTests();
+    const state = useTimerStore.getState();
+    expect(Array.isArray(state.session?.snapshot.effort)).toBe(true);
+    expect(state.session?.snapshot.effort).toEqual([{ kind: 'slack', count: 3 }]);
+    expect(state.history).toHaveLength(2);
+    expect(state.history[0]?.effort).toEqual([{ kind: 'meeting', count: 1 }]);
+    expect(state.history[1]?.effort).toEqual([]);
+    // Spreading the legacy effort must work — this is the regression that
+    // surfaced in prod as "A.effort is not iterable".
+    expect(() => [...(state.session?.snapshot.effort ?? [])]).not.toThrow();
+    expect(() => state.history.map((r) => [...r.effort])).not.toThrow();
+  });
+
+  it('persists a running session across reload', async () => {
     useTimerStore.getState().start(form);
     const id = useTimerStore.getState().session?.id;
     // Snapshot persisted JSON before wiping in-memory state. The setState
@@ -113,7 +176,7 @@ describe('timer-store', () => {
     expect(persisted).not.toBeNull();
     useTimerStore.setState({ session: null });
     localStorage.setItem('hours_tracker.timer.v1', persisted!);
-    _rehydrateFromStorageForTests();
+    await _rehydrateFromStorageForTests();
     expect(useTimerStore.getState().session?.id).toBe(id);
     expect(useTimerStore.getState().session?.phase.kind).toBe('running');
   });
