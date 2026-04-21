@@ -28,7 +28,7 @@ type State = {
   /** Update mutable fields on the current session's snapshot (project/bucket
    *  during inline edits). No-op if no session. */
   updateSnapshot: (
-    updates: Partial<Pick<Form, 'projectId' | 'bucketId' | 'date' | 'effort_kind'>>,
+    updates: Partial<Pick<Form, 'projectId' | 'bucketId' | 'date' | 'effort'>>,
   ) => void;
   /** Remove a single historical recording by id. */
   removeHistory: (id: string) => void;

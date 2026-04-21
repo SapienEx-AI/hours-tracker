@@ -6,7 +6,7 @@ const form = {
   bucketId: null,
   description: 'kickoff',
   date: '2026-04-14',
-  effort_kind: null,
+  effort: [],
 };
 
 describe('timer-store', () => {
@@ -81,25 +81,25 @@ describe('timer-store', () => {
     expect(s?.snapshot.bucketId).toBeNull();
     // Unaffected fields preserved:
     expect(s?.snapshot.description).toBe('kickoff');
-    expect(s?.snapshot.effort_kind).toBeNull();
+    expect(s?.snapshot.effort).toEqual([]);
   });
 
-  it('updateSnapshot accepts effort_kind and leaves other fields unchanged', () => {
+  it('updateSnapshot accepts effort and leaves other fields unchanged', () => {
     useTimerStore.getState().start(form);
-    useTimerStore.getState().updateSnapshot({ effort_kind: 'slack' });
+    useTimerStore.getState().updateSnapshot({ effort: [{ kind: 'slack', count: 1 }] });
     const s = useTimerStore.getState().session;
-    expect(s?.snapshot.effort_kind).toBe('slack');
+    expect(s?.snapshot.effort).toEqual([{ kind: 'slack', count: 1 }]);
     expect(s?.snapshot.projectId).toBe('sector-growth');
     expect(s?.snapshot.bucketId).toBeNull();
     expect(s?.snapshot.description).toBe('kickoff');
   });
 
-  it('stop archives the snapshot effort_kind into the recording', () => {
+  it('stop archives the snapshot effort into the recording', () => {
     useTimerStore.getState().start(form);
-    useTimerStore.getState().updateSnapshot({ effort_kind: 'meeting' });
+    useTimerStore.getState().updateSnapshot({ effort: [{ kind: 'meeting', count: 1 }] });
     const rec = useTimerStore.getState().stop();
-    expect(rec?.effort_kind).toBe('meeting');
-    expect(useTimerStore.getState().history[0]?.effort_kind).toBe('meeting');
+    expect(rec?.effort).toEqual([{ kind: 'meeting', count: 1 }]);
+    expect(useTimerStore.getState().history[0]?.effort).toEqual([{ kind: 'meeting', count: 1 }]);
   });
 
   it('persists a running session across reload', () => {

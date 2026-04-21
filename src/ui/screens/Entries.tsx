@@ -116,7 +116,7 @@ export function Entries({ partner }: { partner: Partner }): JSX.Element {
   const visible = (entries.data?.entries ?? []).filter(
     (e) =>
       (statusFilter === 'all' || e.billable_status === statusFilter) &&
-      (effortKindFilter === null || e.effort_kind === effortKindFilter) &&
+      (effortKindFilter === null || e.effort.some((x) => x.kind === effortKindFilter)) &&
       (!filter ||
         e.project.toLowerCase().includes(filter.toLowerCase()) ||
         e.description.toLowerCase().includes(filter.toLowerCase())),

@@ -3,50 +3,67 @@ import type { EffortItem, EffortKind } from '@/schema/types';
 import { Input } from '@/ui/components/Input';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { EffortKindSelect } from '@/ui/components/EffortKindSelect';
-import { EffortChips } from '@/ui/screens/log/EffortChips';
+import { FieldFlash, type FlashTone } from './FieldFlash';
+import { EffortChips } from './EffortChips';
+import type { FormState } from './form-helpers';
 
 type Props = {
-  effort: EffortItem[];
-  onChange: (next: EffortItem[]) => void;
+  form: FormState;
+  setForm: (next: FormState | ((f: FormState) => FormState)) => void;
+  flashFields: ReadonlySet<string>;
+  nonce: number;
+  tone: FlashTone;
 };
 
-export function EditActivityField({ effort, onChange }: Props): JSX.Element {
+export function ActivityField(p: Props): JSX.Element {
   const [pendingKind, setPendingKind] = useState<EffortKind | null>(null);
   const [pendingCount, setPendingCount] = useState<number>(1);
 
   function addChip() {
     if (pendingKind === null) return;
-    const existing = effort.find((x) => x.kind === pendingKind);
-    const next: EffortItem[] = existing
-      ? effort.map((x) =>
-          x.kind === pendingKind
-            ? { kind: x.kind, count: Math.min(100, x.count + pendingCount) }
-            : x,
-        )
-      : [...effort, { kind: pendingKind, count: pendingCount }].sort((a, b) =>
-          a.kind.localeCompare(b.kind),
-        );
-    onChange(next);
+    p.setForm((f) => {
+      const existing = f.effort.find((x) => x.kind === pendingKind);
+      const next: EffortItem[] = existing
+        ? f.effort.map((x) =>
+            x.kind === pendingKind
+              ? { kind: x.kind, count: Math.min(100, x.count + pendingCount) }
+              : x,
+          )
+        : [...f.effort, { kind: pendingKind, count: pendingCount }].sort((a, b) =>
+            a.kind.localeCompare(b.kind),
+          );
+      return { ...f, effort: next };
+    });
     setPendingKind(null);
     setPendingCount(1);
   }
 
   function removeChip(kind: EffortKind) {
-    onChange(effort.filter((x) => x.kind !== kind));
+    p.setForm((f) => ({ ...f, effort: f.effort.filter((x) => x.kind !== kind) }));
   }
 
   function updateChipCount(kind: EffortKind, count: number) {
-    onChange(effort.map((x) => (x.kind === kind ? { ...x, count } : x)));
+    p.setForm((f) => ({
+      ...f,
+      effort: f.effort.map((x) => (x.kind === kind ? { ...x, count } : x)),
+    }));
   }
 
   return (
     <FieldLabel label="Activity">
       <div className="flex flex-col gap-2">
-        <EffortChips
-          items={effort}
-          onRemove={removeChip}
-          onUpdateCount={updateChipCount}
-        />
+        <FieldFlash
+          field="effort"
+          flashFields={p.flashFields}
+          nonce={p.nonce}
+          tone={p.tone}
+        >
+          <EffortChips
+            items={p.form.effort}
+            onRemove={removeChip}
+            onUpdateCount={updateChipCount}
+          />
+        </FieldFlash>
         <div className="flex gap-2">
           <div className="flex-1">
             <EffortKindSelect value={pendingKind} onChange={setPendingKind} />

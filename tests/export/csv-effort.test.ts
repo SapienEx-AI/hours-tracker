@@ -16,27 +16,39 @@ const mk = (overrides: Partial<Entry> = {}): Entry => ({
   created_at: '2026-04-14T10:00:00Z',
   updated_at: '2026-04-14T10:00:00Z',
   source_ref: null,
-  effort_kind: null,
-  effort_count: null,
+  effort: [],
   ...overrides,
 });
 
-describe('entriesToCSV effort columns', () => {
-  it('appends effort_kind and effort_count to the header in that order', () => {
+describe('entriesToCSV effort column', () => {
+  it('appends a single effort column to the header', () => {
     const csv = entriesToCSV([mk()]);
     const header = csv.split('\n')[0]!;
-    expect(header.endsWith('effort_kind,effort_count')).toBe(true);
+    expect(header.endsWith(',effort')).toBe(true);
   });
 
-  it('renders null effort_kind and null effort_count as trailing empty columns', () => {
+  it('renders empty effort as a trailing empty column', () => {
     const csv = entriesToCSV([mk()]);
     const row = csv.split('\n')[1]!;
-    expect(row.endsWith(',,')).toBe(true);
+    expect(row.endsWith(',')).toBe(true);
   });
 
-  it('renders non-null effort_kind and effort_count in the last two columns', () => {
-    const csv = entriesToCSV([mk({ effort_kind: 'slack', effort_count: 3 })]);
+  it('renders multi-kind effort as sorted kind:count;kind:count', () => {
+    const csv = entriesToCSV([
+      mk({
+        effort: [
+          { kind: 'slack', count: 1 },
+          { kind: 'meeting', count: 2 },
+        ],
+      }),
+    ]);
     const row = csv.split('\n')[1]!;
-    expect(row.endsWith(',slack,3')).toBe(true);
+    expect(row.endsWith(',meeting:2;slack:1')).toBe(true);
+  });
+
+  it('renders single-kind effort as kind:count', () => {
+    const csv = entriesToCSV([mk({ effort: [{ kind: 'slack', count: 3 }] })]);
+    const row = csv.split('\n')[1]!;
+    expect(row.endsWith(',slack:3')).toBe(true);
   });
 });

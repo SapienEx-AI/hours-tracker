@@ -9,7 +9,7 @@ import { updateEntry } from '@/data/entries-repo';
 import { editMessage } from '@/data/commit-messages';
 import { splitRepoPath } from '@/data/octokit-client';
 import { resolveRateAtLogTime } from '@/calc';
-import type { Entry, BillableStatus, EffortKind } from '@/schema/types';
+import type { Entry, BillableStatus, EffortItem } from '@/schema/types';
 import { formatHoursDecimal } from '@/format/format';
 import { Button } from '@/ui/components/Button';
 import { Input } from '@/ui/components/Input';
@@ -31,8 +31,7 @@ type FormState = {
   rateOverridden: boolean;
   description: string;
   reviewFlag: boolean;
-  effortKind: EffortKind | null;
-  effortCount: number | null;
+  effort: EffortItem[];
 };
 
 function StatusField({
@@ -65,9 +64,19 @@ function StatusField({
   );
 }
 
-function effortLabel(kind: EffortKind | null | undefined, count: number | null | undefined): string {
-  if (kind === null || kind === undefined || count === null || count === undefined) return 'none';
-  return `${count} ${EFFORT_KIND_LABEL[kind]}`;
+function effortLabel(items: EffortItem[]): string {
+  if (items.length === 0) return 'none';
+  return [...items]
+    .sort((a, b) => a.kind.localeCompare(b.kind))
+    .map((x) => `${x.count} ${EFFORT_KIND_LABEL[x.kind]}`)
+    .join(', ');
+}
+
+function effortEqual(a: EffortItem[], b: EffortItem[]): boolean {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort((x, y) => x.kind.localeCompare(y.kind));
+  const sb = [...b].sort((x, y) => x.kind.localeCompare(y.kind));
+  return sa.every((x, i) => x.kind === sb[i]!.kind && x.count === sb[i]!.count);
 }
 
 function buildChangeDescription(entry: Entry, form: FormState, newRateCents: number): string {
@@ -81,8 +90,8 @@ function buildChangeDescription(entry: Entry, form: FormState, newRateCents: num
   if (entry.description !== form.description) changes.push('description updated');
   if (entry.bucket_id !== form.bucketId) changes.push(`bucket ${entry.bucket_id ?? 'none'} → ${form.bucketId ?? 'none'}`);
   if (entry.date !== form.date) changes.push(`date ${entry.date} → ${form.date}`);
-  if (entry.effort_kind !== form.effortKind || entry.effort_count !== form.effortCount) {
-    changes.push(`activity ${effortLabel(entry.effort_kind, entry.effort_count)} → ${effortLabel(form.effortKind, form.effortCount)}`);
+  if (!effortEqual(entry.effort, form.effort)) {
+    changes.push(`activity ${effortLabel(entry.effort)} → ${effortLabel(form.effort)}`);
   }
   return changes.join(', ') || 'no field changes';
 }
@@ -108,8 +117,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
   const [rateOverridden, setRateOverridden] = useState(entry.rate_source === 'entry_override');
   const [description, setDescription] = useState(entry.description);
   const [reviewFlag, setReviewFlag] = useState(entry.review_flag);
-  const [effortKind, setEffortKind] = useState<EffortKind | null>(entry.effort_kind);
-  const [effortCount, setEffortCount] = useState<number | null>(entry.effort_count);
+  const [effort, setEffort] = useState<EffortItem[]>(entry.effort);
 
   useEffect(() => {
     if (bucketId !== null) setStatus('billable');
@@ -131,7 +139,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
     }
   }, [projectId, bucketId, date, projects.data, rates.data, rateOverridden]);
 
-  const form: FormState = { date, hoursHundredths, bucketId, status, rateCents, rateOverridden, description, reviewFlag, projectId, effortKind, effortCount };
+  const form: FormState = { date, hoursHundredths, bucketId, status, rateCents, rateOverridden, description, reviewFlag, projectId, effort };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -165,8 +173,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
         rate_source: finalSource,
         billable_status: status, bucket_id: bucketId,
         description, review_flag: reviewFlag,
-        effort_kind: effortKind,
-        effort_count: effortCount,
+        effort,
         updated_at: new Date().toISOString(),
       };
       await updateEntry(octokit, {
@@ -249,12 +256,7 @@ export function EditEntryModal({ entry, onClose }: Props): JSX.Element {
             </Select>
           </FieldLabel>
 
-          <EditActivityField
-            effortKind={effortKind}
-            effortCount={effortCount}
-            onKindChange={setEffortKind}
-            onCountChange={setEffortCount}
-          />
+          <EditActivityField effort={effort} onChange={setEffort} />
 
           <StatusField
             status={status}

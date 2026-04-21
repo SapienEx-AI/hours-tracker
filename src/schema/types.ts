@@ -153,6 +153,11 @@ export type EffortCategory =
   | 'internal'
   | 'enablement';
 
+export type EffortItem = {
+  kind: EffortKind;
+  count: number;
+};
+
 export type Entry = {
   id: string;
   project: string;
@@ -167,12 +172,11 @@ export type Entry = {
   created_at: string;
   updated_at: string;
   source_ref: SourceRef;
-  effort_kind: EffortKind | null;
-  effort_count: number | null;
+  effort: EffortItem[];
 };
 
 export type EntriesFile = {
-  schema_version: 1 | 2 | 3 | 4 | 5;
+  schema_version: 1 | 2 | 3 | 4 | 5 | 6;
   month: string;
   entries: Entry[];
 };

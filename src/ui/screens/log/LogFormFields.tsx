@@ -1,14 +1,15 @@
-import type { RefObject } from 'react';
+import { type RefObject } from 'react';
 import type { BillableStatus, Project } from '@/schema/types';
 import { Input } from '@/ui/components/Input';
 import { Select } from '@/ui/components/Select';
 import { FieldLabel } from '@/ui/components/FieldLabel';
 import { Banner } from '@/ui/components/Banner';
 import { HoursChips } from '@/ui/components/HoursChips';
-import { EffortKindSelect, effortUnitLabel } from '@/ui/components/EffortKindSelect';
 import { formatHoursDecimal } from '@/format/format';
 import { formatRateDollars, type FormState } from './form-helpers';
 import { FieldFlash, type FlashTone } from './FieldFlash';
+
+export { ActivityField } from './ActivityField';
 
 export type FieldProps = {
   form: FormState;
@@ -77,60 +78,6 @@ export function ProjectField(
           ))}
         </Select>,
       )}
-    </FieldLabel>
-  );
-}
-
-export function ActivityField(p: FieldProps): JSX.Element {
-  return (
-    <FieldLabel label="Activity">
-      <div className="flex gap-2 items-start">
-        <div className="flex-1">
-          {wrap(
-            'effort_kind',
-            p,
-            <EffortKindSelect
-              value={p.form.effort_kind}
-              onChange={(k) =>
-                p.setForm((f) => ({
-                  ...f,
-                  effort_kind: k,
-                  effort_count: k === null ? null : (f.effort_count ?? 1),
-                }))
-              }
-            />,
-          )}
-        </div>
-        <div className="w-28 shrink-0 flex flex-col gap-0.5">
-          {wrap(
-            'effort_count',
-            p,
-            <Input
-              type="number"
-              min="1"
-              max="100"
-              step="1"
-              disabled={p.form.effort_kind === null}
-              value={p.form.effort_count === null ? '' : String(p.form.effort_count)}
-              onChange={(e) => {
-                const parsed = parseInt(e.target.value, 10);
-                p.setForm((f) => ({
-                  ...f,
-                  effort_count:
-                    e.target.value === '' || Number.isNaN(parsed)
-                      ? null
-                      : Math.max(1, Math.min(100, parsed)),
-                }));
-              }}
-            />,
-          )}
-          {p.form.effort_kind !== null && p.form.effort_count !== null && (
-            <span className="text-[10px] text-slate-500 font-mono px-1">
-              {effortUnitLabel(p.form.effort_kind, p.form.effort_count)}
-            </span>
-          )}
-        </div>
-      </div>
     </FieldLabel>
   );
 }

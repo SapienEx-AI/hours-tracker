@@ -1,6 +1,10 @@
 import type { Octokit } from '@octokit/rest';
-import type { Entry, EntriesFile } from '@/schema/types';
-import { validateEntries, formatValidationErrors } from '@/schema/validators';
+import type { Entry, EntriesFile, EffortItem, EffortKind } from '@/schema/types';
+import {
+  validateEntries,
+  formatValidationErrors,
+  collapseAndSortEffort,
+} from '@/schema/validators';
 import { readJsonFile, writeJsonFileWithRetry, FileNotFoundError } from './github-file';
 import { logMessage } from './commit-messages';
 
@@ -9,49 +13,78 @@ function entriesPath(month: string): string {
 }
 
 /**
- * Upgrade any legacy file (v1 / v2 / v3 / v4) to v5. Strips any legacy
- * `source_event_id` (forbidden in v3+); synthesizes `source_ref` when
- * missing; backfills v4 effort fields (`effort_kind`, `effort_count`) to
- * null when absent. v5 is a pure additive enum widening on
- * `source_ref.kind` — no entry-level changes.
+ * Upgrade any legacy file (v1-v5) to v6. Strips every legacy field:
+ *   - `source_event_id` (forbidden in v3+)
+ *   - `effort_kind` + `effort_count` (replaced by `effort` array in v6)
+ * Synthesizes `source_ref` from the legacy id when missing, and lifts the
+ * v5 scalar pair into the v6 `effort` array.
  *
- * Passing an already-v5 file still runs the cleanup pass as a
- * belt-and-suspenders recovery.
+ * Already-v6 files still run the cleanup pass — belt-and-suspenders
+ * recovery for drift from pre-fix writers.
  */
-export function upgradeEntriesFileToV5(file: EntriesFile): EntriesFile {
+export function upgradeEntriesFileToV6(file: EntriesFile): EntriesFile {
   const entries = file.entries.map((e) => {
-    const anyE = e as Entry & { source_event_id?: string | null };
+    const anyE = e as Entry & {
+      source_event_id?: string | null;
+      effort_kind?: EffortKind | null;
+      effort_count?: number | null;
+    };
     const legacyId = anyE.source_event_id;
-    const cleaned: Entry & { source_event_id?: string | null } = { ...anyE };
+    const cleaned: Record<string, unknown> = { ...anyE };
     delete cleaned.source_event_id;
+    delete cleaned.effort_kind;
+    delete cleaned.effort_count;
     if (cleaned.source_ref === undefined) {
       cleaned.source_ref =
         legacyId === undefined || legacyId === null
           ? null
           : { kind: 'calendar', id: legacyId };
     }
-    if (cleaned.effort_kind === undefined) {
-      cleaned.effort_kind = null;
+    // Lift v5 scalar pair into the v6 effort array.
+    let effort: EffortItem[] = Array.isArray((anyE as Entry).effort)
+      ? [...(anyE as Entry).effort]
+      : [];
+    if (effort.length === 0) {
+      const k = anyE.effort_kind;
+      const c = anyE.effort_count;
+      if (k !== null && k !== undefined && c !== null && c !== undefined) {
+        effort = [{ kind: k, count: c }];
+      }
     }
-    if (cleaned.effort_count === undefined) {
-      cleaned.effort_count = null;
-    }
+    cleaned.effort = collapseAndSortEffort(effort);
     return cleaned as Entry;
   });
-  if (file.schema_version === 5) {
+  if (file.schema_version === 6) {
     return { ...file, entries };
   }
-  return { ...file, schema_version: 5, entries };
+  return { ...file, schema_version: 6, entries };
 }
 
 function schemaUpgradeSuffix(fromVersion: EntriesFile['schema_version']): string {
-  if (fromVersion === 5) return '';
-  return ` [schema v${fromVersion}→v5]`;
+  if (fromVersion === 6) return '';
+  return ` [schema v${fromVersion}→v6]`;
 }
 
 function sourceTag(entry: Entry): 'calendar' | 'timer' | 'slack' | 'gmail' | undefined {
   if (entry.source_ref === null) return undefined;
   return entry.source_ref.kind;
+}
+
+/**
+ * Third layer of uniqueness-by-kind defense (spec §3.2): reject any entry
+ * whose `effort` array has a duplicate `kind`. Validator + upgrader
+ * normalize duplicates; this asserts nothing slipped past them.
+ */
+function assertEffortUnique(entry: Entry, path: string): void {
+  const seen = new Set<EffortKind>();
+  for (const item of entry.effort) {
+    if (seen.has(item.kind)) {
+      throw new Error(
+        `Entry ${entry.id} in ${path} has duplicate effort.kind="${item.kind}" — must be unique.`,
+      );
+    }
+    seen.add(item.kind);
+  }
 }
 
 export type LoadMonthEntriesArgs = {
@@ -141,7 +174,9 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
   const month = args.entry.date.slice(0, 7);
   const path = entriesPath(month);
 
-  const probe: EntriesFile = { schema_version: 5, month, entries: [args.entry] };
+  assertEffortUnique(args.entry, path);
+
+  const probe: EntriesFile = { schema_version: 6, month, entries: [args.entry] };
   const validation = validateEntries(probe);
   if (!validation.ok) {
     throw new Error(`Entry failed validation:\n${formatValidationErrors(validation.errors)}`);
@@ -157,6 +192,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
           rate_cents: args.entry.rate_cents,
           description: args.entry.description,
           source: src,
+          effort: args.entry.effort,
         }
       : {
           project: args.entry.project,
@@ -164,6 +200,7 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
           hours_hundredths: args.entry.hours_hundredths,
           rate_cents: args.entry.rate_cents,
           description: args.entry.description,
+          effort: args.entry.effort,
         },
   );
 
@@ -175,19 +212,19 @@ export async function addEntry(octokit: Octokit, args: AddEntryArgs): Promise<vo
     // the actual on-disk version read during this attempt (retries may see
     // a different version if another writer landed in between).
     message: (current) => {
-      const fromVersion: EntriesFile['schema_version'] = current?.schema_version ?? 5;
+      const fromVersion: EntriesFile['schema_version'] = current?.schema_version ?? 6;
       return baseMessage + schemaUpgradeSuffix(fromVersion);
     },
     transform: (current) => {
       const base: EntriesFile = current ?? {
-        schema_version: 5,
+        schema_version: 6,
         month,
         entries: [],
       };
       if (base.entries.some((e) => e.id === args.entry.id)) {
         throw new Error(`Duplicate entry id ${args.entry.id} — refusing to overwrite.`);
       }
-      const upgraded = upgradeEntriesFileToV5(base);
+      const upgraded = upgradeEntriesFileToV6(base);
       return {
         ...upgraded,
         entries: [...upgraded.entries, args.entry],
@@ -210,6 +247,8 @@ export async function updateEntry(
   const month = args.entry.date.slice(0, 7);
   const path = entriesPath(month);
 
+  assertEffortUnique(args.entry, path);
+
   await writeJsonFileWithRetry<EntriesFile>(octokit, {
     owner: args.owner,
     repo: args.repo,
@@ -219,7 +258,7 @@ export async function updateEntry(
       if (!current) {
         throw new Error(`Cannot update entry in missing month file: ${path}`);
       }
-      const upgraded = upgradeEntriesFileToV5(current);
+      const upgraded = upgradeEntriesFileToV6(current);
       const idx = upgraded.entries.findIndex((e) => e.id === args.entry.id);
       if (idx < 0) {
         throw new Error(`Entry id ${args.entry.id} not found in ${path}`);
@@ -258,7 +297,7 @@ export async function deleteEntry(
     message: args.message,
     transform: (current) => {
       if (!current) throw new Error(`Cannot delete from missing file ${path}`);
-      const upgraded = upgradeEntriesFileToV5(current);
+      const upgraded = upgradeEntriesFileToV6(current);
       return {
         ...upgraded,
         entries: upgraded.entries.filter((e) => e.id !== args.entryId),

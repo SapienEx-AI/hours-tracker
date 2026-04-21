@@ -146,12 +146,12 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       source_ref: s.source_event_id
         ? { kind: 'calendar', id: s.source_event_id }
         : null,
-      effort_kind: 'meeting',
-      effort_count: 1,
+      // Calendar suggestions auto-tag as a single meeting.
+      effort: [{ kind: 'meeting', count: 1 }],
     }));
     setPrefillHint(s.description || '(no title)');
     setLoadFlashFields(
-      new Set(['date', 'hoursHundredths', 'description', 'effort_kind', 'effort_count']),
+      new Set(['date', 'hoursHundredths', 'description', 'effort']),
     );
     setLoadFlashTone({ r: 99, g: 102, b: 241 }); // indigo-500 (Calendar tone)
     setLoadAnimNonce((n) => n + 1);
@@ -173,13 +173,12 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
       projectId: rec.project_id,
       bucketId: rec.bucket_id,
       hoursHundredths: hours,
-      effort_kind: rec.effort_kind,
-      effort_count: rec.effort_kind === null ? null : 1,
+      effort: [...rec.effort],
       source_ref: { kind: 'timer', id: rec.id },
     }));
     setPrefillHint('timer · redriven');
     setLoadFlashFields(
-      new Set(['date', 'projectId', 'bucketId', 'hoursHundredths', 'effort_kind', 'effort_count']),
+      new Set(['date', 'projectId', 'bucketId', 'hoursHundredths', 'effort']),
     );
     setLoadFlashTone({ r: 245, g: 158, b: 11 });
     setLoadAnimNonce((n) => n + 1);
@@ -198,32 +197,34 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
   }
 
   function changeTimerEffortKind(effort_kind: EffortKind | null) {
-    setForm((f) => ({
-      ...f,
-      effort_kind,
-      effort_count: effort_kind === null ? null : (f.effort_count ?? 1),
-    }));
-    updateTimerSnapshot({ effort_kind });
+    // Timer's single-kind hint translates to a single-item effort array.
+    const next: FormState['effort'] = effort_kind === null ? [] : [{ kind: effort_kind, count: 1 }];
+    setForm((f) => ({ ...f, effort: next }));
+    updateTimerSnapshot({ effort: next });
   }
 
   function onQuickActivity(action: QuickAction) {
     setForm((f) => {
-      const sameKind = f.effort_kind === action.kind;
-      const nextCount = sameKind ? (f.effort_count ?? 0) + 1 : 1;
+      const existing = f.effort.find((x) => x.kind === action.kind);
+      const nextEffort: FormState['effort'] = existing
+        ? f.effort.map((x) =>
+            x.kind === action.kind
+              ? { kind: x.kind, count: Math.min(100, x.count + 1) }
+              : x,
+          )
+        : [...f.effort, { kind: action.kind, count: 1 }].sort((a, b) =>
+            a.kind.localeCompare(b.kind),
+          );
       // Hours always accumulate — whether they came from manual typing,
       // another assist panel, or a prior quick-activity click.
-      const nextHours = f.hoursHundredths + action.hoursHundredths;
       return {
         ...f,
-        effort_kind: action.kind,
-        effort_count: nextCount,
-        hoursHundredths: nextHours,
+        effort: nextEffort,
+        hoursHundredths: f.hoursHundredths + action.hoursHundredths,
       };
     });
     setPrefillHint(`quick: ${action.kind.replace(/_/g, ' ')}`);
-    setLoadFlashFields(
-      new Set(['effort_kind', 'effort_count', 'hoursHundredths']),
-    );
+    setLoadFlashFields(new Set(['effort', 'hoursHundredths']));
     setLoadFlashTone({ r: 251, g: 146, b: 60 }); // orange-400 — distinct from indigo and amber
     setLoadAnimNonce((n) => n + 1);
   }
@@ -262,7 +263,7 @@ export function QuickLog({ onNavigate }: Props): JSX.Element {
           bucketId: form.bucketId,
           description: form.description,
           date: form.date,
-          effort_kind: form.effort_kind,
+          effort: form.effort,
         }}
         currentHoursHundredths={form.hoursHundredths}
         projects={activeProjects}

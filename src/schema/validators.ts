@@ -17,6 +17,8 @@ import type {
   ProjectsConfig,
   EntriesFile,
   Entry,
+  EffortItem,
+  EffortKind,
   Snapshot,
   CalendarConfig,
   IntegrationsConfig,
@@ -97,36 +99,45 @@ function liftLegacyFieldToSourceRef(file: EntriesFile): void {
 }
 
 /**
- * Enforce the effort cross-field rule: `effort_kind` and `effort_count` must
- * both be null or both be set. Returns null if clean, else an ErrorObject.
+ * Collapse duplicate kinds (sum counts) and sort by kind for determinism.
+ * Exported so `upgradeEntriesFileToV6` and writer probes can share the
+ * normalizer (defense-in-depth per spec §3.2).
  */
-function checkEffortCrossField(file: EntriesFile): ErrorObject | null {
-  for (let i = 0; i < file.entries.length; i++) {
-    const e = file.entries[i]!;
-    const kNull = e.effort_kind === null || e.effort_kind === undefined;
-    const cNull = e.effort_count === null || e.effort_count === undefined;
-    if (kNull !== cNull) {
-      return {
-        instancePath: `/entries/${i}`,
-        schemaPath: '#/properties/entries/items',
-        keyword: 'cross-field',
-        params: {},
-        message: 'effort_kind and effort_count must both be null or both set',
-      };
-    }
+export function collapseAndSortEffort(items: EffortItem[]): EffortItem[] {
+  const byKind = new Map<EffortKind, number>();
+  for (const it of items) {
+    byKind.set(it.kind, (byKind.get(it.kind) ?? 0) + it.count);
   }
-  return null;
+  return [...byKind.entries()]
+    .map(([kind, count]) => ({ kind, count }))
+    .sort((a, b) => a.kind.localeCompare(b.kind));
 }
 
 /**
- * Backfill effort_kind / effort_count to null on entries that lack them.
- * Pre-v4 files never had these fields; after this pass the in-memory file
- * is always v4 shape regardless of on-disk version.
+ * Lift legacy `effort_kind` + `effort_count` scalars into the v6 `effort`
+ * array, then strip the legacy fields. Applies to every entry regardless
+ * of schema_version on disk (v1-v5 all lack `effort`, v5 has scalars).
+ * Also collapses duplicate kinds and sorts by kind for stable hashing.
  */
-function backfillEffortFields(file: EntriesFile): void {
+function liftEffortToArray(file: EntriesFile): void {
   for (const e of file.entries) {
-    if (!('effort_kind' in e)) (e as Entry).effort_kind = null;
-    if (!('effort_count' in e)) (e as Entry).effort_count = null;
+    const anyE = e as Entry & {
+      effort_kind?: EffortKind | null;
+      effort_count?: number | null;
+    };
+    let effort: EffortItem[] = Array.isArray((e as Entry).effort)
+      ? [...(e as Entry).effort]
+      : [];
+    if (effort.length === 0) {
+      const k = anyE.effort_kind;
+      const c = anyE.effort_count;
+      if (k !== null && k !== undefined && c !== null && c !== undefined) {
+        effort = [{ kind: k, count: c }];
+      }
+    }
+    delete anyE.effort_kind;
+    delete anyE.effort_count;
+    (e as Entry).effort = collapseAndSortEffort(effort);
   }
 }
 
@@ -137,9 +148,7 @@ export const validateEntries = (data: unknown): ValidationResult<EntriesFile> =>
   if (!_entries(cloned)) return { ok: false, errors: _entries.errors ?? [] };
   const file = cloned as EntriesFile;
   liftLegacyFieldToSourceRef(file);
-  const crossErr = checkEffortCrossField(file);
-  if (crossErr !== null) return { ok: false, errors: [crossErr] };
-  backfillEffortFields(file);
+  liftEffortToArray(file);
   return { ok: true, value: file };
 };
 

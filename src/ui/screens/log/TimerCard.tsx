@@ -122,7 +122,7 @@ export function TimerCard({
           projects={projects}
           projectId={form.projectId}
           bucketId={form.bucketId}
-          effortKind={form.effort_kind}
+          effortKind={form.effort.length > 0 ? form.effort[0]!.kind : null}
           onChangeProject={onChangeProject}
           onChangeBucket={onChangeBucket}
           onChangeEffortKind={onChangeEffortKind}
@@ -137,7 +137,7 @@ export function TimerCard({
           projects={projects}
           projectId={form.projectId}
           bucketId={form.bucketId}
-          effortKind={form.effort_kind}
+          effortKind={form.effort.length > 0 ? form.effort[0]!.kind : null}
           onChangeProject={onChangeProject}
           onChangeBucket={onChangeBucket}
           onChangeEffortKind={onChangeEffortKind}

@@ -14,7 +14,7 @@ const snapshot = {
   bucketId: null,
   description: '',
   date: '2026-04-14',
-  effort_kind: null,
+  effort: [],
 };
 
 describe('Timer session invariants', () => {
