@@ -1,0 +1,33 @@
+{
+  "app": {
+    "version": "1.0.0",
+    "repo": "sapienex-ai/hours-tracker",
+    "repo_url": "https://github.com/sapienex-ai/hours-tracker"
+  },
+  "data": {
+    "repo_convention": "hours-data-<partner>-<consultant-slug>",
+    "schema_versions": {
+      "entries": 6,
+      "profile": 1,
+      "rates": 1,
+      "projects": 1,
+      "snapshot": 1,
+      "calendar_config": 1
+    }
+  },
+  "releases": [
+    {
+      "version": "1.0.0",
+      "released_at": "2026-04-17",
+      "commit": "58ab742",
+      "summary": "Versioning system live. Bottom-left badge shows version + environment, tooltip shows change summary.",
+      "changes": [
+        "feat(version): systematic release metadata in public/version.json",
+        "feat(version): bottom-left VersionBadge with -prod/-local suffix",
+        "feat(version): hover tooltip renders current release summary + changes",
+        "feat(version): scripts/release.mjs bumps version + captures git log",
+        "docs: CLAUDE.md release-flow rule"
+      ]
+    }
+  ]
+}
