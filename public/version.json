@@ -1,6 +1,6 @@
 {
   "app": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "repo": "sapienex-ai/hours-tracker",
     "repo_url": "https://github.com/sapienex-ai/hours-tracker"
   },
@@ -17,9 +17,20 @@
   },
   "releases": [
     {
+      "version": "1.0.1",
+      "released_at": "2026-04-21",
+      "commit": "78b5d90",
+      "summary": "Fix: timer bombed with \"A.effort is not iterable\" when rehydrating a pre-v6 persisted session.",
+      "changes": [
+        "fix(timer): normalize pre-v6 persisted sessions on rehydrate — session snapshot + every HistoricalRecording coerced to effort: EffortItem[]",
+        "fix(timer): _rehydrateFromStorageForTests now routes through zustand's real persist.rehydrate() so migrate + onRehydrateStorage actually run",
+        "test(timer): regression test covers three legacy shapes + asserts spreading effort does not throw"
+      ]
+    },
+    {
       "version": "1.0.0",
       "released_at": "2026-04-17",
-      "commit": "58ab742",
+      "commit": "a27f118",
       "summary": "Versioning system live. Bottom-left badge shows version + environment, tooltip shows change summary.",
       "changes": [
         "feat(version): systematic release metadata in public/version.json",
